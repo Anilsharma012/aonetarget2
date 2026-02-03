@@ -173,13 +173,18 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleDeleteToken = (tokenId: string, code: string) => {
+  const handleDeleteToken = async (tokenId: string, code: string) => {
     if (!confirm(`Are you sure you want to delete ${code}?`)) {
       return;
     }
 
-    setTokens(tokens.filter(t => t.id !== tokenId));
-    showToast(`${code} has been deleted`, 'success');
+    try {
+      await tokensAPI.delete(tokenId);
+      setTokens(tokens.filter(t => t.id !== tokenId));
+      showToast(`${code} has been deleted`, 'success');
+    } catch (error) {
+      showToast('Failed to delete token', 'error');
+    }
   };
 
   const handleEditClick = (token: Token) => {
