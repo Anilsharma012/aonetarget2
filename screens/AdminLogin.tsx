@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { adminAPI } from '../api';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -13,22 +13,27 @@ const AdminLogin: React.FC<Props> = ({ setAuth }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Hardcoded Credentials as requested
-    setTimeout(() => {
-      if (adminId === 'admin' && password === 'aone@2026') {
+    try {
+      // Authenticate with MongoDB via API
+      const response = await adminAPI.login(adminId, password);
+
+      if (response.success) {
         localStorage.setItem('isAdminAuthenticated', 'true');
+        localStorage.setItem('adminId', response.adminId);
+        localStorage.setItem('adminName', response.name);
         setAuth(true);
         navigate('/admin');
-      } else {
-        setError('Invalid Admin ID or Password. Please try again.');
-        setIsLoading(false);
       }
-    }, 800);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid credentials. Please try again.';
+      setError(errorMessage);
+      setIsLoading(false);
+    }
   };
 
   return (
