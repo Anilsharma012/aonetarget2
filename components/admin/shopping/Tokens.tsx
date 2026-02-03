@@ -69,6 +69,11 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
   const loadTokens = async () => {
     try {
       setLoading(true);
+      const data = await tokensAPI.getAll();
+      setTokens(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showToast('Failed to load tokens', 'error');
+      // Use demo data if API fails
       setTokens([
         {
           id: 'TKN-001',
@@ -115,8 +120,6 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
           createdDate: '2024-06-01'
         }
       ]);
-    } catch (error) {
-      showToast('Failed to load tokens', 'error');
     } finally {
       setLoading(false);
     }
