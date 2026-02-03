@@ -107,13 +107,20 @@ export const ordersAPI = {
 export const adminAPI = {
   login: async (adminId: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      const url = `${API_BASE_URL}/admin/login`;
+      console.log('API URL:', url);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminId, password }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
@@ -121,6 +128,7 @@ export const adminAPI = {
 
       return data;
     } catch (error) {
+      console.error('Admin login error:', error);
       if (error instanceof Error) {
         throw error;
       }
