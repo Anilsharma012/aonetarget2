@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { buyersAPI } from '../../../api';
 
 interface Buyer {
   id: string;
