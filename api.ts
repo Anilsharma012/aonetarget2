@@ -91,17 +91,28 @@ export const studentsAPI = {
   getAll: async () => {
     const url = `${API_BASE_URL}/students`;
     console.log('Fetching students from:', url);
-    const response = await fetch(url);
-    const contentType = response.headers.get('content-type');
+    try {
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', {
+        contentType: response.headers.get('content-type'),
+        cors: response.headers.get('access-control-allow-origin')
+      });
 
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Non-JSON response from API:', text.substring(0, 200));
-      throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+      const contentType = response.headers.get('content-type');
+
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+      }
+
+      if (!response.ok) throw new Error(`Failed to fetch students (${response.status})`);
+      return response.json();
+    } catch (error) {
+      console.error('Students API error:', error);
+      throw error;
     }
-
-    if (!response.ok) throw new Error(`Failed to fetch students (${response.status})`);
-    return response.json();
   },
 
   getById: async (id: string) => {
