@@ -151,21 +151,26 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleEditToken = (e: React.FormEvent) => {
+  const handleEditToken = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedToken) return;
 
-    const updatedToken: Token = {
-      ...selectedToken,
-      ...formData
-    };
+    try {
+      const updatedToken: Token = {
+        ...selectedToken,
+        ...formData
+      };
 
-    setTokens(tokens.map(t => t.id === selectedToken.id ? updatedToken : t));
-    resetForm();
-    setShowEditModal(false);
-    setSelectedToken(null);
-    showToast('Token updated successfully', 'success');
+      await tokensAPI.update(selectedToken.id, updatedToken);
+      setTokens(tokens.map(t => t.id === selectedToken.id ? updatedToken : t));
+      resetForm();
+      setShowEditModal(false);
+      setSelectedToken(null);
+      showToast('Token updated successfully', 'success');
+    } catch (error) {
+      showToast('Failed to update token', 'error');
+    }
   };
 
   const handleDeleteToken = (tokenId: string, code: string) => {
