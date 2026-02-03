@@ -1,15 +1,20 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // In development, use relative paths so Vite proxy can handle it
-    // In production, use the same domain
-    return '/api';
+    const hostname = window.location.hostname;
+
+    // For development on localhost, use the Express server on port 5000
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000/api';
+    }
   }
+
+  // For deployed apps, use relative path to same domain
   return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-console.log('Final API_BASE_URL:', API_BASE_URL);
+console.log('API Base URL:', API_BASE_URL);
 
 // Courses API
 export const coursesAPI = {
