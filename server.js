@@ -138,6 +138,61 @@ app.get('/api/orders/:userId', async (req, res) => {
   }
 });
 
+// Admin Authentication Routes
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { adminId, password } = req.body;
+
+    if (!adminId || !password) {
+      return res.status(400).json({ error: 'Admin ID and password are required' });
+    }
+
+    const admin = await db.collection('admins').findOne({ adminId });
+
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid Admin ID or Password' });
+    }
+
+    // Simple password comparison (in production, use bcrypt)
+    if (admin.password !== password) {
+      return res.status(401).json({ error: 'Invalid Admin ID or Password' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      adminId: admin.adminId,
+      name: admin.name
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/admin/verify', async (req, res) => {
+  try {
+    const adminId = req.headers['x-admin-id'];
+
+    if (!adminId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const admin = await db.collection('admins').findOne({ adminId });
+
+    if (!admin) {
+      return res.status(401).json({ error: 'Admin not found' });
+    }
+
+    res.json({
+      success: true,
+      adminId: admin.adminId,
+      name: admin.name
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
