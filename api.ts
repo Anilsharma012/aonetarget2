@@ -1,9 +1,11 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
-  // Always use relative path for consistency - works with both Vite proxy and deployed apps
-  const url = '/api';
-  console.log('Using API URL:', url);
-  return url;
+  if (typeof window !== 'undefined') {
+    // In development, use relative paths so Vite proxy can handle it
+    // In production, use the same domain
+    return '/api';
+  }
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
