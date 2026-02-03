@@ -126,16 +126,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setShowAddModal(false);
       showToast(`Student ${newStudent.name} added successfully`, 'success');
     } catch (error) {
-      showToast('Failed to add student', 'error');
-      // Still add locally if API fails
-      const newStudent: Student = {
-        id: generateStudentId(),
-        ...formData
-      };
-      setStudents([...students, newStudent]);
-      resetForm();
-      setShowAddModal(false);
-      showToast(`Student ${newStudent.name} added (offline mode)`, 'success');
+      console.error('Add student error:', error);
+      showToast('Failed to add student to database. Please try again.', 'error');
     }
   };
 
@@ -157,17 +149,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setSelectedStudent(null);
       showToast('Student updated successfully', 'success');
     } catch (error) {
-      showToast('Failed to update student', 'error');
-      // Still update locally if API fails
-      const updatedStudent: Student = {
-        ...selectedStudent,
-        ...formData
-      };
-      setStudents(students.map(s => s.id === selectedStudent.id ? updatedStudent : s));
-      resetForm();
-      setShowEditModal(false);
-      setSelectedStudent(null);
-      showToast('Student updated (offline mode)', 'success');
+      console.error('Update student error:', error);
+      showToast('Failed to update student. Please try again.', 'error');
     }
   };
 
@@ -181,10 +164,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setStudents(students.filter(s => s.id !== studentId));
       showToast(`${studentName} has been deleted`, 'success');
     } catch (error) {
-      showToast('Failed to delete student', 'error');
-      // Still delete locally if API fails
-      setStudents(students.filter(s => s.id !== studentId));
-      showToast(`${studentName} deleted (offline mode)`, 'success');
+      console.error('Delete student error:', error);
+      showToast('Failed to delete student. Please try again.', 'error');
     }
   };
 
