@@ -95,10 +95,34 @@ export const ordersAPI = {
     if (!response.ok) throw new Error('Failed to create order');
     return response.json();
   },
-  
+
   getByUserId: async (userId: string) => {
     const response = await fetch(`${API_BASE_URL}/orders/${userId}`);
     if (!response.ok) throw new Error('Failed to fetch orders');
+    return response.json();
+  }
+};
+
+// Admin Authentication API
+export const adminAPI = {
+  login: async (adminId: string, password: string) => {
+    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId, password }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
+    }
+    return response.json();
+  },
+
+  verify: async (adminId: string) => {
+    const response = await fetch(`${API_BASE_URL}/admin/verify`, {
+      headers: { 'x-admin-id': adminId },
+    });
+    if (!response.ok) throw new Error('Verification failed');
     return response.json();
   }
 };
