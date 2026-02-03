@@ -90,66 +90,9 @@ const Students: React.FC<Props> = ({ showToast }) => {
       const data = await studentsAPI.getAll();
       setStudents(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load students', 'error');
-      // Use demo data if API fails
-      setStudents([
-        {
-          id: 'ST-2001',
-          name: 'Rahul Deshmukh',
-          email: 'rahul.deshmukh@gmail.com',
-          phone: '9845210022',
-          dob: '2005-01-15',
-          course: 'NEET Droppers',
-          city: 'Pune',
-          registrationDate: '2025-01-20',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: 'Good performance'
-        },
-        {
-          id: 'ST-2002',
-          name: 'Sneha Patil',
-          email: 'sneha.patil@gmail.com',
-          phone: '8876543210',
-          dob: '2004-06-22',
-          course: 'Nursing CET 2025',
-          city: 'Nagpur',
-          registrationDate: '2025-01-25',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'pending',
-          notes: ''
-        },
-        {
-          id: 'ST-2003',
-          name: 'Vikram Singh',
-          email: 'vikram.singh@gmail.com',
-          phone: '7766554433',
-          dob: '2006-03-10',
-          course: 'Class 12th PCM',
-          city: 'Delhi',
-          registrationDate: '2025-01-30',
-          registrationType: 'bulk',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: ''
-        },
-        {
-          id: 'ST-2004',
-          name: 'Pooja Verma',
-          email: 'pooja.verma@gmail.com',
-          phone: '9988776655',
-          dob: '2005-08-05',
-          course: 'Physics Crash Course',
-          city: 'Indore',
-          registrationDate: '2025-02-01',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: ''
-        }
-      ]);
+      console.error('Failed to load students:', error);
+      showToast('Failed to connect to database. Please check server connection.', 'error');
+      setStudents([]);
     } finally {
       setLoading(false);
     }
