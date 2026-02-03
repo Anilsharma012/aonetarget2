@@ -72,7 +72,11 @@ const Buyers: React.FC<Props> = ({ showToast }) => {
   const loadBuyers = async () => {
     try {
       setLoading(true);
-      // Simulate API call
+      const data = await buyersAPI.getAll();
+      setBuyers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showToast('Failed to load buyers', 'error');
+      // Use demo data if API fails
       setBuyers([
         {
           id: 'BUY-001',
@@ -119,8 +123,6 @@ const Buyers: React.FC<Props> = ({ showToast }) => {
           status: 'pending'
         }
       ]);
-    } catch (error) {
-      showToast('Failed to load buyers', 'error');
     } finally {
       setLoading(false);
     }
