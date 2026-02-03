@@ -4,11 +4,16 @@ import { studentsAPI } from '../../api';
 interface Student {
   id: string;
   name: string;
+  email: string;
   phone: string;
+  dob: string;
   course: string;
   city: string;
-  email?: string;
+  registrationDate: string;
+  registrationType: string;
   status: 'active' | 'inactive';
+  paymentStatus: 'paid' | 'pending' | 'failed';
+  notes?: string;
 }
 
 interface Props {
@@ -26,16 +31,23 @@ const Students: React.FC<Props> = ({ showToast }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showFeesModal, setShowFeesModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   
   // Form states
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
     email: '',
+    phone: '',
+    dob: '',
     course: '',
     city: '',
-    status: 'active' as 'active' | 'inactive'
+    registrationDate: new Date().toISOString().split('T')[0],
+    registrationType: 'regular',
+    status: 'active' as 'active' | 'inactive',
+    paymentStatus: 'pending' as 'paid' | 'pending' | 'failed',
+    notes: ''
   });
 
   // Load students on mount
@@ -51,6 +63,7 @@ const Students: React.FC<Props> = ({ showToast }) => {
       filtered = filtered.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.phone.includes(searchQuery)
       );
     }
@@ -71,10 +84,62 @@ const Students: React.FC<Props> = ({ showToast }) => {
       showToast('Failed to load students', 'error');
       // Use demo data if API fails
       setStudents([
-        { id: 'ST-2001', name: 'Rahul Deshmukh', phone: '9845210022', course: 'NEET Droppers Batch', city: 'Pune', status: 'active' },
-        { id: 'ST-2002', name: 'Sneha Patil', phone: '8876543210', course: 'Nursing CET 2025', city: 'Nagpur', status: 'active' },
-        { id: 'ST-2003', name: 'Vikram Singh', phone: '7766554433', course: 'Class 12th PCM', city: 'Delhi', status: 'active' },
-        { id: 'ST-2004', name: 'Pooja Verma', phone: '9988776655', course: 'Physics Crash Course', city: 'Indore', status: 'active' },
+        {
+          id: 'ST-2001',
+          name: 'Rahul Deshmukh',
+          email: 'rahul.deshmukh@gmail.com',
+          phone: '9845210022',
+          dob: '2005-01-15',
+          course: 'NEET Droppers',
+          city: 'Pune',
+          registrationDate: '2025-01-20',
+          registrationType: 'regular',
+          status: 'active',
+          paymentStatus: 'paid',
+          notes: 'Good performance'
+        },
+        {
+          id: 'ST-2002',
+          name: 'Sneha Patil',
+          email: 'sneha.patil@gmail.com',
+          phone: '8876543210',
+          dob: '2004-06-22',
+          course: 'Nursing CET 2025',
+          city: 'Nagpur',
+          registrationDate: '2025-01-25',
+          registrationType: 'regular',
+          status: 'active',
+          paymentStatus: 'pending',
+          notes: ''
+        },
+        {
+          id: 'ST-2003',
+          name: 'Vikram Singh',
+          email: 'vikram.singh@gmail.com',
+          phone: '7766554433',
+          dob: '2006-03-10',
+          course: 'Class 12th PCM',
+          city: 'Delhi',
+          registrationDate: '2025-01-30',
+          registrationType: 'bulk',
+          status: 'active',
+          paymentStatus: 'paid',
+          notes: ''
+        },
+        {
+          id: 'ST-2004',
+          name: 'Pooja Verma',
+          email: 'pooja.verma@gmail.com',
+          phone: '9988776655',
+          dob: '2005-08-05',
+          course: 'Physics Crash Course',
+          city: 'Indore',
+          registrationDate: '2025-02-01',
+          registrationType: 'regular',
+          status: 'active',
+          paymentStatus: 'paid',
+          notes: ''
+        }
       ]);
     } finally {
       setLoading(false);
@@ -86,13 +151,13 @@ const Students: React.FC<Props> = ({ showToast }) => {
       const num = parseInt(s.id.replace('ST-', ''));
       return isNaN(num) ? 0 : num;
     }));
-    return `ST-${maxId + 1}`;
+    return `ST-${String(maxId + 1).padStart(4, '0')}`;
   };
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.course) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.course) {
       showToast('Please fill all required fields', 'error');
       return;
     }
@@ -180,37 +245,62 @@ const Students: React.FC<Props> = ({ showToast }) => {
     setSelectedStudent(student);
     setFormData({
       name: student.name,
+      email: student.email,
       phone: student.phone,
-      email: student.email || '',
+      dob: student.dob,
       course: student.course,
       city: student.city,
-      status: student.status
+      registrationDate: student.registrationDate,
+      registrationType: student.registrationType,
+      status: student.status,
+      paymentStatus: student.paymentStatus,
+      notes: student.notes || ''
     });
     setShowEditModal(true);
+  };
+
+  const handleFeesClick = (student: Student) => {
+    setSelectedStudent(student);
+    setShowFeesModal(true);
+  };
+
+  const handleNotesClick = (student: Student) => {
+    setSelectedStudent(student);
+    setFormData(prev => ({ ...prev, notes: student.notes || '' }));
+    setShowNotesModal(true);
   };
 
   const resetForm = () => {
     setFormData({
       name: '',
-      phone: '',
       email: '',
+      phone: '',
+      dob: '',
       course: '',
       city: '',
-      status: 'active'
+      registrationDate: new Date().toISOString().split('T')[0],
+      registrationType: 'regular',
+      status: 'active',
+      paymentStatus: 'pending',
+      notes: ''
     });
   };
 
   const handleExportCSV = () => {
     try {
-      const headers = ['ID', 'Name', 'Phone', 'Email', 'Course', 'City', 'Status'];
+      const headers = ['ID', 'Name', 'Email', 'Phone', 'DOB', 'Course', 'City', 'Reg Date', 'Reg Type', 'Status', 'Payment'];
       const rows = filteredStudents.map(s => [
         s.id,
         s.name,
+        s.email,
         s.phone,
-        s.email || '',
+        s.dob,
         s.course,
         s.city,
-        s.status
+        s.registrationDate,
+        s.registrationType,
+        s.status,
+        s.paymentStatus
       ]);
 
       const csvContent = [
@@ -231,6 +321,30 @@ const Students: React.FC<Props> = ({ showToast }) => {
       showToast(`Exported ${filteredStudents.length} student(s) to CSV`, 'success');
     } catch (error) {
       showToast('Failed to export CSV', 'error');
+    }
+  };
+
+  const updatePaymentStatus = (studentId: string, status: 'paid' | 'pending' | 'failed') => {
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      const updated = { ...student, paymentStatus: status };
+      studentsAPI.update(studentId, updated).catch(() => {});
+      setStudents(students.map(s => s.id === studentId ? updated : s));
+      showToast(`Payment status updated to ${status}`, 'success');
+    }
+  };
+
+  const saveNotes = async () => {
+    if (!selectedStudent) return;
+    
+    try {
+      const updated = { ...selectedStudent, notes: formData.notes };
+      await studentsAPI.update(selectedStudent.id, updated);
+      setStudents(students.map(s => s.id === selectedStudent.id ? updated : s));
+      setShowNotesModal(false);
+      showToast('Notes saved successfully', 'success');
+    } catch (error) {
+      showToast('Failed to save notes', 'error');
     }
   };
 
@@ -256,7 +370,7 @@ const Students: React.FC<Props> = ({ showToast }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5 transition-all"
-            placeholder="Search by name, ID or mobile..."
+            placeholder="Search by name, email, ID or mobile..."
           />
         </div>
         <div className="flex gap-2">
@@ -269,7 +383,6 @@ const Students: React.FC<Props> = ({ showToast }) => {
             <option value="active">Active Only</option>
             <option value="inactive">Inactive Only</option>
           </select>
-          <button className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-navy"><span className="material-icons-outlined text-sm">filter_alt</span></button>
         </div>
       </div>
 
@@ -280,42 +393,62 @@ const Students: React.FC<Props> = ({ showToast }) => {
         ) : filteredStudents.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No students found</div>
         ) : (
-          <table className="w-full text-left">
-            <thead className="bg-[#F8F9FA] text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <table className="w-full text-left text-[11px]">
+            <thead className="bg-[#F8F9FA] font-black text-gray-400 uppercase tracking-widest sticky top-0">
               <tr>
-                <th className="px-8 py-5 border-b border-gray-100">Full Name / ID</th>
-                <th className="px-8 py-5 border-b border-gray-100">Assigned Package</th>
-                <th className="px-8 py-5 border-b border-gray-100 text-center">Status</th>
-                <th className="px-8 py-5 border-b border-gray-100 text-center">Actions</th>
+                <th className="px-4 py-4 border-b border-gray-100">Name</th>
+                <th className="px-4 py-4 border-b border-gray-100">Email</th>
+                <th className="px-4 py-4 border-b border-gray-100">Contact</th>
+                <th className="px-4 py-4 border-b border-gray-100">DOB</th>
+                <th className="px-4 py-4 border-b border-gray-100">Course</th>
+                <th className="px-4 py-4 border-b border-gray-100">Reg. Date</th>
+                <th className="px-4 py-4 border-b border-gray-100">Reg. Type</th>
+                <th className="px-4 py-4 border-b border-gray-100 text-center">Status</th>
+                <th className="px-4 py-4 border-b border-gray-100 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="text-xs">
+            <tbody>
               {filteredStudents.map(s => (
                 <tr key={s.id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 group">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-navy/5 rounded-xl flex items-center justify-center font-black text-navy text-[10px]">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-navy/10 rounded-lg flex items-center justify-center font-black text-navy text-[9px]">
                         {s.name.charAt(0)}
                       </div>
-                      <div>
-                        <p className="font-black text-navy uppercase tracking-tight">{s.name}</p>
-                        <p className="text-[10px] font-bold text-gray-300">ID: {s.id} • {s.phone} • {s.city}</p>
-                      </div>
+                      <span className="font-bold text-navy">{s.name}</span>
+                      <span className="text-[9px] text-gray-400">{s.id}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-5">
-                    <span className="text-[9px] font-black text-navy/40 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full">{s.course}</span>
+                  <td className="px-4 py-4">
+                    <span className="text-[10px] text-gray-600">{s.email}</span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${s.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                  <td className="px-4 py-4">
+                    <span className="text-[10px] font-bold text-navy">{s.phone}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-[10px] text-gray-600">{new Date(s.dob).toLocaleDateString('en-IN')}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-[9px] font-black text-navy/40 uppercase bg-gray-100 px-2 py-1 rounded-md w-fit inline-block">{s.course}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-[10px] text-gray-600">{new Date(s.registrationDate).toLocaleDateString('en-IN')}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-[9px] font-bold text-navy uppercase bg-blue-100 px-2 py-1 rounded-md">{s.registrationType}</span>
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase inline-block ${s.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                       {s.status}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <div className="flex justify-center gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleViewStudent(s)} className="p-2.5 bg-white border border-gray-100 rounded-xl text-navy hover:bg-navy hover:text-white transition-all shadow-sm" title="View"><span className="material-icons-outlined text-sm">visibility</span></button>
-                      <button onClick={() => handleEditClick(s)} className="p-2.5 bg-white border border-gray-100 rounded-xl text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm" title="Edit"><span className="material-icons-outlined text-sm">edit</span></button>
-                      <button onClick={() => handleDeleteStudent(s.id, s.name)} className="p-2.5 bg-white border border-gray-100 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete"><span className="material-icons-outlined text-sm">delete</span></button>
+                  <td className="px-4 py-4 text-center">
+                    <div className="flex justify-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity flex-wrap">
+                      <button onClick={() => handleViewStudent(s)} title="View" className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">visibility</span></button>
+                      <button onClick={() => handleEditClick(s)} title="Edit" className="p-2 bg-teal-100 text-teal-600 hover:bg-teal-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">edit</span></button>
+                      <button onClick={() => handleFeesClick(s)} title="Fees" className="p-2 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">account_balance_wallet</span></button>
+                      <button onClick={() => handleNotesClick(s)} title="Notes" className="p-2 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">note</span></button>
+                      <button onClick={() => handleDeleteStudent(s.id, s.name)} title="Delete" className="p-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">delete</span></button>
                     </div>
                   </td>
                 </tr>
@@ -328,63 +461,97 @@ const Students: React.FC<Props> = ({ showToast }) => {
       {/* Add Student Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
               <h3 className="text-xl font-black text-navy uppercase">Add New Student</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
             <form onSubmit={handleAddStudent} className="p-6 space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter full name"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Phone *</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter phone number"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter email"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Course *</label>
-                <input
-                  type="text"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter course name"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">City</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter city"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Full Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Email *</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter email"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Phone *</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">DOB</label>
+                  <input
+                    type="date"
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Course *</label>
+                  <input
+                    type="text"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter course name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter city"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Reg. Type</label>
+                  <select
+                    value={formData.registrationType}
+                    onChange={(e) => setFormData({ ...formData, registrationType: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  >
+                    <option value="regular">Regular</option>
+                    <option value="bulk">Bulk</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
               <div className="flex gap-3 pt-4">
                 <button
@@ -409,83 +576,107 @@ const Students: React.FC<Props> = ({ showToast }) => {
       {/* Edit Student Modal */}
       {showEditModal && selectedStudent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
               <h3 className="text-xl font-black text-navy uppercase">Edit Student</h3>
               <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
             <form onSubmit={handleEditStudent} className="p-6 space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Student ID</label>
-                <input
-                  type="text"
-                  disabled
-                  value={selectedStudent.id}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold bg-gray-50 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter full name"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Phone *</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter phone number"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter email"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Course *</label>
-                <input
-                  type="text"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter course name"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">City</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                  placeholder="Enter city"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                  className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Student ID</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedStudent.id}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold bg-gray-50 cursor-not-allowed"
+                  />
+                </div>
+                <div></div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Full Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Email *</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter email"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Phone *</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">DOB</label>
+                  <input
+                    type="date"
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Course *</label>
+                  <input
+                    type="text"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter course name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    placeholder="Enter city"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Reg. Type</label>
+                  <select
+                    value={formData.registrationType}
+                    onChange={(e) => setFormData({ ...formData, registrationType: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  >
+                    <option value="regular">Regular</option>
+                    <option value="bulk">Bulk</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
               <div className="flex gap-3 pt-4">
                 <button
@@ -527,29 +718,43 @@ const Students: React.FC<Props> = ({ showToast }) => {
                   <p className="text-[10px] font-bold text-gray-300">{selectedStudent.id}</p>
                 </div>
               </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Phone</p>
-                <p className="text-sm font-bold text-navy">{selectedStudent.phone}</p>
-              </div>
-              {selectedStudent.email && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Email</p>
                   <p className="text-sm font-bold text-navy">{selectedStudent.email}</p>
                 </div>
-              )}
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Course</p>
-                <p className="text-sm font-bold text-navy">{selectedStudent.course}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">City</p>
-                <p className="text-sm font-bold text-navy">{selectedStudent.city}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Status</p>
-                <span className={`inline-block px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${selectedStudent.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                  {selectedStudent.status}
-                </span>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Phone</p>
+                  <p className="text-sm font-bold text-navy">{selectedStudent.phone}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">DOB</p>
+                  <p className="text-sm font-bold text-navy">{new Date(selectedStudent.dob).toLocaleDateString('en-IN')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Course</p>
+                  <p className="text-sm font-bold text-navy">{selectedStudent.course}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Reg. Date</p>
+                  <p className="text-sm font-bold text-navy">{new Date(selectedStudent.registrationDate).toLocaleDateString('en-IN')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Reg. Type</p>
+                  <p className="text-sm font-bold text-navy">{selectedStudent.registrationType}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Status</p>
+                  <span className={`inline-block px-3 py-1 rounded-md text-[9px] font-black uppercase ${selectedStudent.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {selectedStudent.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Payment</p>
+                  <span className={`inline-block px-3 py-1 rounded-md text-[9px] font-black uppercase ${selectedStudent.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : selectedStudent.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'}`}>
+                    {selectedStudent.paymentStatus}
+                  </span>
+                </div>
               </div>
               <div className="flex gap-3 pt-4">
                 <button
@@ -565,6 +770,93 @@ const Students: React.FC<Props> = ({ showToast }) => {
                   className="flex-1 px-4 py-3 bg-gray-100 text-navy text-[10px] font-black rounded-xl uppercase hover:bg-gray-200 transition-all"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fees Management Modal */}
+      {showFeesModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-xl font-black text-navy uppercase">Manage Fees - {selectedStudent.name}</h3>
+              <button onClick={() => setShowFeesModal(false)} className="text-gray-400 hover:text-gray-600">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Current Status</p>
+                <span className={`inline-block px-4 py-2 rounded-lg text-[10px] font-black uppercase ${selectedStudent.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : selectedStudent.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'}`}>
+                  {selectedStudent.paymentStatus}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => updatePaymentStatus(selectedStudent.id, 'paid')}
+                  className="w-full px-4 py-3 bg-green-100 text-green-600 text-[10px] font-black rounded-xl uppercase hover:bg-green-600 hover:text-white transition-all"
+                >
+                  Mark as Paid
+                </button>
+                <button
+                  onClick={() => updatePaymentStatus(selectedStudent.id, 'pending')}
+                  className="w-full px-4 py-3 bg-yellow-100 text-yellow-600 text-[10px] font-black rounded-xl uppercase hover:bg-yellow-600 hover:text-white transition-all"
+                >
+                  Mark as Pending
+                </button>
+                <button
+                  onClick={() => updatePaymentStatus(selectedStudent.id, 'failed')}
+                  className="w-full px-4 py-3 bg-red-100 text-red-600 text-[10px] font-black rounded-xl uppercase hover:bg-red-600 hover:text-white transition-all"
+                >
+                  Mark as Failed
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFeesModal(false)}
+                className="w-full px-4 py-3 bg-gray-100 text-navy text-[10px] font-black rounded-xl uppercase hover:bg-gray-200 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes Modal */}
+      {showNotesModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-xl font-black text-navy uppercase">Notes - {selectedStudent.name}</h3>
+              <button onClick={() => setShowNotesModal(false)} className="text-gray-400 hover:text-gray-600">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5 resize-none h-32"
+                placeholder="Add notes about this student..."
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNotesModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-navy text-[10px] font-black rounded-xl uppercase hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveNotes}
+                  className="flex-1 px-4 py-3 bg-navy text-white text-[10px] font-black rounded-xl uppercase hover:bg-blue-900 transition-all"
+                >
+                  Save Notes
                 </button>
               </div>
             </div>
