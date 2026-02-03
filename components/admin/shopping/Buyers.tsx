@@ -153,21 +153,26 @@ const Buyers: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleEditBuyer = (e: React.FormEvent) => {
+  const handleEditBuyer = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedBuyer) return;
 
-    const updatedBuyer: Buyer = {
-      ...selectedBuyer,
-      ...formData
-    };
+    try {
+      const updatedBuyer: Buyer = {
+        ...selectedBuyer,
+        ...formData
+      };
 
-    setBuyers(buyers.map(b => b.id === selectedBuyer.id ? updatedBuyer : b));
-    resetForm();
-    setShowEditModal(false);
-    setSelectedBuyer(null);
-    showToast('Buyer updated successfully', 'success');
+      await buyersAPI.update(selectedBuyer.id, updatedBuyer);
+      setBuyers(buyers.map(b => b.id === selectedBuyer.id ? updatedBuyer : b));
+      resetForm();
+      setShowEditModal(false);
+      setSelectedBuyer(null);
+      showToast('Buyer updated successfully', 'success');
+    } catch (error) {
+      showToast('Failed to update buyer', 'error');
+    }
   };
 
   const handleDeleteBuyer = (buyerId: string, email: string) => {
