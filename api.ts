@@ -1,14 +1,19 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const port = window.location.port;
+  if (typeof window === 'undefined') return '/api';
 
-    // In development on Vite (port 3000 or 5173), use the Express server on 5000
-    if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('172.')) &&
-        (port === '3000' || port === '5173' || port === '')) {
-      return 'http://localhost:5000/api';
-    }
+  const hostname = window.location.hostname;
+
+  // Check if we're running on localhost/127.0.0.1
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Use direct connection to Express server on port 5000
+    return 'http://localhost:5000/api';
+  }
+
+  // Check if hostname contains 172. (Docker container IP)
+  if (hostname.includes('172.')) {
+    // Use direct connection to Express server on port 5000
+    return 'http://localhost:5000/api';
   }
 
   // For deployed apps, use relative path to same domain
@@ -16,7 +21,11 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-console.log('API Base URL:', API_BASE_URL);
+if (typeof window !== 'undefined') {
+  console.log('Hostname:', window.location.hostname);
+  console.log('Port:', window.location.port);
+  console.log('API Base URL:', API_BASE_URL);
+}
 
 // Courses API
 export const coursesAPI = {
