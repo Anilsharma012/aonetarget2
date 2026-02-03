@@ -467,6 +467,81 @@ const Students: React.FC<Props> = ({ showToast }) => {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {filteredStudents.length > 0 && (
+        <div className="p-6 border-t border-gray-100 flex flex-wrap justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black text-gray-400 uppercase">Items Per Page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(parseInt(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-black uppercase text-gray-600 outline-none hover:border-navy"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <div className="text-[10px] font-black text-gray-400 uppercase">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} students
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg uppercase hover:bg-navy hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="material-icons-outlined text-sm">chevron_left</span>
+            </button>
+
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else {
+                  if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${
+                      currentPage === pageNum
+                        ? 'bg-navy text-white'
+                        : 'bg-gray-100 text-navy hover:bg-gray-200'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg uppercase hover:bg-navy hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="material-icons-outlined text-sm">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add Student Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
