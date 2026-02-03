@@ -19,17 +19,24 @@ const AdminLogin: React.FC<Props> = ({ setAuth }) => {
     setError('');
 
     try {
+      console.log('Login attempt with:', { adminId });
+
       // Authenticate with MongoDB via API
       const response = await adminAPI.login(adminId, password);
 
-      if (response.success) {
+      console.log('Login response:', response);
+
+      if (response && response.success) {
         localStorage.setItem('isAdminAuthenticated', 'true');
         localStorage.setItem('adminId', response.adminId);
         localStorage.setItem('adminName', response.name);
         setAuth(true);
         navigate('/admin');
+      } else {
+        throw new Error('Login response invalid');
       }
     } catch (err) {
+      console.error('Login error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Invalid credentials. Please try again.';
       setError(errorMessage);
       setIsLoading(false);
