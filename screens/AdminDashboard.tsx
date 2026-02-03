@@ -25,22 +25,41 @@ interface Props {
   setAuth: (val: boolean) => void;
 }
 
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: string;
+  color: string;
+  submenu?: { id: AdminView; label: string; icon: string }[];
+}
+
 const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<AdminView>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', color: 'text-blue-400' },
     { id: 'misc', label: 'Misc Manager', icon: 'category', color: 'text-purple-400' },
     { id: 'students', label: 'Students', icon: 'people', color: 'text-orange-400' },
-    { id: 'shopping', label: 'Shopping Hub', icon: 'shopping_cart', color: 'text-pink-400' },
+    {
+      id: 'shopping',
+      label: 'Shopping Hub',
+      icon: 'shopping_cart',
+      color: 'text-pink-400',
+      submenu: [
+        { id: 'buyers', label: 'Buyers List', icon: 'person' },
+        { id: 'tokens', label: 'Tokens', icon: 'card_giftcard' },
+        { id: 'coupons', label: 'Coupons', icon: 'local_offer' }
+      ]
+    },
     { id: 'store', label: 'Package Store', icon: 'store', color: 'text-emerald-400' },
     { id: 'institute', label: 'Institute Profile', icon: 'business', color: 'text-cyan-400' },
     { id: 'questions', label: 'Manage Questions', icon: 'help_outline', color: 'text-amber-400' },
