@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dashboard from '../components/admin/Dashboard';
 import MiscSection from '../components/admin/MiscSection';
 import Students from '../components/admin/Students';
-import Shopping from '../components/admin/Shopping';
 import Store from '../components/admin/Store';
 import Institute from '../components/admin/Institute';
 import Questions from '../components/admin/Questions';
@@ -17,8 +15,11 @@ import Messages from '../components/admin/Messages';
 import Blog from '../components/admin/Blog';
 import Settings from '../components/admin/Settings';
 import Banners from '../components/admin/Banners';
+import Buyers from '../components/admin/shopping/Buyers';
+import Tokens from '../components/admin/shopping/Tokens';
+import Coupons from '../components/admin/shopping/Coupons';
 
-export type AdminView = 'dashboard' | 'misc' | 'students' | 'shopping' | 'store' | 'institute' | 'questions' | 'tests' | 'videos' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
+export type AdminView = 'dashboard' | 'misc' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'tests' | 'videos' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
 
 interface Props {
   setAuth: (val: boolean) => void;
