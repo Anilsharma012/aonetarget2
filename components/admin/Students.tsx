@@ -417,7 +417,7 @@ const Students: React.FC<Props> = ({ showToast }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map(s => (
+              {paginatedStudents.map(s => (
                 <tr key={s.id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 group">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
