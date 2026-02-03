@@ -1,6 +1,17 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
-  // Always use relative paths - Vite proxy will handle dev, relative path works for production
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    // In development on Vite (port 3000 or 5173), use the Express server on 5000
+    if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('172.')) &&
+        (port === '3000' || port === '5173' || port === '')) {
+      return 'http://localhost:5000/api';
+    }
+  }
+
+  // For deployed apps, use relative path to same domain
   return '/api';
 };
 
