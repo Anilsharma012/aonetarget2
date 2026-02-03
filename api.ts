@@ -87,42 +87,83 @@ export const usersAPI = {
 // Students API
 export const studentsAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/students`);
-    if (!response.ok) throw new Error('Failed to fetch students');
+    const url = `${API_BASE_URL}/students`;
+    console.log('Fetching students from:', url);
+    const response = await fetch(url);
+    const contentType = response.headers.get('content-type');
+
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response from API:', text.substring(0, 200));
+      throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+    }
+
+    if (!response.ok) throw new Error(`Failed to fetch students (${response.status})`);
     return response.json();
   },
 
   getById: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`);
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url);
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
     if (!response.ok) throw new Error('Failed to fetch student');
     return response.json();
   },
 
   create: async (studentData: any) => {
-    const response = await fetch(`${API_BASE_URL}/students`, {
+    const url = `${API_BASE_URL}/students`;
+    console.log('Creating student at:', url, 'with data:', studentData);
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(studentData),
     });
-    if (!response.ok) throw new Error('Failed to create student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response from create:', text.substring(0, 200));
+      throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+    }
+
+    if (!response.ok) throw new Error(`Failed to create student (${response.status})`);
     return response.json();
   },
 
   update: async (id: string, studentData: any) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(studentData),
     });
-    if (!response.ok) throw new Error('Failed to update student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
+    if (!response.ok) throw new Error(`Failed to update student (${response.status})`);
     return response.json();
   },
 
   delete: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
+    if (!response.ok) throw new Error(`Failed to delete student (${response.status})`);
     return response.json();
   }
 };
