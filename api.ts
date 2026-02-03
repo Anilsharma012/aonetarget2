@@ -83,7 +83,7 @@ export const usersAPI = {
     if (!response.ok) throw new Error('Failed to fetch user');
     return response.json();
   },
-  
+
   create: async (userData: any) => {
     const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
@@ -91,6 +91,49 @@ export const usersAPI = {
       body: JSON.stringify(userData),
     });
     if (!response.ok) throw new Error('Failed to create user');
+    return response.json();
+  }
+};
+
+// Students API
+export const studentsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/students`);
+    if (!response.ok) throw new Error('Failed to fetch students');
+    return response.json();
+  },
+
+  getById: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch student');
+    return response.json();
+  },
+
+  create: async (studentData: any) => {
+    const response = await fetch(`${API_BASE_URL}/students`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(studentData),
+    });
+    if (!response.ok) throw new Error('Failed to create student');
+    return response.json();
+  },
+
+  update: async (id: string, studentData: any) => {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(studentData),
+    });
+    if (!response.ok) throw new Error('Failed to update student');
+    return response.json();
+  },
+
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete student');
     return response.json();
   }
 };
