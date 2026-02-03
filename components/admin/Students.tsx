@@ -257,13 +257,18 @@ const Students: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const updatePaymentStatus = (studentId: string, status: 'paid' | 'pending' | 'failed') => {
+  const updatePaymentStatus = async (studentId: string, status: 'paid' | 'pending' | 'failed') => {
     const student = students.find(s => s.id === studentId);
     if (student) {
       const updated = { ...student, paymentStatus: status };
-      studentsAPI.update(studentId, updated).catch(() => {});
-      setStudents(students.map(s => s.id === studentId ? updated : s));
-      showToast(`Payment status updated to ${status}`, 'success');
+      try {
+        await studentsAPI.update(studentId, updated);
+        setStudents(students.map(s => s.id === studentId ? updated : s));
+        showToast(`Payment status updated to ${status}`, 'success');
+      } catch (error) {
+        console.error('Update payment status error:', error);
+        showToast('Failed to update payment status', 'error');
+      }
     }
   };
 
