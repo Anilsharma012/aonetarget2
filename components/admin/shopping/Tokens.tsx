@@ -125,25 +125,30 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleAddToken = (e: React.FormEvent) => {
+  const handleAddToken = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.code || !formData.value || !formData.quantity) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
-    const newToken: Token = {
-      id: `TKN-${String(tokens.length + 1).padStart(3, '0')}`,
-      ...formData,
-      usedQuantity: 0,
-      createdDate: new Date().toISOString().split('T')[0]
-    };
+    try {
+      const newToken: Token = {
+        id: `TKN-${String(tokens.length + 1).padStart(3, '0')}`,
+        ...formData,
+        usedQuantity: 0,
+        createdDate: new Date().toISOString().split('T')[0]
+      };
 
-    setTokens([...tokens, newToken]);
-    resetForm();
-    setShowAddModal(false);
-    showToast(`Token ${newToken.code} created successfully`, 'success');
+      await tokensAPI.create(newToken);
+      setTokens([...tokens, newToken]);
+      resetForm();
+      setShowAddModal(false);
+      showToast(`Token ${newToken.code} created successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to create token', 'error');
+    }
   };
 
   const handleEditToken = (e: React.FormEvent) => {
