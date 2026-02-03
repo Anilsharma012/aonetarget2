@@ -1,10 +1,10 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { COURSES } from '../constants';
+import { coursesAPI } from '../api';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<any[]>([]);
 
   const handleDownloadAPK = () => {
     const dummyContent = "This is a dummy APK file content for Aone Target Institute.";
