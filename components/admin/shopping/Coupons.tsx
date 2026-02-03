@@ -150,25 +150,30 @@ const Coupons: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleAddCoupon = (e: React.FormEvent) => {
+  const handleAddCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.code || !formData.discountValue || !formData.validUpto) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
-    const newCoupon: Coupon = {
-      id: `CPN-${String(coupons.length + 1).padStart(3, '0')}`,
-      ...formData,
-      usedCount: 0,
-      createdDate: new Date().toISOString().split('T')[0]
-    };
+    try {
+      const newCoupon: Coupon = {
+        id: `CPN-${String(coupons.length + 1).padStart(3, '0')}`,
+        ...formData,
+        usedCount: 0,
+        createdDate: new Date().toISOString().split('T')[0]
+      };
 
-    setCoupons([...coupons, newCoupon]);
-    resetForm();
-    setShowAddModal(false);
-    showToast(`Coupon ${newCoupon.code} created successfully`, 'success');
+      await couponsAPI.create(newCoupon);
+      setCoupons([...coupons, newCoupon]);
+      resetForm();
+      setShowAddModal(false);
+      showToast(`Coupon ${newCoupon.code} created successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to create coupon', 'error');
+    }
   };
 
   const handleEditCoupon = (e: React.FormEvent) => {
