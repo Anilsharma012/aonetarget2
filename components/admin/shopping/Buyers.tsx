@@ -128,24 +128,29 @@ const Buyers: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleAddBuyer = (e: React.FormEvent) => {
+  const handleAddBuyer = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email || !formData.paymentMethod || !formData.amount) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
-    const newBuyer: Buyer = {
-      id: `BUY-${String(buyers.length + 1).padStart(3, '0')}`,
-      date: new Date().toISOString().split('T')[0],
-      ...formData
-    };
+    try {
+      const newBuyer: Buyer = {
+        id: `BUY-${String(buyers.length + 1).padStart(3, '0')}`,
+        date: new Date().toISOString().split('T')[0],
+        ...formData
+      };
 
-    setBuyers([...buyers, newBuyer]);
-    resetForm();
-    setShowAddModal(false);
-    showToast(`Buyer ${newBuyer.email} added successfully`, 'success');
+      await buyersAPI.create(newBuyer);
+      setBuyers([...buyers, newBuyer]);
+      resetForm();
+      setShowAddModal(false);
+      showToast(`Buyer ${newBuyer.email} added successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to add buyer', 'error');
+    }
   };
 
   const handleEditBuyer = (e: React.FormEvent) => {
