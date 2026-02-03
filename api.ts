@@ -2,19 +2,30 @@
 const getApiBaseUrl = () => {
   // If environment variable is set, use it
   if (process.env.REACT_APP_API_URL) {
+    console.log('Using REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
     return process.env.REACT_APP_API_URL;
   }
 
   // Check if running locally (localhost) or deployed
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:5000/api';
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    console.log('Current hostname:', hostname);
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      const url = 'http://localhost:5000/api';
+      console.log('Using local API URL:', url);
+      return url;
+    }
   }
 
   // For deployed apps, use relative path to same domain
-  return '/api';
+  const url = '/api';
+  console.log('Using relative API URL:', url);
+  return url;
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('Final API_BASE_URL:', API_BASE_URL);
 
 // Courses API
 export const coursesAPI = {
