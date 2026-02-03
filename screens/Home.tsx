@@ -6,6 +6,20 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await coursesAPI.getAll();
+        setCourses(data);
+      } catch (error) {
+        console.error('Failed to fetch courses:', error);
+        // Fallback to empty array if API fails
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
   const handleDownloadAPK = () => {
     const dummyContent = "This is a dummy APK file content for Aone Target Institute.";
     const blob = new Blob([dummyContent], { type: 'application/vnd.android.package-archive' });
