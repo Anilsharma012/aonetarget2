@@ -87,11 +87,14 @@ const Students: React.FC<Props> = ({ showToast }) => {
   const loadStudents = async () => {
     try {
       setLoading(true);
+      console.log('Loading students...');
       const data = await studentsAPI.getAll();
+      console.log('Students loaded successfully:', data);
       setStudents(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to load students:', error);
-      showToast('Failed to connect to database. Please check server connection.', 'error');
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Failed to load students:', errorMsg, error);
+      showToast(`Failed to load students: ${errorMsg}`, 'error');
       setStudents([]);
     } finally {
       setLoading(false);
