@@ -126,20 +126,46 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
 
         <nav className="flex-1 overflow-y-auto hide-scrollbar py-4 px-2 space-y-0.5">
            {menuItems.map((item) => (
-             <button
-               key={item.id}
-               onClick={() => {
-                 setActiveView(item.id as AdminView);
-                 if(!isSidebarOpen && window.innerWidth < 1024) setSidebarOpen(false);
-               }}
-               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group relative ${
-                 activeView === item.id ? 'bg-white/10 text-white' : 'text-white/40 hover:bg-white/5 hover:text-white'
-               }`}
-             >
-               {activeView === item.id && <div className="absolute left-0 top-2 bottom-2 w-1.5 bg-blue-400 rounded-r-full shadow-[0_0_15px_rgba(96,165,250,0.5)]"></div>}
-               <span className={`material-icons-outlined text-xl transition-colors ${activeView === item.id ? item.color : 'group-hover:text-white/80'}`}>{item.icon}</span>
-               {isSidebarOpen && <span className="text-[12px] font-bold tracking-tight truncate">{item.label}</span>}
-             </button>
+             <div key={item.id}>
+               <button
+                 onClick={() => {
+                   if (item.submenu) {
+                     setExpandedMenu(expandedMenu === item.id ? null : item.id);
+                   } else {
+                     setActiveView(item.id as AdminView);
+                   }
+                 }}
+                 className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group relative ${
+                   activeView === item.id || expandedMenu === item.id ? 'bg-white/10 text-white' : 'text-white/40 hover:bg-white/5 hover:text-white'
+                 }`}
+               >
+                 {(activeView === item.id || expandedMenu === item.id) && <div className="absolute left-0 top-2 bottom-2 w-1.5 bg-blue-400 rounded-r-full shadow-[0_0_15px_rgba(96,165,250,0.5)]"></div>}
+                 <span className={`material-icons-outlined text-xl transition-colors ${activeView === item.id || expandedMenu === item.id ? item.color : 'group-hover:text-white/80'}`}>{item.icon}</span>
+                 {isSidebarOpen && <span className="text-[12px] font-bold tracking-tight truncate flex-1 text-left">{item.label}</span>}
+                 {isSidebarOpen && item.submenu && (
+                   <span className={`material-icons-outlined text-sm transition-transform ${expandedMenu === item.id ? 'rotate-180' : ''}`}>expand_more</span>
+                 )}
+               </button>
+
+               {item.submenu && expandedMenu === item.id && isSidebarOpen && (
+                 <div className="pl-4 mt-1 space-y-1">
+                   {item.submenu.map((subitem) => (
+                     <button
+                       key={subitem.id}
+                       onClick={() => setActiveView(subitem.id)}
+                       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[11px] font-bold transition-all ${
+                         activeView === subitem.id
+                           ? 'bg-white/20 text-white'
+                           : 'text-white/50 hover:text-white hover:bg-white/10'
+                       }`}
+                     >
+                       <span className="material-icons-outlined text-sm">{subitem.icon}</span>
+                       <span className="truncate">{subitem.label}</span>
+                     </button>
+                   ))}
+                 </div>
+               )}
+             </div>
            ))}
         </nav>
 
