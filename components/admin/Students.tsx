@@ -87,69 +87,15 @@ const Students: React.FC<Props> = ({ showToast }) => {
   const loadStudents = async () => {
     try {
       setLoading(true);
+      console.log('Loading students...');
       const data = await studentsAPI.getAll();
+      console.log('Students loaded successfully:', data);
       setStudents(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load students', 'error');
-      // Use demo data if API fails
-      setStudents([
-        {
-          id: 'ST-2001',
-          name: 'Rahul Deshmukh',
-          email: 'rahul.deshmukh@gmail.com',
-          phone: '9845210022',
-          dob: '2005-01-15',
-          course: 'NEET Droppers',
-          city: 'Pune',
-          registrationDate: '2025-01-20',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: 'Good performance'
-        },
-        {
-          id: 'ST-2002',
-          name: 'Sneha Patil',
-          email: 'sneha.patil@gmail.com',
-          phone: '8876543210',
-          dob: '2004-06-22',
-          course: 'Nursing CET 2025',
-          city: 'Nagpur',
-          registrationDate: '2025-01-25',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'pending',
-          notes: ''
-        },
-        {
-          id: 'ST-2003',
-          name: 'Vikram Singh',
-          email: 'vikram.singh@gmail.com',
-          phone: '7766554433',
-          dob: '2006-03-10',
-          course: 'Class 12th PCM',
-          city: 'Delhi',
-          registrationDate: '2025-01-30',
-          registrationType: 'bulk',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: ''
-        },
-        {
-          id: 'ST-2004',
-          name: 'Pooja Verma',
-          email: 'pooja.verma@gmail.com',
-          phone: '9988776655',
-          dob: '2005-08-05',
-          course: 'Physics Crash Course',
-          city: 'Indore',
-          registrationDate: '2025-02-01',
-          registrationType: 'regular',
-          status: 'active',
-          paymentStatus: 'paid',
-          notes: ''
-        }
-      ]);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Failed to load students:', errorMsg, error);
+      showToast(`Failed to load students: ${errorMsg}`, 'error');
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -183,16 +129,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setShowAddModal(false);
       showToast(`Student ${newStudent.name} added successfully`, 'success');
     } catch (error) {
-      showToast('Failed to add student', 'error');
-      // Still add locally if API fails
-      const newStudent: Student = {
-        id: generateStudentId(),
-        ...formData
-      };
-      setStudents([...students, newStudent]);
-      resetForm();
-      setShowAddModal(false);
-      showToast(`Student ${newStudent.name} added (offline mode)`, 'success');
+      console.error('Add student error:', error);
+      showToast('Failed to add student to database. Please try again.', 'error');
     }
   };
 
@@ -214,17 +152,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setSelectedStudent(null);
       showToast('Student updated successfully', 'success');
     } catch (error) {
-      showToast('Failed to update student', 'error');
-      // Still update locally if API fails
-      const updatedStudent: Student = {
-        ...selectedStudent,
-        ...formData
-      };
-      setStudents(students.map(s => s.id === selectedStudent.id ? updatedStudent : s));
-      resetForm();
-      setShowEditModal(false);
-      setSelectedStudent(null);
-      showToast('Student updated (offline mode)', 'success');
+      console.error('Update student error:', error);
+      showToast('Failed to update student. Please try again.', 'error');
     }
   };
 
@@ -238,10 +167,8 @@ const Students: React.FC<Props> = ({ showToast }) => {
       setStudents(students.filter(s => s.id !== studentId));
       showToast(`${studentName} has been deleted`, 'success');
     } catch (error) {
-      showToast('Failed to delete student', 'error');
-      // Still delete locally if API fails
-      setStudents(students.filter(s => s.id !== studentId));
-      showToast(`${studentName} deleted (offline mode)`, 'success');
+      console.error('Delete student error:', error);
+      showToast('Failed to delete student. Please try again.', 'error');
     }
   };
 
@@ -333,13 +260,18 @@ const Students: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const updatePaymentStatus = (studentId: string, status: 'paid' | 'pending' | 'failed') => {
+  const updatePaymentStatus = async (studentId: string, status: 'paid' | 'pending' | 'failed') => {
     const student = students.find(s => s.id === studentId);
     if (student) {
       const updated = { ...student, paymentStatus: status };
-      studentsAPI.update(studentId, updated).catch(() => {});
-      setStudents(students.map(s => s.id === studentId ? updated : s));
-      showToast(`Payment status updated to ${status}`, 'success');
+      try {
+        await studentsAPI.update(studentId, updated);
+        setStudents(students.map(s => s.id === studentId ? updated : s));
+        showToast(`Payment status updated to ${status}`, 'success');
+      } catch (error) {
+        console.error('Update payment status error:', error);
+        showToast('Failed to update payment status', 'error');
+      }
     }
   };
 

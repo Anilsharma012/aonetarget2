@@ -10,8 +10,23 @@ const PORT = process.env.API_PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
+}));
 app.use(express.json());
+
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('  Body:', JSON.stringify(req.body).substring(0, 100));
+  }
+  next();
+});
 
 let db;
 
@@ -118,9 +133,11 @@ app.post('/api/users', async (req, res) => {
 app.get('/api/students', async (req, res) => {
   try {
     const students = await db.collection('students').find({}).toArray();
+    console.log('GET /api/students - Found', students.length, 'students');
     res.json(students);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch students' });
+    console.error('Error fetching students:', error);
+    res.status(500).json({ error: 'Failed to fetch students', details: error.message });
   }
 });
 
@@ -138,38 +155,49 @@ app.get('/api/students/:id', async (req, res) => {
 
 app.post('/api/students', async (req, res) => {
   try {
+    console.log('POST /api/students - Received student data:', req.body);
     const result = await db.collection('students').insertOne(req.body);
+    console.log('Student created successfully with ID:', result.insertedId);
     res.status(201).json({ _id: result.insertedId, ...req.body });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create student' });
+    console.error('Error creating student:', error);
+    res.status(500).json({ error: 'Failed to create student', details: error.message });
   }
 });
 
 app.put('/api/students/:id', async (req, res) => {
   try {
+    console.log('PUT /api/students/:id - Updating student:', req.params.id, req.body);
     const { ObjectId } = await import('mongodb');
     const result = await db.collection('students').updateOne(
       { id: req.params.id },
       { $set: req.body }
     );
     if (result.matchedCount === 0) {
+      console.warn('Student not found:', req.params.id);
       return res.status(404).json({ error: 'Student not found' });
     }
+    console.log('Student updated successfully:', req.params.id);
     res.json({ success: true, message: 'Student updated' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update student' });
+    console.error('Error updating student:', error);
+    res.status(500).json({ error: 'Failed to update student', details: error.message });
   }
 });
 
 app.delete('/api/students/:id', async (req, res) => {
   try {
+    console.log('DELETE /api/students/:id - Deleting student:', req.params.id);
     const result = await db.collection('students').deleteOne({ id: req.params.id });
     if (result.deletedCount === 0) {
+      console.warn('Student not found for deletion:', req.params.id);
       return res.status(404).json({ error: 'Student not found' });
     }
+    console.log('Student deleted successfully:', req.params.id);
     res.json({ success: true, message: 'Student deleted' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete student' });
+    console.error('Error deleting student:', error);
+    res.status(500).json({ error: 'Failed to delete student', details: error.message });
   }
 });
 

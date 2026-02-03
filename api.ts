@@ -1,31 +1,31 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
-  // If environment variable is set, use it
-  if (process.env.REACT_APP_API_URL) {
-    console.log('Using REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-    return process.env.REACT_APP_API_URL;
+  if (typeof window === 'undefined') return '/api';
+
+  const hostname = window.location.hostname;
+
+  // Check if we're running on localhost/127.0.0.1
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Use direct connection to Express server on port 5000
+    return 'http://localhost:5000/api';
   }
 
-  // Check if running locally (localhost) or deployed
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    console.log('Current hostname:', hostname);
-
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      const url = 'http://localhost:5000/api';
-      console.log('Using local API URL:', url);
-      return url;
-    }
+  // Check if hostname contains 172. (Docker container IP)
+  if (hostname.includes('172.')) {
+    // Use direct connection to Express server on port 5000
+    return 'http://localhost:5000/api';
   }
 
   // For deployed apps, use relative path to same domain
-  const url = '/api';
-  console.log('Using relative API URL:', url);
-  return url;
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-console.log('Final API_BASE_URL:', API_BASE_URL);
+if (typeof window !== 'undefined') {
+  console.log('Hostname:', window.location.hostname);
+  console.log('Port:', window.location.port);
+  console.log('API Base URL:', API_BASE_URL);
+}
 
 // Courses API
 export const coursesAPI = {
@@ -98,42 +98,94 @@ export const usersAPI = {
 // Students API
 export const studentsAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/students`);
-    if (!response.ok) throw new Error('Failed to fetch students');
-    return response.json();
+    const url = `${API_BASE_URL}/students`;
+    console.log('Fetching students from:', url);
+    try {
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', {
+        contentType: response.headers.get('content-type'),
+        cors: response.headers.get('access-control-allow-origin')
+      });
+
+      const contentType = response.headers.get('content-type');
+
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response from API:', text.substring(0, 200));
+        throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+      }
+
+      if (!response.ok) throw new Error(`Failed to fetch students (${response.status})`);
+      return response.json();
+    } catch (error) {
+      console.error('Students API error:', error);
+      throw error;
+    }
   },
 
   getById: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`);
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url);
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
     if (!response.ok) throw new Error('Failed to fetch student');
     return response.json();
   },
 
   create: async (studentData: any) => {
-    const response = await fetch(`${API_BASE_URL}/students`, {
+    const url = `${API_BASE_URL}/students`;
+    console.log('Creating student at:', url, 'with data:', studentData);
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(studentData),
     });
-    if (!response.ok) throw new Error('Failed to create student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response from create:', text.substring(0, 200));
+      throw new Error(`API returned non-JSON response. Status: ${response.status}`);
+    }
+
+    if (!response.ok) throw new Error(`Failed to create student (${response.status})`);
     return response.json();
   },
 
   update: async (id: string, studentData: any) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(studentData),
     });
-    if (!response.ok) throw new Error('Failed to update student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
+    if (!response.ok) throw new Error(`Failed to update student (${response.status})`);
     return response.json();
   },
 
   delete: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+    const url = `${API_BASE_URL}/students/${id}`;
+    const response = await fetch(url, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete student');
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('API returned non-JSON response');
+    }
+
+    if (!response.ok) throw new Error(`Failed to delete student (${response.status})`);
     return response.json();
   }
 };
