@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { adminAPI } from '../api';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -13,22 +13,54 @@ const AdminLogin: React.FC<Props> = ({ setAuth }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Hardcoded Credentials as requested
-    setTimeout(() => {
-      if (adminId === 'admin' && password === 'aone@2026') {
+    try {
+      console.log('Login attempt with:', { adminId });
+
+      // Try to authenticate with MongoDB via API
+      let response;
+      try {
+        response = await adminAPI.login(adminId, password);
+      } catch (apiError) {
+        console.warn('Backend API unavailable, using fallback authentication');
+
+        // Fallback: Simple authentication without backend
+        // For local testing when backend isn't deployed
+        const defaultAdminId = 'admin';
+        const defaultPassword = 'aone@2026';
+
+        if (adminId === defaultAdminId && password === defaultPassword) {
+          response = {
+            success: true,
+            adminId: defaultAdminId,
+            name: 'Admin User'
+          };
+        } else {
+          throw new Error('Invalid Admin ID or Password');
+        }
+      }
+
+      console.log('Login response:', response);
+
+      if (response && response.success) {
         localStorage.setItem('isAdminAuthenticated', 'true');
+        localStorage.setItem('adminId', response.adminId);
+        localStorage.setItem('adminName', response.name);
         setAuth(true);
         navigate('/admin');
       } else {
-        setError('Invalid Admin ID or Password. Please try again.');
-        setIsLoading(false);
+        throw new Error('Login response invalid');
       }
-    }, 800);
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Invalid credentials. Please try again.';
+      setError(errorMessage);
+      setIsLoading(false);
+    }
   };
 
   return (

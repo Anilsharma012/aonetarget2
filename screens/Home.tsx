@@ -1,10 +1,32 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { coursesAPI } from '../api';
 import { COURSES } from '../constants';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<any[]>(COURSES);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await coursesAPI.getAll();
+        if (data && data.length > 0) {
+          setCourses(data);
+        } else {
+          // Use default courses if API returns empty
+          setCourses(COURSES);
+        }
+      } catch (error) {
+        console.error('Failed to fetch from MongoDB:', error);
+        console.log('Using default courses from constants');
+        // Fallback to constants if API fails
+        setCourses(COURSES);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   const handleDownloadAPK = () => {
     const dummyContent = "This is a dummy APK file content for Aone Target Institute.";
