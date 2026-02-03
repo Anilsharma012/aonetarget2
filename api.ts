@@ -138,6 +138,117 @@ export const studentsAPI = {
   }
 };
 
+// Buyers API
+export const buyersAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/buyers`);
+    if (!response.ok) throw new Error('Failed to fetch buyers');
+    return response.json();
+  },
+
+  create: async (buyerData: any) => {
+    const response = await fetch(`${API_BASE_URL}/buyers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buyerData),
+    });
+    if (!response.ok) throw new Error('Failed to create buyer');
+    return response.json();
+  },
+
+  update: async (id: string, buyerData: any) => {
+    const response = await fetch(`${API_BASE_URL}/buyers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buyerData),
+    });
+    if (!response.ok) throw new Error('Failed to update buyer');
+    return response.json();
+  },
+
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/buyers/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete buyer');
+    return response.json();
+  }
+};
+
+// Tokens API
+export const tokensAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/tokens`);
+    if (!response.ok) throw new Error('Failed to fetch tokens');
+    return response.json();
+  },
+
+  create: async (tokenData: any) => {
+    const response = await fetch(`${API_BASE_URL}/tokens`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokenData),
+    });
+    if (!response.ok) throw new Error('Failed to create token');
+    return response.json();
+  },
+
+  update: async (id: string, tokenData: any) => {
+    const response = await fetch(`${API_BASE_URL}/tokens/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokenData),
+    });
+    if (!response.ok) throw new Error('Failed to update token');
+    return response.json();
+  },
+
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/tokens/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete token');
+    return response.json();
+  }
+};
+
+// Coupons API
+export const couponsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/coupons`);
+    if (!response.ok) throw new Error('Failed to fetch coupons');
+    return response.json();
+  },
+
+  create: async (couponData: any) => {
+    const response = await fetch(`${API_BASE_URL}/coupons`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(couponData),
+    });
+    if (!response.ok) throw new Error('Failed to create coupon');
+    return response.json();
+  },
+
+  update: async (id: string, couponData: any) => {
+    const response = await fetch(`${API_BASE_URL}/coupons/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(couponData),
+    });
+    if (!response.ok) throw new Error('Failed to update coupon');
+    return response.json();
+  },
+
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/coupons/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete coupon');
+    return response.json();
+  }
+};
+
 // Orders API
 export const ordersAPI = {
   create: async (orderData: any) => {
