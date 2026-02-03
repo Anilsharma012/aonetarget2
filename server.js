@@ -118,9 +118,11 @@ app.post('/api/users', async (req, res) => {
 app.get('/api/students', async (req, res) => {
   try {
     const students = await db.collection('students').find({}).toArray();
+    console.log('GET /api/students - Found', students.length, 'students');
     res.json(students);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch students' });
+    console.error('Error fetching students:', error);
+    res.status(500).json({ error: 'Failed to fetch students', details: error.message });
   }
 });
 
