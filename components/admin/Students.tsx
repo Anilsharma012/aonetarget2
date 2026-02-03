@@ -75,7 +75,14 @@ const Students: React.FC<Props> = ({ showToast }) => {
     }
 
     setFilteredStudents(filtered);
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [students, searchQuery, statusFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
   const loadStudents = async () => {
     try {
