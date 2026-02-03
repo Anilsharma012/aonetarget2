@@ -172,13 +172,17 @@ app.put('/api/students/:id', async (req, res) => {
 
 app.delete('/api/students/:id', async (req, res) => {
   try {
+    console.log('DELETE /api/students/:id - Deleting student:', req.params.id);
     const result = await db.collection('students').deleteOne({ id: req.params.id });
     if (result.deletedCount === 0) {
+      console.warn('Student not found for deletion:', req.params.id);
       return res.status(404).json({ error: 'Student not found' });
     }
+    console.log('Student deleted successfully:', req.params.id);
     res.json({ success: true, message: 'Student deleted' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete student' });
+    console.error('Error deleting student:', error);
+    res.status(500).json({ error: 'Failed to delete student', details: error.message });
   }
 });
 
