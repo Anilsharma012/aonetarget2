@@ -150,17 +150,21 @@ app.post('/api/students', async (req, res) => {
 
 app.put('/api/students/:id', async (req, res) => {
   try {
+    console.log('PUT /api/students/:id - Updating student:', req.params.id, req.body);
     const { ObjectId } = await import('mongodb');
     const result = await db.collection('students').updateOne(
       { id: req.params.id },
       { $set: req.body }
     );
     if (result.matchedCount === 0) {
+      console.warn('Student not found:', req.params.id);
       return res.status(404).json({ error: 'Student not found' });
     }
+    console.log('Student updated successfully:', req.params.id);
     res.json({ success: true, message: 'Student updated' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update student' });
+    console.error('Error updating student:', error);
+    res.status(500).json({ error: 'Failed to update student', details: error.message });
   }
 });
 
