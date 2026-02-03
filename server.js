@@ -10,12 +10,21 @@ const PORT = process.env.API_PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
+}));
 app.use(express.json());
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('  Body:', JSON.stringify(req.body).substring(0, 100));
+  }
   next();
 });
 
