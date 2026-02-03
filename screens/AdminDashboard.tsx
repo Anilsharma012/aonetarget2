@@ -86,7 +86,9 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'dashboard': return <Dashboard {...props} />;
       case 'misc': return <MiscSection {...props} />;
       case 'students': return <Students {...props} />;
-      case 'shopping': return <Shopping {...props} />;
+      case 'buyers': return <Buyers {...props} />;
+      case 'tokens': return <Tokens {...props} />;
+      case 'coupons': return <Coupons {...props} />;
       case 'store': return <Store {...props} />;
       case 'institute': return <Institute {...props} />;
       case 'questions': return <Questions {...props} />;
