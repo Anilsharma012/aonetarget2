@@ -78,6 +78,11 @@ const Coupons: React.FC<Props> = ({ showToast }) => {
   const loadCoupons = async () => {
     try {
       setLoading(true);
+      const data = await couponsAPI.getAll();
+      setCoupons(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showToast('Failed to load coupons', 'error');
+      // Use demo data if API fails
       setCoupons([
         {
           id: 'CPN-001',
@@ -140,8 +145,6 @@ const Coupons: React.FC<Props> = ({ showToast }) => {
           createdDate: '2024-07-20'
         }
       ]);
-    } catch (error) {
-      showToast('Failed to load coupons', 'error');
     } finally {
       setLoading(false);
     }
