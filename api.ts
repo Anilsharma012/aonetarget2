@@ -130,6 +130,17 @@ export const adminAPI = {
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
 
+      // Check content-type before parsing JSON
+      const contentType = response.headers.get('content-type');
+      console.log('Content-Type:', contentType);
+
+      if (!contentType || !contentType.includes('application/json')) {
+        // Response is not JSON, likely an error from server/proxy
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error(`Backend API not available. Status: ${response.status}`);
+      }
+
       const data = await response.json();
       console.log('Response data:', data);
 
