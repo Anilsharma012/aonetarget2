@@ -1,26 +1,8 @@
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
-  // If environment variable is set, use it
-  if (process.env.REACT_APP_API_URL) {
-    console.log('Using REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-    return process.env.REACT_APP_API_URL;
-  }
-
-  // Check if running locally (localhost) or deployed
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    console.log('Current hostname:', hostname);
-
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      const url = 'http://localhost:5000/api';
-      console.log('Using local API URL:', url);
-      return url;
-    }
-  }
-
-  // For deployed apps, use relative path to same domain
+  // Always use relative path for consistency - works with both Vite proxy and deployed apps
   const url = '/api';
-  console.log('Using relative API URL:', url);
+  console.log('Using API URL:', url);
   return url;
 };
 
