@@ -175,13 +175,18 @@ const Buyers: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleDeleteBuyer = (buyerId: string, email: string) => {
+  const handleDeleteBuyer = async (buyerId: string, email: string) => {
     if (!confirm(`Are you sure you want to delete ${email}?`)) {
       return;
     }
 
-    setBuyers(buyers.filter(b => b.id !== buyerId));
-    showToast(`${email} has been deleted`, 'success');
+    try {
+      await buyersAPI.delete(buyerId);
+      setBuyers(buyers.filter(b => b.id !== buyerId));
+      showToast(`${email} has been deleted`, 'success');
+    } catch (error) {
+      showToast('Failed to delete buyer', 'error');
+    }
   };
 
   const handleEditClick = (buyer: Buyer) => {
