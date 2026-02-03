@@ -138,10 +138,13 @@ app.get('/api/students/:id', async (req, res) => {
 
 app.post('/api/students', async (req, res) => {
   try {
+    console.log('POST /api/students - Received student data:', req.body);
     const result = await db.collection('students').insertOne(req.body);
+    console.log('Student created successfully with ID:', result.insertedId);
     res.status(201).json({ _id: result.insertedId, ...req.body });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create student' });
+    console.error('Error creating student:', error);
+    res.status(500).json({ error: 'Failed to create student', details: error.message });
   }
 });
 
