@@ -106,23 +106,46 @@ export const ordersAPI = {
 // Admin Authentication API
 export const adminAPI = {
   login: async (adminId: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId, password }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Login failed');
     }
-    return response.json();
   },
 
   verify: async (adminId: string) => {
-    const response = await fetch(`${API_BASE_URL}/admin/verify`, {
-      headers: { 'x-admin-id': adminId },
-    });
-    if (!response.ok) throw new Error('Verification failed');
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/verify`, {
+        headers: { 'x-admin-id': adminId },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Verification failed');
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Verification failed');
+    }
   }
 };
