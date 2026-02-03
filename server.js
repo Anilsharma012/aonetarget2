@@ -114,6 +114,65 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+// Routes for Students
+app.get('/api/students', async (req, res) => {
+  try {
+    const students = await db.collection('students').find({}).toArray();
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch students' });
+  }
+});
+
+app.get('/api/students/:id', async (req, res) => {
+  try {
+    const student = await db.collection('students').findOne({ id: req.params.id });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch student' });
+  }
+});
+
+app.post('/api/students', async (req, res) => {
+  try {
+    const result = await db.collection('students').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create student' });
+  }
+});
+
+app.put('/api/students/:id', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    const result = await db.collection('students').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json({ success: true, message: 'Student updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update student' });
+  }
+});
+
+app.delete('/api/students/:id', async (req, res) => {
+  try {
+    const result = await db.collection('students').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json({ success: true, message: 'Student deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete student' });
+  }
+});
+
 // Routes for Orders/Payments
 app.post('/api/orders', async (req, res) => {
   try {
