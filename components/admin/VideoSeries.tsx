@@ -430,8 +430,8 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
                     <td className="px-6 py-4">
                       <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">{item.course}</span>
                     </td>
-                    <td className="px-6 py-4 text-center font-black text-purple-600">{item.totalVideos}</td>
-                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{item.studentsEnrolled}</td>
+                    <td className="px-6 py-4 text-center font-black text-purple-600">{item.totalVideos || 0}</td>
+                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{item.studentsEnrolled || 0}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
