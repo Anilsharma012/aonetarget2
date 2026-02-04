@@ -94,6 +94,7 @@ const Blog: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingPost(null);
+      setThumbnailFile(null);
       setFormData({
         title: '',
         content: '',
