@@ -593,24 +593,24 @@ const Tests: React.FC<Props> = ({ showToast }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Open Date</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Open Date & Time</label>
                   <input
-                    type="text"
-                    placeholder="DD-MM-YYYY HH:MM AM/PM"
+                    type="datetime-local"
                     value={formData.openDate}
                     onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
+                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Close Date</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Close Date & Time</label>
                   <input
-                    type="text"
-                    placeholder="DD-MM-YYYY HH:MM AM/PM"
+                    type="datetime-local"
                     value={formData.closeDate}
                     onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
+                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
                 </div>
               </div>
 
