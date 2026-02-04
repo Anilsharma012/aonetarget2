@@ -118,6 +118,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'institute': return <Institute {...props} />;
       case 'questions': return <Questions {...props} />;
       case 'question-bank': return <Questions {...props} view="bank" />;
+      case 'passages': return <Passages {...props} />;
       case 'tests': return <Tests {...props} />;
       case 'subjective-test': return <SubjectiveTest {...props} />;
       case 'test-series': return <TestSeries {...props} />;
