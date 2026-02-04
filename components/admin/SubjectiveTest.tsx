@@ -382,13 +382,19 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter course"
+                  <select
                     value={formData.course}
                     onChange={(e) => setFormData({ ...formData, course: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  />
+                  >
+                    <option value="">Select Course</option>
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="History">History</option>
+                    <option value="Science">Science</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Social Studies">Social Studies</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Questions *</label>
