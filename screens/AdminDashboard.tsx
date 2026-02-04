@@ -24,7 +24,7 @@ import Buyers from '../components/admin/shopping/Buyers';
 import Tokens from '../components/admin/shopping/Tokens';
 import Coupons from '../components/admin/shopping/Coupons';
 
-export type AdminView = 'dashboard' | 'misc' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
 
 interface Props {
   setAuth: (val: boolean) => void;
