@@ -182,10 +182,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     if (selectedTests.length === 0) return;
     if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
       try {
-        await Promise.all(selectedTests.map(id => testsAPI.delete(id)));
-        showToast(`${selectedTests.length} tests deleted!`);
+        setTests(tests.filter(t => !selectedTests.includes(t.id)));
         setSelectedTests([]);
-        loadData();
+        showToast(`${selectedTests.length} tests deleted!`);
       } catch (error) {
         showToast('Failed to delete tests', 'error');
       }
