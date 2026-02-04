@@ -203,11 +203,11 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Videos</p>
-              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + s.totalVideos, 0)}</p>
+              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + (s.totalVideos || 0), 0)}</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Enrolled Students</p>
-              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + s.studentsEnrolled, 0)}</p>
+              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + (s.studentsEnrolled || 0), 0)}</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Active</p>
