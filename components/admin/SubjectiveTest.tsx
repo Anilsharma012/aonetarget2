@@ -107,13 +107,16 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
       };
 
       if (editingTest) {
+        // Update existing test
+        setTests(tests.map(t => t.id === editingTest.id ? testData : t));
         showToast('Subjective test updated successfully!');
       } else {
+        // Add new test
+        setTests([...tests, testData]);
         showToast('Subjective test created successfully!');
       }
 
       handleCloseModal();
-      loadTests();
     } catch (error) {
       showToast('Failed to save test', 'error');
     }
