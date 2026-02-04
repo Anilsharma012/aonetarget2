@@ -269,7 +269,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Views</p>
-              <p className="text-3xl font-black mt-2">{videos.reduce((sum, v) => sum + v.views, 0).toLocaleString()}</p>
+              <p className="text-3xl font-black mt-2">{videos.reduce((sum, v) => sum + (v.views || 0), 0).toLocaleString()}</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Active</p>
