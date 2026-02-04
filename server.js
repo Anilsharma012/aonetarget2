@@ -529,41 +529,158 @@ app.delete('/api/questions/:id', async (req, res) => {
 app.get('/api/tests', async (req, res) => {
   try {
     const tests = await db.collection('tests').find({}).toArray();
+    console.log('GET /api/tests - Found', tests.length, 'tests');
     res.json(tests);
   } catch (error) {
+    console.error('Error fetching tests:', error);
     res.status(500).json({ error: 'Failed to fetch tests' });
   }
 });
 
 app.post('/api/tests', async (req, res) => {
   try {
+    console.log('POST /api/tests - Received test data:', req.body);
     const result = await db.collection('tests').insertOne(req.body);
+    console.log('Test created successfully with ID:', result.insertedId);
     res.status(201).json({ _id: result.insertedId, ...req.body });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create test' });
+    console.error('Error creating test:', error);
+    res.status(500).json({ error: 'Failed to create test', details: error.message });
   }
 });
 
 app.put('/api/tests/:id', async (req, res) => {
   try {
+    console.log('PUT /api/tests/:id - Updating test:', req.params.id, req.body);
     const result = await db.collection('tests').updateOne(
       { id: req.params.id },
       { $set: req.body }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    console.log('Test updated successfully:', req.params.id);
     res.json({ success: true, message: 'Test updated' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update test' });
+    console.error('Error updating test:', error);
+    res.status(500).json({ error: 'Failed to update test', details: error.message });
   }
 });
 
 app.delete('/api/tests/:id', async (req, res) => {
   try {
+    console.log('DELETE /api/tests/:id - Deleting test:', req.params.id);
     const result = await db.collection('tests').deleteOne({ id: req.params.id });
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    console.log('Test deleted successfully:', req.params.id);
     res.json({ success: true, message: 'Test deleted' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete test' });
+    console.error('Error deleting test:', error);
+    res.status(500).json({ error: 'Failed to delete test', details: error.message });
+  }
+});
+
+// Routes for Test Series
+app.get('/api/test-series', async (req, res) => {
+  try {
+    const series = await db.collection('testSeries').find({}).toArray();
+    console.log('GET /api/test-series - Found', series.length, 'series');
+    res.json(series);
+  } catch (error) {
+    console.error('Error fetching test series:', error);
+    res.status(500).json({ error: 'Failed to fetch test series' });
+  }
+});
+
+app.post('/api/test-series', async (req, res) => {
+  try {
+    console.log('POST /api/test-series - Received series data:', req.body);
+    const result = await db.collection('testSeries').insertOne(req.body);
+    console.log('Series created successfully with ID:', result.insertedId);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error creating test series:', error);
+    res.status(500).json({ error: 'Failed to create test series', details: error.message });
+  }
+});
+
+app.put('/api/test-series/:id', async (req, res) => {
+  try {
+    console.log('PUT /api/test-series/:id - Updating series:', req.params.id, req.body);
+    const result = await db.collection('testSeries').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Series not found' });
+    console.log('Series updated successfully:', req.params.id);
+    res.json({ success: true, message: 'Series updated' });
+  } catch (error) {
+    console.error('Error updating test series:', error);
+    res.status(500).json({ error: 'Failed to update test series', details: error.message });
+  }
+});
+
+app.delete('/api/test-series/:id', async (req, res) => {
+  try {
+    console.log('DELETE /api/test-series/:id - Deleting series:', req.params.id);
+    const result = await db.collection('testSeries').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Series not found' });
+    console.log('Series deleted successfully:', req.params.id);
+    res.json({ success: true, message: 'Series deleted' });
+  } catch (error) {
+    console.error('Error deleting test series:', error);
+    res.status(500).json({ error: 'Failed to delete test series', details: error.message });
+  }
+});
+
+// Routes for Subjective Tests
+app.get('/api/subjective-tests', async (req, res) => {
+  try {
+    const tests = await db.collection('subjectiveTests').find({}).toArray();
+    console.log('GET /api/subjective-tests - Found', tests.length, 'tests');
+    res.json(tests);
+  } catch (error) {
+    console.error('Error fetching subjective tests:', error);
+    res.status(500).json({ error: 'Failed to fetch subjective tests' });
+  }
+});
+
+app.post('/api/subjective-tests', async (req, res) => {
+  try {
+    console.log('POST /api/subjective-tests - Received test data:', req.body);
+    const result = await db.collection('subjectiveTests').insertOne(req.body);
+    console.log('Subjective test created successfully with ID:', result.insertedId);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error creating subjective test:', error);
+    res.status(500).json({ error: 'Failed to create subjective test', details: error.message });
+  }
+});
+
+app.put('/api/subjective-tests/:id', async (req, res) => {
+  try {
+    console.log('PUT /api/subjective-tests/:id - Updating test:', req.params.id, req.body);
+    const result = await db.collection('subjectiveTests').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    console.log('Subjective test updated successfully:', req.params.id);
+    res.json({ success: true, message: 'Test updated' });
+  } catch (error) {
+    console.error('Error updating subjective test:', error);
+    res.status(500).json({ error: 'Failed to update subjective test', details: error.message });
+  }
+});
+
+app.delete('/api/subjective-tests/:id', async (req, res) => {
+  try {
+    console.log('DELETE /api/subjective-tests/:id - Deleting test:', req.params.id);
+    const result = await db.collection('subjectiveTests').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    console.log('Subjective test deleted successfully:', req.params.id);
+    res.json({ success: true, message: 'Test deleted' });
+  } catch (error) {
+    console.error('Error deleting subjective test:', error);
+    res.status(500).json({ error: 'Failed to delete subjective test', details: error.message });
   }
 });
 
@@ -1187,7 +1304,3 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-
-
-
