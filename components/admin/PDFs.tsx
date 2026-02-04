@@ -199,22 +199,45 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.fileUrl) {
-      showToast('Please fill required fields', 'error');
+    if (!formData.title) {
+      showToast('Please enter PDF title', 'error');
+      return;
+    }
+
+    let finalFileUrl = formData.fileUrl;
+
+    // Handle file upload if selected
+    if (uploadMode === 'file' && selectedFile) {
+      if (!finalFileUrl) {
+        try {
+          showToast('Uploading PDF...', 'success');
+          finalFileUrl = await uploadToCloudStorage(selectedFile);
+        } catch (error) {
+          showToast('Failed to upload PDF file', 'error');
+          return;
+        }
+      }
+    } else if (uploadMode === 'url' && !formData.fileUrl) {
+      showToast('Please enter PDF URL or upload a file', 'error');
       return;
     }
 
     try {
+      const submitData = {
+        ...formData,
+        fileUrl: finalFileUrl
+      };
+
       if (editingPdf) {
         await pdfsAPI.update(editingPdf.id, {
           ...editingPdf,
-          ...formData
+          ...submitData
         });
         showToast('PDF updated successfully!');
       } else {
         const pdfData = {
           id: `pdf_${Date.now()}`,
-          ...formData,
+          ...submitData,
           createdAt: new Date().toISOString()
         };
         await pdfsAPI.create(pdfData);
