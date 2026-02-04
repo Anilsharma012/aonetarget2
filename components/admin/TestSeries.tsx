@@ -150,6 +150,19 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
     );
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedSeries.length === 0) return;
+    if (confirm(`Delete ${selectedSeries.length} selected series?`)) {
+      try {
+        setSeries(series.filter(s => !selectedSeries.includes(s.id)));
+        setSelectedSeries([]);
+        showToast(`${selectedSeries.length} series deleted!`);
+      } catch (error) {
+        showToast('Failed to delete series', 'error');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
