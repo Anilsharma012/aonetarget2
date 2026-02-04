@@ -152,11 +152,13 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       };
 
       if (editingTest) {
-        // Update existing test
+        // Update existing test in API and state
+        await testsAPI.update(editingTest.id, testData);
         setTests(tests.map(t => t.id === editingTest.id ? testData : t));
         showToast('Test updated successfully!');
       } else {
-        // Add new test
+        // Add new test to API and state
+        await testsAPI.create(testData);
         setTests([...tests, testData]);
         showToast('Test created successfully!');
       }
