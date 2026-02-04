@@ -23,6 +23,14 @@ import Banners from '../components/admin/Banners';
 import Buyers from '../components/admin/shopping/Buyers';
 import Tokens from '../components/admin/shopping/Tokens';
 import Coupons from '../components/admin/shopping/Coupons';
+import Courses from '../components/admin/misc/Courses';
+import SubCourses from '../components/admin/misc/SubCourses';
+import Subjects from '../components/admin/misc/Subjects';
+import Topics from '../components/admin/misc/Topics';
+import Instructions from '../components/admin/misc/Instructions';
+import ExamDocuments from '../components/admin/misc/ExamDocuments';
+import GlobalNews from '../components/admin/misc/GlobalNews';
+import PushNotifications from '../components/admin/misc/PushNotifications';
 
 export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
 
