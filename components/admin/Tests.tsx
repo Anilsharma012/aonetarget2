@@ -65,18 +65,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       setTests(testData);
       setCourses(courseData);
     } catch (error) {
-      console.log('Using sample data...');
-      // Sample data for demo
-      setTests([
-        { id: '1', name: 'FUNDAMENTALS OF CHEMISTRY', course: 'NEET', questions: 50, status: 'active', date: '01-07-2024', openDate: '01-07-2024 10:00 AM', closeDate: '01-07-2024 11:00 AM', duration: 60, featured: true, totalAttempts: 450, avgScore: 72 },
-        { id: '2', name: 'FOSET-TEST MOCK TEST 1', course: 'NEET', questions: 180, status: 'active', date: '15-07-2024', openDate: '15-07-2024 02:00 PM', closeDate: '15-07-2024 05:00 PM', duration: 180, featured: false, totalAttempts: 230, avgScore: 65 },
-        { id: '3', name: 'NEET MOCK TEST FOR 12 STD', course: 'IIT-JEE', questions: 90, status: 'draft', date: '22-07-2024', openDate: '', closeDate: '', duration: 120, featured: false },
-        { id: '4', name: 'TESTING FOR BOARDS', course: 'BOARDS', questions: 100, status: 'scheduled', date: '25-07-2024', openDate: '25-07-2024 03:30 PM', closeDate: '25-07-2024 05:00 PM', duration: 90, featured: true },
-        { id: '5', name: 'FREE MOCK TEST FOR NEET 2025', course: 'NEET', questions: 180, status: 'active', date: '27-07-2024', openDate: '27-07-2024 02:00 AM', closeDate: '27-07-2024 03:00 AM', duration: 60, featured: false },
-        { id: '6', name: 'FINAL MOCK TEST BATCH 2024', course: 'IIT-JEE', questions: 150, status: 'active', date: '28-07-2024', openDate: '28-07-2024 01:00 PM', closeDate: '28-07-2024 04:00 PM', duration: 180, featured: true },
-        { id: '7', name: 'MOCK AIIMS MOCK NEET TEST ST 1', course: 'NEET', questions: 200, status: 'active', date: '30-07-2024', openDate: '30-07-2024 02:00 PM', closeDate: '30-07-2024 05:00 PM', duration: 180 },
-        { id: '8', name: 'MOCK AIIMS MOCK NEET TEST ST 2', course: 'NEET', questions: 200, status: 'inactive', date: '01-08-2024', openDate: '01-08-2024 10:00 AM', closeDate: '01-08-2024 01:00 PM', duration: 180 }
-      ]);
+      console.log('Starting with empty state...');
+      // Start with empty state - users will add data via the form
+      setTests([]);
     } finally {
       setLoading(false);
     }
