@@ -172,7 +172,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
     if (selectedSeries.length === 0) return;
     if (confirm(`Delete ${selectedSeries.length} selected series?`)) {
       try {
-        await Promise.all(selectedSeries.map(id => testsAPI.delete(id)));
+        await Promise.all(selectedSeries.map(id => testSeriesAPI.delete(id)));
         setSeries(series.filter(s => !selectedSeries.includes(s.id)));
         setSelectedSeries([]);
         showToast(`${selectedSeries.length} series deleted!`);
