@@ -1,30 +1,63 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
+import { dashboardAPI } from '../../src/services/apiClient';
 
 interface Props {
   showToast: (m: string, type?: 'success' | 'error') => void;
 }
 
+interface DashboardStats {
+  liveTests: number;
+  activePackages: number;
+  registrations: number;
+  questionsBank: number;
+  recentBuyers: any[];
+  recentOrders: any[];
+}
+
 const Dashboard: React.FC<Props> = ({ showToast }) => {
-  // Mock Data for Charts
+  const [stats, setStats] = useState<DashboardStats>({
+    liveTests: 0,
+    activePackages: 0,
+    registrations: 0,
+    questionsBank: 0,
+    recentBuyers: [],
+    recentOrders: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const data = await dashboardAPI.getStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to load dashboard stats');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const growthData = [
-    { name: 'Aug', users: 4000 },
-    { name: 'Sep', users: 5500 },
-    { name: 'Oct', users: 7800 },
-    { name: 'Nov', users: 10200 },
-    { name: 'Dec', users: 14500 },
-    { name: 'Jan', users: 18520 },
+    { name: 'Aug', users: Math.floor(stats.registrations * 0.2) },
+    { name: 'Sep', users: Math.floor(stats.registrations * 0.35) },
+    { name: 'Oct', users: Math.floor(stats.registrations * 0.5) },
+    { name: 'Nov', users: Math.floor(stats.registrations * 0.7) },
+    { name: 'Dec', users: Math.floor(stats.registrations * 0.85) },
+    { name: 'Jan', users: stats.registrations },
   ];
 
   const enrollmentData = [
-    { name: 'Physics', students: 4500, color: '#1A237E' },
-    { name: 'Biology', students: 6200, color: '#D32F2F' },
-    { name: 'Chemistry', students: 3800, color: '#0091EA' },
-    { name: 'Nursing', students: 2400, color: '#009688' },
+    { name: 'Physics', students: Math.floor(stats.registrations * 0.25), color: '#1A237E' },
+    { name: 'Biology', students: Math.floor(stats.registrations * 0.35), color: '#D32F2F' },
+    { name: 'Chemistry', students: Math.floor(stats.registrations * 0.22), color: '#0091EA' },
+    { name: 'Nursing', students: Math.floor(stats.registrations * 0.18), color: '#009688' },
   ];
 
   const testStatusData = [
@@ -33,18 +66,25 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
     { name: 'Not Started', value: 190, color: '#9E9E9E' },
   ];
 
-  const stats = [
-    { label: 'Live Tests', val: '1,240', icon: 'quiz', color: 'bg-blue-600', trend: '+12%', sub: 'Active Exams' },
-    { label: 'Active Packages', val: '42', icon: 'inventory_2', color: 'bg-purple-600', trend: '+4%', sub: 'Paid Batches' },
-    { label: 'Registrations', val: '18,520', icon: 'people', color: 'bg-orange-600', trend: '+28%', sub: 'New Students' },
-    { label: 'Q-Bank Size', val: '52.4K', icon: 'help_outline', color: 'bg-teal-600', trend: '+150', sub: 'Total Questions' },
+  const statsCards = [
+    { label: 'Live Tests', val: stats.liveTests.toLocaleString(), icon: 'quiz', color: 'bg-blue-600', trend: '+12%', sub: 'Active Exams' },
+    { label: 'Active Packages', val: stats.activePackages.toString(), icon: 'inventory_2', color: 'bg-purple-600', trend: '+4%', sub: 'Paid Batches' },
+    { label: 'Registrations', val: stats.registrations.toLocaleString(), icon: 'people', color: 'bg-orange-600', trend: '+28%', sub: 'New Students' },
+    { label: 'Q-Bank Size', val: stats.questionsBank >= 1000 ? `${(stats.questionsBank/1000).toFixed(1)}K` : stats.questionsBank.toString(), icon: 'help_outline', color: 'bg-teal-600', trend: '+150', sub: 'Total Questions' },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
-      {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((s, i) => (
+        {statsCards.map((s, i) => (
           <div 
             key={i} 
             onClick={() => showToast(`${s.label} list refreshed!`)}
@@ -63,10 +103,7 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
         ))}
       </div>
       
-      {/* Main Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* User Growth Area Chart */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8">
            <div className="flex justify-between items-center mb-8">
               <div>
@@ -100,7 +137,6 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
            </div>
         </div>
 
-        {/* Enrollment Trends Bar Chart */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8">
            <div className="flex justify-between items-center mb-8">
               <div>
@@ -129,7 +165,6 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Test Completion Status Pie Chart */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 flex flex-col">
            <h4 className="text-sm font-black text-navy uppercase tracking-widest mb-2">Test Completion Rate</h4>
            <p className="text-[10px] text-gray-400 font-bold uppercase mb-8">Daily average completion status</p>
@@ -161,7 +196,6 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
            </div>
         </div>
 
-        {/* Quick Broadcaster Widget */}
         <div className="lg:col-span-2 bg-navy rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl flex flex-col justify-between group">
            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
            <div className="relative z-10">
@@ -193,35 +227,41 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
         </div>
       </div>
 
-      {/* Recent Sales Activity */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8">
          <div className="flex justify-between items-center mb-8">
             <h4 className="text-sm font-black text-navy uppercase tracking-widest">Real-time Transaction Stream</h4>
             <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b-2 border-blue-500/20 pb-0.5">View Ledger</button>
          </div>
          <div className="space-y-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-3xl border border-gray-100/50 hover:bg-white hover:shadow-lg transition-all cursor-pointer group">
-                 <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <img src={`https://i.pravatar.cc/150?u=${i+10}`} className="w-12 h-12 rounded-2xl grayscale group-hover:grayscale-0 transition-all" alt="" />
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-gray-50 rounded-full"></div>
-                    </div>
-                    <div>
-                       <p className="text-xs font-black text-navy uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                        {i === 1 ? 'Aditya Sharma' : i === 2 ? 'Kiran Mehra' : 'Siddharth Jain'} purchased "NEET Ultimate 2026"
-                       </p>
-                       <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
-                        {i * 2} minutes ago • Gateway: Razorpay • ID: #TXN-77{i}4
-                       </p>
-                    </div>
-                 </div>
-                 <div className="text-right">
-                    <span className="text-lg font-black text-navy group-hover:text-green-600 transition-colors">₹9,999</span>
-                    <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Settled</p>
-                 </div>
+            {stats.recentOrders.length === 0 && stats.recentBuyers.length === 0 ? (
+              <div className="text-center py-8 opacity-50">
+                <span className="material-icons-outlined text-4xl text-gray-300">receipt_long</span>
+                <p className="text-xs text-gray-400 mt-2">No recent transactions</p>
               </div>
-            ))}
+            ) : (
+              [...stats.recentOrders, ...stats.recentBuyers].slice(0, 5).map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-3xl border border-gray-100/50 hover:bg-white hover:shadow-lg transition-all cursor-pointer group">
+                   <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <img src={`https://i.pravatar.cc/150?u=${i+10}`} className="w-12 h-12 rounded-2xl grayscale group-hover:grayscale-0 transition-all" alt="" />
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-gray-50 rounded-full"></div>
+                      </div>
+                      <div>
+                         <p className="text-xs font-black text-navy uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                          {item.email || item.userId || 'Unknown User'} - Transaction
+                         </p>
+                         <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5 tracking-widest">
+                          {new Date(item.createdAt || item.date || Date.now()).toLocaleDateString()} • Gateway: Razorpay • ID: #{item.id?.slice(-6) || 'N/A'}
+                         </p>
+                      </div>
+                   </div>
+                   <div className="text-right">
+                      <span className="text-lg font-black text-navy group-hover:text-green-600 transition-colors">₹{(item.amount || item.paymentAmount || 0).toLocaleString()}</span>
+                      <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest">{item.status || 'Settled'}</p>
+                   </div>
+                </div>
+              ))
+            )}
          </div>
       </div>
     </div>

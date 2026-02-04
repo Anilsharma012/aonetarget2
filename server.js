@@ -418,6 +418,762 @@ app.get('/api/admin/verify', async (req, res) => {
   }
 });
 
+// Routes for Store/Products
+app.get('/api/store', async (req, res) => {
+  try {
+    const products = await db.collection('store').find({}).toArray();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch store products' });
+  }
+});
+
+app.post('/api/store', async (req, res) => {
+  try {
+    const result = await db.collection('store').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create product' });
+  }
+});
+
+app.put('/api/store/:id', async (req, res) => {
+  try {
+    const result = await db.collection('store').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Product not found' });
+    res.json({ success: true, message: 'Product updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+app.delete('/api/store/:id', async (req, res) => {
+  try {
+    const result = await db.collection('store').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Product not found' });
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// Routes for Institute Settings
+app.get('/api/institute', async (req, res) => {
+  try {
+    const settings = await db.collection('institute').findOne({});
+    res.json(settings || { name: '', email: '', phone: '', address: '', logo: '' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch institute settings' });
+  }
+});
+
+app.put('/api/institute', async (req, res) => {
+  try {
+    const result = await db.collection('institute').updateOne(
+      {},
+      { $set: req.body },
+      { upsert: true }
+    );
+    res.json({ success: true, message: 'Institute settings updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update institute settings' });
+  }
+});
+
+// Routes for Questions
+app.get('/api/questions', async (req, res) => {
+  try {
+    const questions = await db.collection('questions').find({}).toArray();
+    res.json(questions);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch questions' });
+  }
+});
+
+app.post('/api/questions', async (req, res) => {
+  try {
+    const result = await db.collection('questions').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create question' });
+  }
+});
+
+app.put('/api/questions/:id', async (req, res) => {
+  try {
+    const result = await db.collection('questions').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Question not found' });
+    res.json({ success: true, message: 'Question updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update question' });
+  }
+});
+
+app.delete('/api/questions/:id', async (req, res) => {
+  try {
+    const result = await db.collection('questions').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Question not found' });
+    res.json({ success: true, message: 'Question deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete question' });
+  }
+});
+
+// Routes for Tests
+app.get('/api/tests', async (req, res) => {
+  try {
+    const tests = await db.collection('tests').find({}).toArray();
+    res.json(tests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch tests' });
+  }
+});
+
+app.post('/api/tests', async (req, res) => {
+  try {
+    const result = await db.collection('tests').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create test' });
+  }
+});
+
+app.put('/api/tests/:id', async (req, res) => {
+  try {
+    const result = await db.collection('tests').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    res.json({ success: true, message: 'Test updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update test' });
+  }
+});
+
+app.delete('/api/tests/:id', async (req, res) => {
+  try {
+    const result = await db.collection('tests').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    res.json({ success: true, message: 'Test deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete test' });
+  }
+});
+
+// Routes for Videos
+app.get('/api/videos', async (req, res) => {
+  try {
+    const videos = await db.collection('videos').find({}).toArray();
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch videos' });
+  }
+});
+
+app.post('/api/videos', async (req, res) => {
+  try {
+    const result = await db.collection('videos').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create video' });
+  }
+});
+
+app.put('/api/videos/:id', async (req, res) => {
+  try {
+    const result = await db.collection('videos').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Video not found' });
+    res.json({ success: true, message: 'Video updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update video' });
+  }
+});
+
+app.delete('/api/videos/:id', async (req, res) => {
+  try {
+    const result = await db.collection('videos').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Video not found' });
+    res.json({ success: true, message: 'Video deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete video' });
+  }
+});
+
+// Routes for Live Videos/Streams
+app.get('/api/live-videos', async (req, res) => {
+  try {
+    const liveVideos = await db.collection('liveVideos').find({}).toArray();
+    res.json(liveVideos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch live videos' });
+  }
+});
+
+app.post('/api/live-videos', async (req, res) => {
+  try {
+    const result = await db.collection('liveVideos').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create live video' });
+  }
+});
+
+app.put('/api/live-videos/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveVideos').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Live video not found' });
+    res.json({ success: true, message: 'Live video updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update live video' });
+  }
+});
+
+app.delete('/api/live-videos/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveVideos').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Live video not found' });
+    res.json({ success: true, message: 'Live video deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete live video' });
+  }
+});
+
+// Routes for PDFs
+app.get('/api/pdfs', async (req, res) => {
+  try {
+    const pdfs = await db.collection('pdfs').find({}).toArray();
+    res.json(pdfs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch PDFs' });
+  }
+});
+
+app.post('/api/pdfs', async (req, res) => {
+  try {
+    const result = await db.collection('pdfs').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create PDF' });
+  }
+});
+
+app.put('/api/pdfs/:id', async (req, res) => {
+  try {
+    const result = await db.collection('pdfs').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'PDF not found' });
+    res.json({ success: true, message: 'PDF updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update PDF' });
+  }
+});
+
+app.delete('/api/pdfs/:id', async (req, res) => {
+  try {
+    const result = await db.collection('pdfs').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'PDF not found' });
+    res.json({ success: true, message: 'PDF deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete PDF' });
+  }
+});
+
+// Routes for Packages/Batches
+app.get('/api/packages', async (req, res) => {
+  try {
+    const packages = await db.collection('packages').find({}).toArray();
+    res.json(packages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
+});
+
+app.post('/api/packages', async (req, res) => {
+  try {
+    const result = await db.collection('packages').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create package' });
+  }
+});
+
+app.put('/api/packages/:id', async (req, res) => {
+  try {
+    const result = await db.collection('packages').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Package not found' });
+    res.json({ success: true, message: 'Package updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update package' });
+  }
+});
+
+app.delete('/api/packages/:id', async (req, res) => {
+  try {
+    const result = await db.collection('packages').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Package not found' });
+    res.json({ success: true, message: 'Package deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete package' });
+  }
+});
+
+// Routes for Messages
+app.get('/api/messages', async (req, res) => {
+  try {
+    const messages = await db.collection('messages').find({}).toArray();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  try {
+    const result = await db.collection('messages').insertOne({
+      ...req.body,
+      createdAt: new Date(),
+      read: false
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create message' });
+  }
+});
+
+app.put('/api/messages/:id', async (req, res) => {
+  try {
+    const result = await db.collection('messages').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Message not found' });
+    res.json({ success: true, message: 'Message updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update message' });
+  }
+});
+
+app.delete('/api/messages/:id', async (req, res) => {
+  try {
+    const result = await db.collection('messages').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Message not found' });
+    res.json({ success: true, message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
+// Routes for Blog
+app.get('/api/blog', async (req, res) => {
+  try {
+    const posts = await db.collection('blog').find({}).toArray();
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch blog posts' });
+  }
+});
+
+app.post('/api/blog', async (req, res) => {
+  try {
+    const result = await db.collection('blog').insertOne({
+      ...req.body,
+      createdAt: new Date(),
+      status: req.body.status || 'draft'
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create blog post' });
+  }
+});
+
+app.put('/api/blog/:id', async (req, res) => {
+  try {
+    const result = await db.collection('blog').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Blog post not found' });
+    res.json({ success: true, message: 'Blog post updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update blog post' });
+  }
+});
+
+app.delete('/api/blog/:id', async (req, res) => {
+  try {
+    const result = await db.collection('blog').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Blog post not found' });
+    res.json({ success: true, message: 'Blog post deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete blog post' });
+  }
+});
+
+// Routes for Settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await db.collection('settings').findOne({});
+    res.json(settings || { paymentGateway: 'razorpay', systemStatus: 'online', maintenanceMode: false });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    const result = await db.collection('settings').updateOne(
+      {},
+      { $set: req.body },
+      { upsert: true }
+    );
+    res.json({ success: true, message: 'Settings updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// Routes for Banners
+app.get('/api/banners', async (req, res) => {
+  try {
+    const banners = await db.collection('banners').find({}).toArray();
+    res.json(banners);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch banners' });
+  }
+});
+
+app.post('/api/banners', async (req, res) => {
+  try {
+    const result = await db.collection('banners').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create banner' });
+  }
+});
+
+app.put('/api/banners/:id', async (req, res) => {
+  try {
+    const result = await db.collection('banners').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Banner not found' });
+    res.json({ success: true, message: 'Banner updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update banner' });
+  }
+});
+
+app.delete('/api/banners/:id', async (req, res) => {
+  try {
+    const result = await db.collection('banners').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Banner not found' });
+    res.json({ success: true, message: 'Banner deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete banner' });
+  }
+});
+
+// Routes for Misc items (subjects, topics, subcourses, instructions, news, notifications)
+app.get('/api/subjects', async (req, res) => {
+  try {
+    const subjects = await db.collection('subjects').find({}).toArray();
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+});
+
+app.post('/api/subjects', async (req, res) => {
+  try {
+    const result = await db.collection('subjects').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create subject' });
+  }
+});
+
+app.put('/api/subjects/:id', async (req, res) => {
+  try {
+    const result = await db.collection('subjects').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Subject not found' });
+    res.json({ success: true, message: 'Subject updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update subject' });
+  }
+});
+
+app.delete('/api/subjects/:id', async (req, res) => {
+  try {
+    const result = await db.collection('subjects').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Subject not found' });
+    res.json({ success: true, message: 'Subject deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete subject' });
+  }
+});
+
+app.get('/api/topics', async (req, res) => {
+  try {
+    const topics = await db.collection('topics').find({}).toArray();
+    res.json(topics);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch topics' });
+  }
+});
+
+app.post('/api/topics', async (req, res) => {
+  try {
+    const result = await db.collection('topics').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create topic' });
+  }
+});
+
+app.put('/api/topics/:id', async (req, res) => {
+  try {
+    const result = await db.collection('topics').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Topic not found' });
+    res.json({ success: true, message: 'Topic updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update topic' });
+  }
+});
+
+app.delete('/api/topics/:id', async (req, res) => {
+  try {
+    const result = await db.collection('topics').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Topic not found' });
+    res.json({ success: true, message: 'Topic deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete topic' });
+  }
+});
+
+app.get('/api/subcourses', async (req, res) => {
+  try {
+    const subcourses = await db.collection('subcourses').find({}).toArray();
+    res.json(subcourses);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subcourses' });
+  }
+});
+
+app.post('/api/subcourses', async (req, res) => {
+  try {
+    const result = await db.collection('subcourses').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create subcourse' });
+  }
+});
+
+app.put('/api/subcourses/:id', async (req, res) => {
+  try {
+    const result = await db.collection('subcourses').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Subcourse not found' });
+    res.json({ success: true, message: 'Subcourse updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update subcourse' });
+  }
+});
+
+app.delete('/api/subcourses/:id', async (req, res) => {
+  try {
+    const result = await db.collection('subcourses').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Subcourse not found' });
+    res.json({ success: true, message: 'Subcourse deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete subcourse' });
+  }
+});
+
+app.get('/api/instructions', async (req, res) => {
+  try {
+    const instructions = await db.collection('instructions').find({}).toArray();
+    res.json(instructions);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch instructions' });
+  }
+});
+
+app.post('/api/instructions', async (req, res) => {
+  try {
+    const result = await db.collection('instructions').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create instruction' });
+  }
+});
+
+app.put('/api/instructions/:id', async (req, res) => {
+  try {
+    const result = await db.collection('instructions').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Instruction not found' });
+    res.json({ success: true, message: 'Instruction updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update instruction' });
+  }
+});
+
+app.delete('/api/instructions/:id', async (req, res) => {
+  try {
+    const result = await db.collection('instructions').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Instruction not found' });
+    res.json({ success: true, message: 'Instruction deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete instruction' });
+  }
+});
+
+app.get('/api/exam-documents', async (req, res) => {
+  try {
+    const docs = await db.collection('examDocuments').find({}).toArray();
+    res.json(docs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch exam documents' });
+  }
+});
+
+app.post('/api/exam-documents', async (req, res) => {
+  try {
+    const result = await db.collection('examDocuments').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create exam document' });
+  }
+});
+
+app.put('/api/exam-documents/:id', async (req, res) => {
+  try {
+    const result = await db.collection('examDocuments').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Exam document not found' });
+    res.json({ success: true, message: 'Exam document updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update exam document' });
+  }
+});
+
+app.delete('/api/exam-documents/:id', async (req, res) => {
+  try {
+    const result = await db.collection('examDocuments').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Exam document not found' });
+    res.json({ success: true, message: 'Exam document deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete exam document' });
+  }
+});
+
+app.get('/api/news', async (req, res) => {
+  try {
+    const news = await db.collection('news').find({}).toArray();
+    res.json(news);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch news' });
+  }
+});
+
+app.post('/api/news', async (req, res) => {
+  try {
+    const result = await db.collection('news').insertOne({ ...req.body, createdAt: new Date() });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create news' });
+  }
+});
+
+app.put('/api/news/:id', async (req, res) => {
+  try {
+    const result = await db.collection('news').updateOne({ id: req.params.id }, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'News not found' });
+    res.json({ success: true, message: 'News updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update news' });
+  }
+});
+
+app.delete('/api/news/:id', async (req, res) => {
+  try {
+    const result = await db.collection('news').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'News not found' });
+    res.json({ success: true, message: 'News deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete news' });
+  }
+});
+
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const notifications = await db.collection('notifications').find({}).toArray();
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+app.post('/api/notifications', async (req, res) => {
+  try {
+    const result = await db.collection('notifications').insertOne({ ...req.body, createdAt: new Date(), sent: false });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create notification' });
+  }
+});
+
+app.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    const result = await db.collection('notifications').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Notification not found' });
+    res.json({ success: true, message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete notification' });
+  }
+});
+
+// Dashboard Stats API
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const [testsCount, packagesCount, studentsCount, questionsCount, buyersData, ordersData] = await Promise.all([
+      db.collection('tests').countDocuments(),
+      db.collection('packages').countDocuments() + db.collection('store').countDocuments(),
+      db.collection('students').countDocuments(),
+      db.collection('questions').countDocuments(),
+      db.collection('buyers').find({}).sort({ date: -1 }).limit(10).toArray(),
+      db.collection('orders').find({}).sort({ createdAt: -1 }).limit(10).toArray()
+    ]);
+
+    res.json({
+      liveTests: testsCount,
+      activePackages: packagesCount,
+      registrations: studentsCount,
+      questionsBank: questionsCount,
+      recentBuyers: buyersData,
+      recentOrders: ordersData
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });

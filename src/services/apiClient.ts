@@ -28,6 +28,20 @@ export const coursesAPI = {
     });
     if (!response.ok) throw new Error('Failed to create course');
     return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update course');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete course');
+    return response.json();
   }
 };
 
@@ -362,5 +376,585 @@ export const adminAPI = {
       }
       throw new Error('Verification failed');
     }
+  }
+};
+
+// Store API
+export const storeAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/store`);
+    if (!response.ok) throw new Error('Failed to fetch store products');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/store`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create product');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/store/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update product');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/store/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete product');
+    return response.json();
+  }
+};
+
+// Institute API
+export const instituteAPI = {
+  get: async () => {
+    const response = await fetch(`${API_BASE_URL}/institute`);
+    if (!response.ok) throw new Error('Failed to fetch institute settings');
+    return response.json();
+  },
+  update: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/institute`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update institute settings');
+    return response.json();
+  }
+};
+
+// Questions API
+export const questionsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/questions`);
+    if (!response.ok) throw new Error('Failed to fetch questions');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create question');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update question');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/questions/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete question');
+    return response.json();
+  }
+};
+
+// Tests API
+export const testsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/tests`);
+    if (!response.ok) throw new Error('Failed to fetch tests');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/tests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create test');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/tests/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update test');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/tests/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete test');
+    return response.json();
+  }
+};
+
+// Videos API
+export const videosAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/videos`);
+    if (!response.ok) throw new Error('Failed to fetch videos');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/videos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create video');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update video');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/videos/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete video');
+    return response.json();
+  }
+};
+
+// Live Videos API
+export const liveVideosAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/live-videos`);
+    if (!response.ok) throw new Error('Failed to fetch live videos');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/live-videos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create live video');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/live-videos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update live video');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/live-videos/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete live video');
+    return response.json();
+  }
+};
+
+// PDFs API
+export const pdfsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/pdfs`);
+    if (!response.ok) throw new Error('Failed to fetch PDFs');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/pdfs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create PDF');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/pdfs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update PDF');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/pdfs/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete PDF');
+    return response.json();
+  }
+};
+
+// Packages API
+export const packagesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/packages`);
+    if (!response.ok) throw new Error('Failed to fetch packages');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/packages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create package');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/packages/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update package');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/packages/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete package');
+    return response.json();
+  }
+};
+
+// Messages API
+export const messagesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/messages`);
+    if (!response.ok) throw new Error('Failed to fetch messages');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create message');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/messages/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update message');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/messages/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete message');
+    return response.json();
+  }
+};
+
+// Blog API
+export const blogAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/blog`);
+    if (!response.ok) throw new Error('Failed to fetch blog posts');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/blog`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create blog post');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/blog/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update blog post');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/blog/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete blog post');
+    return response.json();
+  }
+};
+
+// Settings API
+export const settingsAPI = {
+  get: async () => {
+    const response = await fetch(`${API_BASE_URL}/settings`);
+    if (!response.ok) throw new Error('Failed to fetch settings');
+    return response.json();
+  },
+  update: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update settings');
+    return response.json();
+  }
+};
+
+// Banners API
+export const bannersAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/banners`);
+    if (!response.ok) throw new Error('Failed to fetch banners');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/banners`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create banner');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/banners/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update banner');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/banners/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete banner');
+    return response.json();
+  }
+};
+
+// Subjects API
+export const subjectsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/subjects`);
+    if (!response.ok) throw new Error('Failed to fetch subjects');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subjects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create subject');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subjects/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update subject');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/subjects/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete subject');
+    return response.json();
+  }
+};
+
+// Topics API
+export const topicsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/topics`);
+    if (!response.ok) throw new Error('Failed to fetch topics');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/topics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create topic');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/topics/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update topic');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/topics/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete topic');
+    return response.json();
+  }
+};
+
+// Subcourses API
+export const subcoursesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/subcourses`);
+    if (!response.ok) throw new Error('Failed to fetch subcourses');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subcourses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create subcourse');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subcourses/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update subcourse');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/subcourses/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete subcourse');
+    return response.json();
+  }
+};
+
+// Instructions API
+export const instructionsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/instructions`);
+    if (!response.ok) throw new Error('Failed to fetch instructions');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/instructions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create instruction');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/instructions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update instruction');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/instructions/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete instruction');
+    return response.json();
+  }
+};
+
+// Exam Documents API
+export const examDocumentsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/exam-documents`);
+    if (!response.ok) throw new Error('Failed to fetch exam documents');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/exam-documents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create exam document');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/exam-documents/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update exam document');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/exam-documents/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete exam document');
+    return response.json();
+  }
+};
+
+// News API
+export const newsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/news`);
+    if (!response.ok) throw new Error('Failed to fetch news');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/news`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create news');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/news/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update news');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/news/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete news');
+    return response.json();
+  }
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/notifications`);
+    if (!response.ok) throw new Error('Failed to fetch notifications');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/notifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create notification');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/notifications/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete notification');
+    return response.json();
+  }
+};
+
+// Dashboard Stats API
+export const dashboardAPI = {
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+    if (!response.ok) throw new Error('Failed to fetch dashboard stats');
+    return response.json();
   }
 };
