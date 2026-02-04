@@ -103,21 +103,38 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
         studentsEnrolled: editingTest?.studentsEnrolled || 0
       };
 
+      console.log('Sending subjective test data:', testData);
+
       if (editingTest) {
-        // Update existing test in API and state
-        await testsAPI.update(editingTest.id, testData);
-        setTests(tests.map(t => t.id === editingTest.id ? testData : t));
-        showToast('Subjective test updated successfully!');
+        // Update existing test
+        try {
+          await testsAPI.update(editingTest.id, testData);
+          setTests(tests.map(t => t.id === editingTest.id ? testData : t));
+          showToast('Subjective test updated successfully!');
+        } catch (apiError) {
+          console.error('API update error:', apiError);
+          // Fallback: just update state if API fails
+          setTests(tests.map(t => t.id === editingTest.id ? testData : t));
+          showToast('Test updated (local only)');
+        }
       } else {
         // Add new test to API and state
-        await testsAPI.create(testData);
-        setTests([...tests, testData]);
-        showToast('Subjective test created successfully!');
+        try {
+          await testsAPI.create(testData);
+          setTests([...tests, testData]);
+          showToast('Subjective test created successfully!');
+        } catch (apiError) {
+          console.error('API create error:', apiError);
+          // Fallback: just update state if API fails
+          setTests([...tests, testData]);
+          showToast('Test created (local only)');
+        }
       }
 
       handleCloseModal();
     } catch (error) {
-      showToast('Failed to save test', 'error');
+      console.error('Test save error:', error);
+      showToast(`Error: ${error instanceof Error ? error.message : 'Failed to save test'}`, 'error');
     }
   };
 
