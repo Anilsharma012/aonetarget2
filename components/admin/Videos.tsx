@@ -695,26 +695,116 @@ const Videos: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
 
-              {/* URLs */}
+              {/* Video Upload */}
               <div>
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Video URL</label>
-                <input
-                  type="text"
-                  placeholder="https://example.com/video.mp4"
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-3">Upload Video File</label>
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={(e) => handleDrop(e, 'video')}
+                  className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
+                    dragActive
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : formData.videoFile
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-indigo-300'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => e.target.files && handleVideoFile(e.target.files[0])}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="pointer-events-none">
+                    <div className="mb-3">
+                      {formData.videoFile ? (
+                        <span className="material-icons-outlined text-4xl text-green-600">check_circle</span>
+                      ) : (
+                        <span className="material-icons-outlined text-4xl text-gray-400">cloud_upload</span>
+                      )}
+                    </div>
+                    <p className="font-black text-gray-700 text-sm mb-1">
+                      {formData.videoFile ? 'Video selected' : 'Drag & drop your video here'}
+                    </p>
+                    <p className="text-xs text-gray-500">or click to browse your files</p>
+                    {formData.videoFile && (
+                      <p className="text-xs font-bold text-green-600 mt-2">📁 {formData.videoFile.name}</p>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Thumbnail Upload */}
               <div>
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Thumbnail URL</label>
-                <input
-                  type="text"
-                  placeholder="https://example.com/thumbnail.jpg"
-                  value={formData.thumbnail}
-                  onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-3">Upload Thumbnail Image</label>
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={(e) => handleDrop(e, 'thumbnail')}
+                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${
+                    dragActive
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : formData.thumbnailFile
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-indigo-300'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files && handleThumbnailFile(e.target.files[0])}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="pointer-events-none">
+                    <div className="mb-2">
+                      {formData.thumbnailFile ? (
+                        <span className="material-icons-outlined text-3xl text-green-600">image</span>
+                      ) : (
+                        <span className="material-icons-outlined text-3xl text-gray-400">image_search</span>
+                      )}
+                    </div>
+                    <p className="font-bold text-gray-700 text-xs mb-1">
+                      {formData.thumbnailFile ? 'Thumbnail selected' : 'Drag & drop thumbnail'}
+                    </p>
+                    <p className="text-[10px] text-gray-500">or click to select image</p>
+                    {formData.thumbnailFile && (
+                      <p className="text-xs font-bold text-green-600 mt-1">🖼️ {formData.thumbnailFile.name}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Alternative URL Option */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-2">
+                  <span className="material-icons-outlined text-base">info</span>
+                  Or paste URL directly (optional)
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Video URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={formData.videoUrl}
+                      onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Thumbnail URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={formData.thumbnail}
+                      onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30 text-xs"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
