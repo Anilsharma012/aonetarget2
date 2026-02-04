@@ -112,7 +112,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
       if (editingSeries) {
         // Update existing series
         try {
-          await testsAPI.update(editingSeries.id, seriesData);
+          await testSeriesAPI.update(editingSeries.id, seriesData);
           setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
           showToast('Series updated successfully!');
         } catch (apiError) {
@@ -124,7 +124,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
       } else {
         // Add new series to API and state
         try {
-          await testsAPI.create(seriesData);
+          await testSeriesAPI.create(seriesData);
           setSeries([...series, seriesData]);
           showToast('Series created successfully!');
         } catch (apiError) {
