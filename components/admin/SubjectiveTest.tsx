@@ -52,7 +52,7 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
   };
 
   const filteredTests = tests.filter(test => {
-    const matchesSearch = test.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || (test.title && test.title.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = !filterStatus || test.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
