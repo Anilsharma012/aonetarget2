@@ -29,6 +29,7 @@ const Blog: React.FC<Props> = ({ showToast }) => {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
