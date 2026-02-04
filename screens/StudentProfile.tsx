@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import StudentSidebar from '../components/StudentSidebar';
 
 interface StudentProfileProps {
   setAuth: (auth: boolean) => void;
@@ -7,41 +8,59 @@ interface StudentProfileProps {
 
 const StudentProfile: React.FC<StudentProfileProps> = ({ setAuth }) => {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [student, setStudent] = useState<any>(null);
-  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [tests, setTests] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [stats, setStats] = useState({
+    enrolled: 0,
+    completed: 0,
+    tests: 0
+  });
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    phone: '',
+    class: '',
+    target: ''
+  });
 
   useEffect(() => {
     const storedStudent = localStorage.getItem('studentData');
     if (storedStudent) {
       const studentData = JSON.parse(storedStudent);
       setStudent(studentData);
-      fetchStudentData(studentData.id);
+      setEditForm({
+        name: studentData.name || '',
+        phone: studentData.phone || '',
+        class: studentData.class || '12th',
+        target: studentData.target || 'NEET'
+      });
+      fetchStats(studentData.id);
     } else {
       navigate('/student-login');
     }
   }, []);
 
-  const fetchStudentData = async (studentId: string) => {
+  const fetchStats = async (studentId: string) => {
     try {
-      const [coursesRes, notificationsRes, testsRes] = await Promise.all([
+      const [coursesRes, testsRes] = await Promise.all([
         fetch(`/api/students/${studentId}/courses`),
-        fetch('/api/notifications'),
-        fetch('/api/tests')
+        fetch(`/api/students/${studentId}/test-results`)
       ]);
 
-      const coursesData = await coursesRes.json();
-      const notificationsData = await notificationsRes.json();
-      const testsData = await testsRes.json();
+      const coursesData = await coursesRes.json().catch(() => []);
+      const testsData = await testsRes.json().catch(() => []);
 
-      setEnrolledCourses(Array.isArray(coursesData) ? coursesData : []);
-      setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
-      setTests(Array.isArray(testsData) ? testsData : []);
+      const courses = Array.isArray(coursesData) ? coursesData : [];
+      const completedCourses = courses.filter((c: any) => c.progress >= 100).length;
+
+      setStats({
+        enrolled: courses.length,
+        completed: completedCourses,
+        tests: Array.isArray(testsData) ? testsData.length : 0
+      });
     } catch (error) {
-      console.error('Error fetching student data:', error);
+      console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
@@ -53,6 +72,35 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ setAuth }) => {
     setAuth(false);
     navigate('/');
   };
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await fetch(`/api/students/${student.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+
+      if (response.ok) {
+        const updatedStudent = { ...student, ...editForm };
+        setStudent(updatedStudent);
+        localStorage.setItem('studentData', JSON.stringify(updatedStudent));
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+  };
+
+  const menuItems = [
+    { icon: 'edit', label: 'Edit Profile', action: () => setIsEditing(true) },
+    { icon: 'school', label: 'My Courses', path: '/my-courses' },
+    { icon: 'quiz', label: 'My Tests', path: '/mock-tests' },
+    { icon: 'download', label: 'Downloads', path: '/downloads' },
+    { icon: 'notifications', label: 'Notifications', path: '/notifications' },
+    { icon: 'help', label: 'Help & Support', path: '/help-support' },
+    { icon: 'settings', label: 'Settings', path: '/settings' }
+  ];
 
   if (loading) {
     return (
@@ -67,233 +115,156 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ setAuth }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-gradient-to-r from-brandBlue to-[#1A237E] text-white pt-8 pb-20 px-4 rounded-b-[2rem]">
-        <div className="flex justify-between items-start mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/20">
-            <span className="material-symbols-rounded">arrow_back</span>
+      <StudentSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} student={student} />
+
+      <header className="bg-gradient-to-r from-brandBlue to-[#1A237E] text-white pt-6 pb-8 px-4">
+        <div className="flex justify-between items-start mb-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full hover:bg-white/20">
+            <span className="material-symbols-rounded">menu</span>
           </button>
           <button onClick={handleLogout} className="p-2 rounded-full hover:bg-white/20">
             <span className="material-symbols-rounded">logout</span>
           </button>
         </div>
         
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center shadow-xl">
-            <span className="text-4xl font-black text-brandBlue">
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl">
+            <span className="text-3xl font-black text-brandBlue">
               {student?.name?.charAt(0)?.toUpperCase() || 'S'}
             </span>
           </div>
-          <h1 className="text-xl font-bold">{student?.name || 'Student'}</h1>
-          <p className="text-blue-200 text-sm mt-1">{student?.email}</p>
-          <div className="flex justify-center gap-4 mt-4">
-            <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
-              {student?.class || '11th'}
-            </span>
-            <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
-              {student?.target || 'NEET'}
-            </span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold">{student?.name || 'Student'}</h1>
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="p-1 bg-white/20 rounded-full"
+              >
+                <span className="material-symbols-rounded text-sm">edit</span>
+              </button>
+            </div>
+            <p className="text-blue-200 text-xs mt-0.5">{student?.email}</p>
+            <p className="text-blue-200 text-xs">{student?.phone || '+91 XXXXX XXXXX'}</p>
           </div>
         </div>
       </header>
 
-      <div className="-mt-10 px-4">
-        <div className="bg-white rounded-2xl shadow-lg p-4 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <span className="text-2xl font-black text-brandBlue">{enrolledCourses.length}</span>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Courses</p>
-          </div>
-          <div className="text-center border-x border-gray-100">
-            <span className="text-2xl font-black text-green-600">{tests.length}</span>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Tests</p>
-          </div>
-          <div className="text-center">
-            <span className="text-2xl font-black text-orange-500">{notifications.length}</span>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Alerts</p>
+      <div className="-mt-4 px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-4">
+          <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest mb-4">Learning Stats</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <span className="text-xl font-black text-brandBlue">{stats.enrolled}</span>
+              </div>
+              <p className="text-[10px] text-gray-500 font-bold">Enrolled</p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <span className="text-xl font-black text-green-600">{stats.completed}</span>
+              </div>
+              <p className="text-[10px] text-gray-500 font-bold">Completed</p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <span className="text-xl font-black text-orange-500">{stats.tests}</span>
+              </div>
+              <p className="text-[10px] text-gray-500 font-bold">Tests</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="px-4 mt-6">
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          {[
-            { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-            { key: 'courses', label: 'Courses', icon: 'school' },
-            { key: 'tests', label: 'Tests', icon: 'quiz' },
-            { key: 'notifications', label: 'Alerts', icon: 'notifications' }
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-2 rounded-lg font-bold text-[10px] flex flex-col items-center gap-1 transition-all ${
-                activeTab === tab.key ? 'bg-white text-brandBlue shadow-sm' : 'text-gray-500'
-              }`}
-            >
-              <span className="material-symbols-rounded text-lg">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'dashboard' && (
-          <div className="space-y-4">
-            <section className="bg-white rounded-xl p-4 shadow-sm">
-              <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
-                <span className="material-symbols-rounded text-brandBlue">trending_up</span>
-                Your Progress
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Physics</span>
-                    <span className="font-bold text-brandBlue">45%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-brandBlue w-[45%]"></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Chemistry</span>
-                    <span className="font-bold text-green-600">60%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 w-[60%]"></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Biology</span>
-                    <span className="font-bold text-orange-500">35%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-500 w-[35%]"></div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-white rounded-xl p-4 shadow-sm">
-              <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
-                <span className="material-symbols-rounded text-brandRed">schedule</span>
-                Upcoming Tests
-              </h3>
-              {tests.slice(0, 3).map((test, idx) => (
-                <div key={idx} className="flex items-center gap-3 py-3 border-b last:border-0">
-                  <div className="w-10 h-10 bg-brandRed/10 rounded-lg flex items-center justify-center">
-                    <span className="material-symbols-rounded text-brandRed">assignment</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold">{test.title || test.name}</p>
-                    <p className="text-[10px] text-gray-400">{test.subject || 'General'}</p>
-                  </div>
-                  <button className="bg-brandBlue text-white px-3 py-1 rounded-lg text-[10px] font-bold">
-                    Start
-                  </button>
-                </div>
-              ))}
-              {tests.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">No upcoming tests</p>
-              )}
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'courses' && (
-          <div className="space-y-4">
-            {enrolledCourses.length > 0 ? (
-              enrolledCourses.map((course, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm flex gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-brandBlue to-[#1A237E] rounded-xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-rounded text-white text-2xl">school</span>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-sm">{course.name || course.title}</h4>
-                    <p className="text-[10px] text-gray-400 mt-1">{course.subject || 'NEET Preparation'}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500" style={{ width: `${course.progress || 30}%` }}></div>
-                      </div>
-                      <span className="text-[10px] font-bold text-gray-500">{course.progress || 30}%</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white rounded-xl p-8 text-center shadow-sm">
-                <span className="material-symbols-rounded text-6xl text-gray-300">school</span>
-                <p className="text-sm text-gray-400 mt-4">No enrolled courses yet</p>
-                <button 
-                  onClick={() => navigate('/batches')}
-                  className="mt-4 bg-brandBlue text-white px-6 py-2 rounded-lg text-sm font-bold"
-                >
-                  Browse Courses
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'tests' && (
-          <div className="space-y-4">
-            {tests.length > 0 ? (
-              tests.map((test, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-sm">{test.title || test.name}</h4>
-                      <p className="text-[10px] text-gray-400 mt-1">{test.questions?.length || 0} Questions | {test.duration || 60} mins</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                      test.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
-                    }`}>
-                      {test.status || 'Pending'}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button className="flex-1 bg-brandBlue text-white py-2 rounded-lg text-xs font-bold">
-                      Start Test
-                    </button>
-                    <button className="px-4 bg-gray-100 text-gray-600 py-2 rounded-lg text-xs font-bold">
-                      Details
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white rounded-xl p-8 text-center shadow-sm">
-                <span className="material-symbols-rounded text-6xl text-gray-300">quiz</span>
-                <p className="text-sm text-gray-400 mt-4">No tests available</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'notifications' && (
-          <div className="space-y-3">
-            {notifications.length > 0 ? (
-              notifications.map((notif, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm flex gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                    <span className="material-symbols-rounded text-brandBlue">
-                      {notif.type === 'test' ? 'assignment' : notif.type === 'course' ? 'school' : 'notifications'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold">{notif.title}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{notif.message}</p>
-                    <p className="text-[10px] text-gray-300 mt-2">{notif.createdAt || 'Just now'}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white rounded-xl p-8 text-center shadow-sm">
-                <span className="material-symbols-rounded text-6xl text-gray-300">notifications_off</span>
-                <p className="text-sm text-gray-400 mt-4">No notifications</p>
-              </div>
-            )}
-          </div>
-        )}
+      <div className="p-4 space-y-2">
+        {menuItems.map((item, idx) => (
+          <button
+            key={idx}
+            onClick={() => item.path ? navigate(item.path) : item.action?.()}
+            className="w-full bg-white rounded-xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
+              <span className="material-symbols-rounded text-gray-600">{item.icon}</span>
+            </div>
+            <span className="flex-1 text-left font-medium text-sm">{item.label}</span>
+            <span className="material-symbols-rounded text-gray-400">chevron_right</span>
+          </button>
+        ))}
       </div>
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold">Edit Profile</h2>
+              <button onClick={() => setIsEditing(false)} className="p-1">
+                <span className="material-symbols-rounded text-gray-400">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Phone</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Class</label>
+                  <select
+                    value={editForm.class}
+                    onChange={(e) => setEditForm({ ...editForm, class: e.target.value })}
+                    className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
+                  >
+                    <option value="11th">11th</option>
+                    <option value="12th">12th</option>
+                    <option value="Dropper">Dropper</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Target</label>
+                  <select
+                    value={editForm.target}
+                    onChange={(e) => setEditForm({ ...editForm, target: e.target.value })}
+                    className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
+                  >
+                    <option value="NEET">NEET</option>
+                    <option value="JEE">JEE</option>
+                    <option value="Both">Both</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                className="flex-1 py-3 bg-brandBlue text-white rounded-xl font-bold text-sm"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

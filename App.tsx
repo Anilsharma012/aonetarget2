@@ -10,8 +10,18 @@ import AdminDashboard from './screens/AdminDashboard';
 import AdminLogin from './screens/AdminLogin';
 import StudentLogin from './screens/StudentLogin';
 import StudentProfile from './screens/StudentProfile';
+import StudentDashboard from './screens/StudentDashboard';
 import CoursesScreen from './screens/CoursesScreen';
 import ChatsScreen from './screens/ChatsScreen';
+import MyCourses from './screens/MyCourses';
+import LiveClasses from './screens/LiveClasses';
+import MockTests from './screens/MockTests';
+import EbookNotes from './screens/EbookNotes';
+import Downloads from './screens/Downloads';
+import Notifications from './screens/Notifications';
+import WatchHistory from './screens/WatchHistory';
+import HelpSupport from './screens/HelpSupport';
+import Settings from './screens/Settings';
 import BottomNav from './components/BottomNav';
 
 const App: React.FC = () => {
@@ -34,17 +44,14 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#121212]">
       <Router>
         <Routes>
-          {/* Admin routes are top-level and don't use the mobile frame */}
           <Route path="/admin-login" element={<AdminLogin setAuth={setIsAdminLoggedIn} />} />
           <Route 
             path="/admin" 
             element={isAdminLoggedIn ? <AdminDashboard setAuth={setIsAdminLoggedIn} /> : <Navigate to="/admin-login" />} 
           />
           
-          {/* Student Login - Full screen without bottom nav */}
           <Route path="/student-login" element={<StudentLogin setAuth={setIsStudentLoggedIn} />} />
           
-          {/* Main App Routes within a mobile-style centered container */}
           <Route path="*" element={
             <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-[#121212] shadow-xl relative">
               <div className="pb-20">
@@ -56,6 +63,38 @@ const App: React.FC = () => {
                   <Route path="/checkout/:id" element={<Checkout />} />
                   <Route path="/study/:id" element={<StudyDashboard />} />
                   <Route path="/success" element={<Success />} />
+                  
+                  <Route path="/student-dashboard" element={
+                    isStudentLoggedIn ? <StudentDashboard /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/my-courses" element={
+                    isStudentLoggedIn ? <MyCourses /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/live-classes" element={
+                    isStudentLoggedIn ? <LiveClasses /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/mock-tests" element={
+                    isStudentLoggedIn ? <MockTests /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/ebook-notes" element={
+                    isStudentLoggedIn ? <EbookNotes /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/downloads" element={
+                    isStudentLoggedIn ? <Downloads /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/notifications" element={
+                    isStudentLoggedIn ? <Notifications /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/watch-history" element={
+                    isStudentLoggedIn ? <WatchHistory /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/help-support" element={
+                    isStudentLoggedIn ? <HelpSupport /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/settings" element={
+                    isStudentLoggedIn ? <Settings setAuth={setIsStudentLoggedIn} /> : <Navigate to="/student-login" />
+                  } />
+                  
                   <Route path="/chats" element={
                     isStudentLoggedIn ? <ChatsScreen /> : <Navigate to="/student-login" />
                   } />

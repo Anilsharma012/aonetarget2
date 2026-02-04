@@ -1408,6 +1408,202 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+// Student Progress Routes
+app.get('/api/students/:id/progress', async (req, res) => {
+  try {
+    const progress = await db.collection('studentProgress').findOne({ studentId: req.params.id });
+    if (!progress) {
+      res.json({ physics: 45, chemistry: 60, biology: 35 });
+    } else {
+      res.json(progress);
+    }
+  } catch (error) {
+    console.error('Error fetching student progress:', error);
+    res.status(500).json({ error: 'Failed to fetch progress' });
+  }
+});
+
+app.put('/api/students/:id/progress', async (req, res) => {
+  try {
+    const result = await db.collection('studentProgress').updateOne(
+      { studentId: req.params.id },
+      { $set: { ...req.body, studentId: req.params.id } },
+      { upsert: true }
+    );
+    res.json({ success: true, message: 'Progress updated' });
+  } catch (error) {
+    console.error('Error updating student progress:', error);
+    res.status(500).json({ error: 'Failed to update progress' });
+  }
+});
+
+// Student Test Results Routes
+app.get('/api/students/:id/test-results', async (req, res) => {
+  try {
+    const results = await db.collection('testResults').find({ studentId: req.params.id }).toArray();
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching test results:', error);
+    res.status(500).json({ error: 'Failed to fetch test results' });
+  }
+});
+
+app.post('/api/students/:id/test-results', async (req, res) => {
+  try {
+    const result = await db.collection('testResults').insertOne({
+      ...req.body,
+      studentId: req.params.id,
+      submittedAt: new Date()
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error saving test result:', error);
+    res.status(500).json({ error: 'Failed to save test result' });
+  }
+});
+
+// Student Downloads Routes
+app.get('/api/students/:id/downloads', async (req, res) => {
+  try {
+    const downloads = await db.collection('downloads').find({ studentId: req.params.id }).toArray();
+    res.json(downloads);
+  } catch (error) {
+    console.error('Error fetching downloads:', error);
+    res.status(500).json({ error: 'Failed to fetch downloads' });
+  }
+});
+
+app.post('/api/students/:id/downloads', async (req, res) => {
+  try {
+    const result = await db.collection('downloads').insertOne({
+      ...req.body,
+      studentId: req.params.id,
+      downloadedAt: new Date()
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error saving download:', error);
+    res.status(500).json({ error: 'Failed to save download' });
+  }
+});
+
+// Student Watch History Routes
+app.get('/api/students/:id/watch-history', async (req, res) => {
+  try {
+    const history = await db.collection('watchHistory').find({ studentId: req.params.id }).sort({ watchedAt: -1 }).toArray();
+    res.json(history);
+  } catch (error) {
+    console.error('Error fetching watch history:', error);
+    res.status(500).json({ error: 'Failed to fetch watch history' });
+  }
+});
+
+app.post('/api/students/:id/watch-history', async (req, res) => {
+  try {
+    const result = await db.collection('watchHistory').insertOne({
+      ...req.body,
+      studentId: req.params.id,
+      watchedAt: new Date()
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error saving watch history:', error);
+    res.status(500).json({ error: 'Failed to save watch history' });
+  }
+});
+
+// Live Classes Routes
+app.get('/api/live-classes', async (req, res) => {
+  try {
+    const classes = await db.collection('liveClasses').find({}).toArray();
+    res.json(classes);
+  } catch (error) {
+    console.error('Error fetching live classes:', error);
+    res.status(500).json({ error: 'Failed to fetch live classes' });
+  }
+});
+
+app.post('/api/live-classes', async (req, res) => {
+  try {
+    const result = await db.collection('liveClasses').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error creating live class:', error);
+    res.status(500).json({ error: 'Failed to create live class' });
+  }
+});
+
+app.put('/api/live-classes/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveClasses').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Live class not found' });
+    res.json({ success: true, message: 'Live class updated' });
+  } catch (error) {
+    console.error('Error updating live class:', error);
+    res.status(500).json({ error: 'Failed to update live class' });
+  }
+});
+
+app.delete('/api/live-classes/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveClasses').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Live class not found' });
+    res.json({ success: true, message: 'Live class deleted' });
+  } catch (error) {
+    console.error('Error deleting live class:', error);
+    res.status(500).json({ error: 'Failed to delete live class' });
+  }
+});
+
+// E-books Routes
+app.get('/api/ebooks', async (req, res) => {
+  try {
+    const ebooks = await db.collection('ebooks').find({}).toArray();
+    res.json(ebooks);
+  } catch (error) {
+    console.error('Error fetching ebooks:', error);
+    res.status(500).json({ error: 'Failed to fetch ebooks' });
+  }
+});
+
+app.post('/api/ebooks', async (req, res) => {
+  try {
+    const result = await db.collection('ebooks').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    console.error('Error creating ebook:', error);
+    res.status(500).json({ error: 'Failed to create ebook' });
+  }
+});
+
+app.put('/api/ebooks/:id', async (req, res) => {
+  try {
+    const result = await db.collection('ebooks').updateOne(
+      { id: req.params.id },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Ebook not found' });
+    res.json({ success: true, message: 'Ebook updated' });
+  } catch (error) {
+    console.error('Error updating ebook:', error);
+    res.status(500).json({ error: 'Failed to update ebook' });
+  }
+});
+
+app.delete('/api/ebooks/:id', async (req, res) => {
+  try {
+    const result = await db.collection('ebooks').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Ebook not found' });
+    res.json({ success: true, message: 'Ebook deleted' });
+  } catch (error) {
+    console.error('Error deleting ebook:', error);
+    res.status(500).json({ error: 'Failed to delete ebook' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
