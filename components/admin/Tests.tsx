@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { testsAPI } from '../../src/services/apiClient';
+import { testsAPI, coursesAPI } from '../../src/services/apiClient';
 
 interface Test {
   id: string;
   name: string;
   course: string;
   questions: number;
-  status: string;
+  status: 'active' | 'inactive' | 'scheduled' | 'draft';
   date: string;
+  openDate?: string;
+  closeDate?: string;
   duration?: number;
+  featured?: boolean;
+  totalAttempts?: number;
+  avgScore?: number;
+}
+
+interface Course {
+  id: string;
+  title: string;
 }
 
 interface Props {
@@ -17,11 +27,30 @@ interface Props {
 
 const Tests: React.FC<Props> = ({ showToast }) => {
   const [tests, setTests] = useState<Test[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingTest, setEditingTest] = useState<Test | null>(null);
-  const [formData, setFormData] = useState({ name: '', course: '', questions: '', duration: '180', status: 'Active' });
+
+  // Filter & Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCourse, setFilterCourse] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTests, setSelectedTests] = useState<string[]>([]);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    course: '',
+    questions: '',
+    duration: '180',
+    status: 'draft' as 'active' | 'inactive' | 'scheduled' | 'draft',
+    openDate: '',
+    closeDate: '',
+    featured: false
+  });
 
   useEffect(() => {
     loadTests();
