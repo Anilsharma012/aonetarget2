@@ -1291,6 +1291,123 @@ app.get('/api/dashboard/stats', async (req, res) => {
   }
 });
 
+// Student Authentication Routes
+app.post('/api/students/register', async (req, res) => {
+  try {
+    const { name, email, phone, password, class: studentClass, target } = req.body;
+    
+    if (!name || !phone || !password) {
+      return res.status(400).json({ error: 'Name, phone and password are required' });
+    }
+    
+    const existingStudent = await db.collection('students').findOne({ phone });
+    if (existingStudent) {
+      return res.status(400).json({ error: 'Phone number already registered' });
+    }
+    
+    const studentId = 'STU-' + Date.now();
+    const student = {
+      id: studentId,
+      name,
+      email: email || '',
+      phone,
+      password,
+      class: studentClass || '11th',
+      target: target || 'NEET',
+      enrolledCourses: [],
+      createdAt: new Date(),
+      status: 'active'
+    };
+    
+    await db.collection('students').insertOne(student);
+    
+    const { password: _, ...studentWithoutPassword } = student;
+    res.status(201).json({ 
+      success: true, 
+      message: 'Registration successful',
+      student: studentWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error registering student:', error);
+    res.status(500).json({ error: 'Registration failed', details: error.message });
+  }
+});
+
+app.post('/api/students/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    
+    if (!phone || !password) {
+      return res.status(400).json({ error: 'Phone and password are required' });
+    }
+    
+    const student = await db.collection('students').findOne({ phone });
+    
+    if (!student) {
+      return res.status(401).json({ error: 'Invalid phone number or password' });
+    }
+    
+    if (student.password !== password) {
+      return res.status(401).json({ error: 'Invalid phone number or password' });
+    }
+    
+    const { password: _, ...studentWithoutPassword } = student;
+    res.json({ 
+      success: true, 
+      message: 'Login successful',
+      student: studentWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error logging in student:', error);
+    res.status(500).json({ error: 'Login failed', details: error.message });
+  }
+});
+
+app.get('/api/students/:id/courses', async (req, res) => {
+  try {
+    const student = await db.collection('students').findOne({ id: req.params.id });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    
+    const enrolledCourseIds = student.enrolledCourses || [];
+    if (enrolledCourseIds.length === 0) {
+      return res.json([]);
+    }
+    
+    const courses = await db.collection('courses').find({ 
+      id: { $in: enrolledCourseIds } 
+    }).toArray();
+    
+    res.json(courses);
+  } catch (error) {
+    console.error('Error fetching student courses:', error);
+    res.status(500).json({ error: 'Failed to fetch courses' });
+  }
+});
+
+// Messages Routes for Chat
+app.get('/api/messages', async (req, res) => {
+  try {
+    const messages = await db.collection('messages').find({}).sort({ createdAt: -1 }).toArray();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  try {
+    const result = await db.collection('messages').insertOne({ 
+      ...req.body, 
+      createdAt: new Date() 
+    });
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });

@@ -36,3 +36,9 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+API_PORT = "3001"
+VITE_PORT = "5173"

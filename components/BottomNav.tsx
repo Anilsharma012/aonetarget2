@@ -1,8 +1,11 @@
-
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const BottomNav: React.FC = () => {
+interface BottomNavProps {
+  isLoggedIn?: boolean;
+}
+
+const BottomNav: React.FC<BottomNavProps> = ({ isLoggedIn = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -10,9 +13,9 @@ const BottomNav: React.FC = () => {
   const tabs = [
     { name: 'Home', icon: 'home', path: '/' },
     { name: 'Batches', icon: 'school', path: '/batches' },
-    { name: 'Courses', icon: 'menu_book', path: '#' },
-    { name: 'Chats', icon: 'chat_bubble', path: '#' },
-    { name: 'Profile', icon: 'person', path: '#' },
+    { name: 'Courses', icon: 'menu_book', path: '/courses' },
+    { name: 'Chats', icon: 'chat_bubble', path: isLoggedIn ? '/chats' : '/student-login' },
+    { name: 'Profile', icon: 'person', path: isLoggedIn ? '/profile' : '/student-login' },
   ];
 
   return (
@@ -23,7 +26,7 @@ const BottomNav: React.FC = () => {
           return (
             <button
               key={tab.name}
-              onClick={() => tab.path !== '#' && navigate(tab.path)}
+              onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center gap-1 w-full transition-colors ${
                 isActive ? 'text-primary' : 'text-gray-400 dark:text-gray-500'
               }`}

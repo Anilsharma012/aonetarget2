@@ -8,15 +8,25 @@ import StudyDashboard from './screens/StudyDashboard';
 import Success from './screens/Success';
 import AdminDashboard from './screens/AdminDashboard';
 import AdminLogin from './screens/AdminLogin';
+import StudentLogin from './screens/StudentLogin';
+import StudentProfile from './screens/StudentProfile';
+import CoursesScreen from './screens/CoursesScreen';
+import ChatsScreen from './screens/ChatsScreen';
 import BottomNav from './components/BottomNav';
 
 const App: React.FC = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAdminAuthenticated');
-    if (authStatus === 'true') {
+    const adminAuthStatus = localStorage.getItem('isAdminAuthenticated');
+    if (adminAuthStatus === 'true') {
       setIsAdminLoggedIn(true);
+    }
+    
+    const studentAuthStatus = localStorage.getItem('isStudentAuthenticated');
+    if (studentAuthStatus === 'true') {
+      setIsStudentLoggedIn(true);
     }
   }, []);
 
@@ -31,6 +41,9 @@ const App: React.FC = () => {
             element={isAdminLoggedIn ? <AdminDashboard setAuth={setIsAdminLoggedIn} /> : <Navigate to="/admin-login" />} 
           />
           
+          {/* Student Login - Full screen without bottom nav */}
+          <Route path="/student-login" element={<StudentLogin setAuth={setIsStudentLoggedIn} />} />
+          
           {/* Main App Routes within a mobile-style centered container */}
           <Route path="*" element={
             <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-[#121212] shadow-xl relative">
@@ -38,14 +51,21 @@ const App: React.FC = () => {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/batches" element={<Batches />} />
+                  <Route path="/courses" element={<CoursesScreen />} />
                   <Route path="/course/:id" element={<CourseDetails />} />
                   <Route path="/checkout/:id" element={<Checkout />} />
                   <Route path="/study/:id" element={<StudyDashboard />} />
                   <Route path="/success" element={<Success />} />
+                  <Route path="/chats" element={
+                    isStudentLoggedIn ? <ChatsScreen /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/profile" element={
+                    isStudentLoggedIn ? <StudentProfile setAuth={setIsStudentLoggedIn} /> : <Navigate to="/student-login" />
+                  } />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </div>
-              <BottomNav />
+              <BottomNav isLoggedIn={isStudentLoggedIn} />
             </div>
           } />
         </Routes>
