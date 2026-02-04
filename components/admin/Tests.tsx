@@ -539,8 +539,17 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   >
                     <option value="">Select Course</option>
+                    <option value="NEET">NEET</option>
+                    <option value="IIT-JEE">IIT-JEE</option>
+                    <option value="BOARDS">BOARDS</option>
+                    <option value="AIIMS">AIIMS</option>
+                    <option value="JIPMER">JIPMER</option>
+                    <option value="KVPY">KVPY</option>
+                    <option value="OLYMPIAD">OLYMPIAD</option>
                     {[...new Set(tests.map(t => t.course))].map(course => (
-                      <option key={course} value={course}>{course}</option>
+                      !['NEET', 'IIT-JEE', 'BOARDS', 'AIIMS', 'JIPMER', 'KVPY', 'OLYMPIAD'].includes(course) && (
+                        <option key={course} value={course}>{course}</option>
+                      )
                     ))}
                   </select>
                 </div>
