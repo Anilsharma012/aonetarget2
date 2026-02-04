@@ -53,7 +53,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
   };
 
   const filteredSeries = series.filter(item => {
-    const matchesSearch = item.seriesName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || (item.seriesName && item.seriesName.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = !filterStatus || item.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
