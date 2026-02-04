@@ -6,6 +6,7 @@ import Students from '../components/admin/Students';
 import Store from '../components/admin/Store';
 import Institute from '../components/admin/Institute';
 import Questions from '../components/admin/Questions';
+import Passages from '../components/admin/Passages';
 import Tests from '../components/admin/Tests';
 import SubjectiveTest from '../components/admin/SubjectiveTest';
 import TestSeries from '../components/admin/TestSeries';
