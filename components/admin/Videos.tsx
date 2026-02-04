@@ -42,9 +42,14 @@ const Videos: React.FC<Props> = ({ showToast }) => {
     duration: '',
     quality: 'HD 1080P',
     videoUrl: '',
+    videoFile: null as File | null,
     thumbnail: '',
+    thumbnailFile: null as File | null,
     status: 'active' as 'active' | 'inactive' | 'archived'
   });
+
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     loadVideos();
