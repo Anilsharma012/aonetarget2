@@ -258,157 +258,376 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   }
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden animate-fade-in relative min-h-[600px]">
-      <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center bg-gray-50/30 gap-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">Mock Test Engine</h3>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Total: {tests.length} Tests</p>
+          <h2 className="text-2xl font-black text-navy">Mock Tests</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage and publish exams</p>
         </div>
-        <button 
-          onClick={() => { setEditingTest(null); setFormData({ name: '', course: '', questions: '', duration: '180', status: 'Active' }); setShowModal(true); }}
-          className="bg-navy text-white text-[11px] font-black px-8 py-4 rounded-2xl shadow-xl uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3"
-        >
-          <span className="material-icons-outlined text-sm">add</span> Create New Test
-        </button>
+        <div className="flex gap-3">
+          {selectedTests.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons-outlined text-lg">delete</span>
+              Delete ({selectedTests.length})
+            </button>
+          )}
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-navy text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-navy/90 transition-colors flex items-center gap-2"
+          >
+            <span className="material-icons-outlined text-lg">add</span>
+            Create Test
+          </button>
+        </div>
       </div>
 
-      {tests.length === 0 ? (
-        <div className="p-16 text-center">
-          <span className="material-icons-outlined text-6xl text-gray-200">quiz</span>
-          <p className="font-black mt-4 uppercase tracking-widest text-gray-400">No Tests Created Yet</p>
+      {/* Main Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Filters Row */}
+        <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Show</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <select
+            value={filterCourse}
+            onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
+          >
+            <option value="">All Courses</option>
+            {[...new Set(tests.map(t => t.course))].map(course => (
+              <option key={course} value={course}>{course}</option>
+            ))}
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="draft">Draft</option>
+          </select>
+
+          <div className="flex-1"></div>
+
+          <div className="relative">
+            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+            <input
+              type="text"
+              placeholder="Search test..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 w-48"
+            />
+          </div>
         </div>
-      ) : (
+
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-[#F8F9FA] text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-8 py-6 border-b border-gray-100">Test Title / Date</th>
-                <th className="px-8 py-6 border-b border-gray-100">Target Course</th>
-                <th className="px-8 py-6 border-b border-gray-100 text-center">Questions</th>
-                <th className="px-8 py-6 border-b border-gray-100 text-center">Current Status</th>
-                <th className="px-8 py-6 border-b border-gray-100 text-center">Control Panel</th>
+                <th className="px-4 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedTests.length === paginatedTests.length && paginatedTests.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
+                  />
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Test Title</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Open Date</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Close Date</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Questions</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Featured</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="text-xs">
-              {tests.map(t => (
-                <tr key={t.id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 group">
-                  <td className="px-8 py-6">
-                    <p className="font-black text-navy uppercase tracking-tight text-sm leading-tight">{t.name}</p>
-                    <p className="text-[10px] font-bold text-gray-300 uppercase mt-1">Added on {t.date}</p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className="text-[10px] font-black text-navy/40 uppercase tracking-widest border border-navy/10 px-3 py-1 rounded-full">{t.course}</span>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mx-auto border border-gray-100">
-                      <span className="font-black text-navy text-base">{t.questions}</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm border ${
-                      t.status === 'Active' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'
-                    }`}>
-                      {t.status}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6 text-center relative">
-                    <div className="flex flex-col items-center gap-2">
-                      <button 
-                        onClick={() => setActiveMenu(activeMenu === t.id ? null : t.id)}
-                        className="bg-orange-500 text-white text-[10px] font-black px-6 py-2.5 rounded-xl uppercase shadow-lg flex items-center gap-2 mx-auto hover:bg-orange-600 hover:-translate-y-0.5 transition-all"
-                      >
-                        Actions <span className="material-icons-outlined text-xs">expand_more</span>
-                      </button>
-                      
-                      {activeMenu === t.id && (
-                        <div className="absolute right-0 top-full mt-2 w-64 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)] rounded-3xl py-4 z-[100] border border-gray-100 text-left animate-fade-in ring-4 ring-black/5">
-                          <div className="max-h-[350px] overflow-y-auto hide-scrollbar">
-                            {actions.map((act, idx) => (
-                              <button 
-                                key={idx} 
-                                onClick={() => {
-                                  if (act.action) {
-                                    act.action(t);
-                                  } else {
-                                    showToast(`Action "${act.label}" triggered!`);
-                                  }
-                                  setActiveMenu(null);
-                                }}
-                                className={`w-full px-6 py-3 flex items-center gap-4 text-[11px] font-bold hover:bg-gray-50 transition-colors ${act.color || 'text-navy'}`}
-                              >
-                                <span className={`material-icons-outlined text-lg opacity-40`}>{act.icon}</span> 
-                                <span className="tracking-tight">{act.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+            <tbody className="divide-y divide-gray-100">
+              {paginatedTests.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-12 text-center">
+                    <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">quiz</span>
+                    <p className="text-gray-400 font-medium">No tests found</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedTests.map((test, index) => (
+                  <tr key={test.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedTests.includes(test.id)}
+                        onChange={() => toggleSelectTest(test.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
+                      />
+                    </td>
+                    <td className="px-4 py-4 text-sm font-medium text-gray-600">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-semibold text-navy uppercase">{test.name}</span>
+                      <p className="text-xs text-gray-400 mt-0.5">Added: {test.date}</p>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{test.course}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{test.openDate || 'N/A'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{test.closeDate || 'N/A'}</td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{test.questions}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => toggleStatus(test)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          test.status === 'active'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        {test.status === 'active' ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        onClick={() => toggleFeatured(test)}
+                        className={`transition-colors ${test.featured ? 'text-yellow-500' : 'text-gray-300'}`}
+                        title={test.featured ? 'Remove from featured' : 'Add to featured'}
+                      >
+                        <span className="material-icons-outlined text-lg">star</span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenModal(test)}
+                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <span className="material-icons-outlined text-lg">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(test.id)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <span className="material-icons-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
 
+        {/* Pagination */}
+        {filteredTests.length > 0 && (
+          <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredTests.length)} of {filteredTests.length} entries
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-10 h-10 text-sm font-bold rounded-lg ${
+                      currentPage === pageNum
+                        ? 'bg-navy text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
-            <h3 className="text-lg font-black text-navy uppercase tracking-widest mb-6">
-              {editingTest ? 'Edit Test' : 'Create New Test'}
-            </h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Test Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              />
-              <input
-                type="text"
-                placeholder="Target Course"
-                value={formData.course}
-                onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              />
-              <div className="grid grid-cols-2 gap-4">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={handleCloseModal}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-xl font-black text-navy uppercase tracking-wide">
+                {editingTest ? 'Edit Test' : 'Create Test'}
+              </h3>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Test Title *</label>
                 <input
-                  type="number"
-                  placeholder="No. of Questions"
-                  value={formData.questions}
-                  onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-                />
-                <input
-                  type="number"
-                  placeholder="Duration (mins)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
+                  type="text"
+                  placeholder="Enter test title"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                 />
               </div>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              >
-                <option value="Active">Active</option>
-                <option value="Scheduled">Scheduled</option>
-                <option value="Draft">Draft</option>
-              </select>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course *</label>
+                  <select
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  >
+                    <option value="">Select Course</option>
+                    {[...new Set(tests.map(t => t.course))].map(course => (
+                      <option key={course} value={course}>{course}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Questions *</label>
+                  <input
+                    type="number"
+                    placeholder="Number of questions"
+                    value={formData.questions}
+                    onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Duration (mins)</label>
+                  <input
+                    type="number"
+                    placeholder="Duration in minutes"
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Open Date</label>
+                  <input
+                    type="text"
+                    placeholder="DD-MM-YYYY HH:MM AM/PM"
+                    value={formData.openDate}
+                    onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Close Date</label>
+                  <input
+                    type="text"
+                    placeholder="DD-MM-YYYY HH:MM AM/PM"
+                    value={formData.closeDate}
+                    onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Mark as Featured</span>
+                </label>
+              </div>
             </div>
-            <div className="flex gap-4 mt-6">
+
+            <div className="p-6 border-t border-gray-100 flex gap-4">
               <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-black text-xs uppercase"
+                onClick={handleCloseModal}
+                className="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-xl font-bold text-sm uppercase hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 bg-navy text-white py-3 rounded-xl font-black text-xs uppercase"
+                className="flex-1 bg-navy text-white py-3.5 rounded-xl font-bold text-sm uppercase hover:bg-navy/90 transition-colors"
               >
                 {editingTest ? 'Update' : 'Create'}
               </button>
