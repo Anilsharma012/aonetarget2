@@ -172,6 +172,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this test?')) {
       try {
+        await testsAPI.delete(id);
         setTests(tests.filter(t => t.id !== id));
         showToast('Test deleted successfully!');
       } catch (error) {
