@@ -40,13 +40,8 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
 
   const loadTests = async () => {
     try {
-      // Sample data for demo
-      setTests([
-        { id: '1', title: 'Essay Writing - English', course: 'English', totalQuestions: 5, evaluationPending: 12, status: 'active', createdDate: '15-07-2024', studentsEnrolled: 145 },
-        { id: '2', title: 'History Long Answer', course: 'History', totalQuestions: 8, evaluationPending: 28, status: 'active', createdDate: '18-07-2024', studentsEnrolled: 98 },
-        { id: '3', title: 'Science Practical Analysis', course: 'Science', totalQuestions: 6, evaluationPending: 0, status: 'active', createdDate: '20-07-2024', studentsEnrolled: 176 },
-        { id: '4', title: 'Literature Comprehension', course: 'English', totalQuestions: 4, evaluationPending: 5, status: 'draft', createdDate: '22-07-2024', studentsEnrolled: 0 },
-      ]);
+      // Start with empty state - users will add data via the form
+      setTests([]);
     } catch (error) {
       showToast('Failed to load tests', 'error');
     } finally {
