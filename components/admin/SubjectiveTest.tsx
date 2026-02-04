@@ -108,7 +108,7 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
       if (editingTest) {
         // Update existing test
         try {
-          await testsAPI.update(editingTest.id, testData);
+          await subjectiveTestsAPI.update(editingTest.id, testData);
           setTests(tests.map(t => t.id === editingTest.id ? testData : t));
           showToast('Subjective test updated successfully!');
         } catch (apiError) {
@@ -120,7 +120,7 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
       } else {
         // Add new test to API and state
         try {
-          await testsAPI.create(testData);
+          await subjectiveTestsAPI.create(testData);
           setTests([...tests, testData]);
           showToast('Subjective test created successfully!');
         } catch (apiError) {
