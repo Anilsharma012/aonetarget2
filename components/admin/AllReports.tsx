@@ -36,16 +36,8 @@ const AllReports: React.FC<Props> = ({ showToast }) => {
 
   const loadReports = async () => {
     try {
-      setReports([
-        { id: '1', studentName: 'Rahul Kumar', testName: 'FUNDAMENTALS OF CHEMISTRY', course: 'NEET', score: 180, totalMarks: 200, accuracy: 90, timeTaken: '45m 30s', completionDate: '01-07-2024', status: 'passed' },
-        { id: '2', studentName: 'Priya Singh', testName: 'FOSET-TEST MOCK TEST 1', course: 'NEET', score: 420, totalMarks: 720, accuracy: 58.3, timeTaken: '2h 45m', completionDate: '15-07-2024', status: 'passed' },
-        { id: '3', studentName: 'Arjun Verma', testName: 'NEET MOCK TEST FOR 12 STD', course: 'IIT-JEE', score: 65, totalMarks: 90, accuracy: 72.2, timeTaken: '1h 50m', completionDate: '22-07-2024', status: 'passed' },
-        { id: '4', studentName: 'Divya Patel', testName: 'TESTING FOR BOARDS', course: 'BOARDS', score: 68, totalMarks: 100, accuracy: 68, timeTaken: '1h 25m', completionDate: '25-07-2024', status: 'failed' },
-        { id: '5', studentName: 'Anjali Sharma', testName: 'FREE MOCK TEST FOR NEET 2025', course: 'NEET', score: 156, totalMarks: 180, accuracy: 86.7, timeTaken: '1h 05m', completionDate: '27-07-2024', status: 'passed' },
-        { id: '6', studentName: 'Ravi Kumar', testName: 'FINAL MOCK TEST BATCH 2024', course: 'IIT-JEE', score: 210, totalMarks: 300, accuracy: 70, timeTaken: '2h 50m', completionDate: '28-07-2024', status: 'passed' },
-        { id: '7', studentName: 'Sana Khan', testName: 'MOCK AIIMS MOCK NEET TEST ST 1', course: 'NEET', score: 450, totalMarks: 720, accuracy: 62.5, timeTaken: '2h 30m', completionDate: '30-07-2024', status: 'incomplete' },
-        { id: '8', studentName: 'Vikram Singh', testName: 'MOCK AIIMS MOCK NEET TEST ST 2', course: 'NEET', score: 380, totalMarks: 720, accuracy: 52.8, timeTaken: '2h 15m', completionDate: '01-08-2024', status: 'failed' },
-      ]);
+      // Start with empty state - reports will be generated when students complete tests
+      setReports([]);
     } catch (error) {
       showToast('Failed to load reports', 'error');
     } finally {
