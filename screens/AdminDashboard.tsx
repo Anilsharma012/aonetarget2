@@ -90,7 +90,16 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
         { id: 'all-reports', label: 'All Reports', icon: 'assessment' }
       ]
     },
-    { id: 'videos', label: 'Video Library', icon: 'play_circle', color: 'text-indigo-400' },
+    {
+      id: 'videos',
+      label: 'Video Library',
+      icon: 'play_circle',
+      color: 'text-indigo-400',
+      submenu: [
+        { id: 'videos', label: 'Videos', icon: 'video_library' },
+        { id: 'video-series', label: 'Video Series', icon: 'playlist_play' }
+      ]
+    },
     { id: 'live-videos', label: 'Live Sessions', icon: 'live_tv', color: 'text-rose-500' },
     { id: 'pdfs', label: 'Manage PDFs', icon: 'picture_as_pdf', color: 'text-red-500' },
     { id: 'packages', label: 'Batches/Pkgs', icon: 'inventory_2', color: 'text-teal-400' },
