@@ -85,6 +85,88 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     currentPage * itemsPerPage
   );
 
+  // File upload handlers
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const uploadToCloudStorage = async (file: File): Promise<string> => {
+    // Using FormData to simulate file upload
+    // In production, replace with actual cloud storage (Firebase, AWS S3, Cloudinary, etc.)
+    try {
+      setUploadProgress(30);
+
+      // Simulating upload delay - in real app, upload to cloud
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create a data URL (for demo) - replace with actual cloud URL in production
+      const reader = new FileReader();
+
+      return new Promise((resolve, reject) => {
+        reader.onload = () => {
+          // In production: return actual cloud storage URL
+          // For now, we'll use the filename with a base URL
+          const cloudUrl = `https://storage.example.com/pdfs/${file.name}`;
+          setUploadProgress(100);
+          resolve(cloudUrl);
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    } catch (error) {
+      showToast('File upload failed', 'error');
+      throw error;
+    }
+  };
+
+  const handleFileSelect = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      showToast('Please select a PDF file', 'error');
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      showToast('File size exceeds 50MB limit', 'error');
+      return;
+    }
+
+    setSelectedFile(file);
+    setFormData({
+      ...formData,
+      fileSize: formatFileSize(file.size)
+    });
+    setUploadProgress(0);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.currentTarget.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
   const handleOpenModal = (pdf?: PDF) => {
     if (pdf) {
       setEditingPdf(pdf);
@@ -100,6 +182,9 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     } else {
       setEditingPdf(null);
       setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploadMode('url');
     }
     setShowModal(true);
   };
@@ -108,6 +193,9 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     setShowModal(false);
     setEditingPdf(null);
     setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setUploadMode('url');
   };
 
   const handleSubmit = async () => {
