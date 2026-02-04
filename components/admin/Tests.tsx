@@ -59,15 +59,15 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const loadData = async () => {
     try {
       const [testData, courseData] = await Promise.all([
-        testsAPI.getAll(),
-        coursesAPI.getAll()
+        testsAPI.getAll().catch(() => []),
+        coursesAPI.getAll().catch(() => [])
       ]);
-      setTests(testData);
-      setCourses(courseData);
+      setTests(Array.isArray(testData) ? testData : []);
+      setCourses(Array.isArray(courseData) ? courseData : []);
     } catch (error) {
-      console.log('Starting with empty state...');
-      // Start with empty state - users will add data via the form
+      console.log('Starting with empty state - MongoDB may not have data yet');
       setTests([]);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
