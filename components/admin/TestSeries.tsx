@@ -128,8 +128,8 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this series?')) {
       try {
+        setSeries(series.filter(s => s.id !== id));
         showToast('Series deleted successfully!');
-        loadSeries();
       } catch (error) {
         showToast('Failed to delete series', 'error');
       }
