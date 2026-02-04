@@ -125,8 +125,8 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this test?')) {
       try {
+        setTests(tests.filter(t => t.id !== id));
         showToast('Subjective test deleted successfully!');
-        loadTests();
       } catch (error) {
         showToast('Failed to delete test', 'error');
       }
