@@ -279,7 +279,7 @@ const Blog: React.FC<Props> = ({ showToast }) => {
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-3xl border border-gray-100 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 sticky top-0 bg-white">
               <h3 className="text-lg font-black text-navy uppercase tracking-widest">{editingPost ? 'Edit Post' : 'Add Post'}</h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <button onClick={() => { setShowModal(false); setThumbnailFile(null); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
