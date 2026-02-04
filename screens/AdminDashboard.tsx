@@ -12,6 +12,7 @@ import SubjectiveTest from '../components/admin/SubjectiveTest';
 import TestSeries from '../components/admin/TestSeries';
 import AllReports from '../components/admin/AllReports';
 import Videos from '../components/admin/Videos';
+import VideoSeries from '../components/admin/VideoSeries';
 import LiveVideos from '../components/admin/LiveVideos';
 import PDFs from '../components/admin/PDFs';
 import Packages from '../components/admin/Packages';
