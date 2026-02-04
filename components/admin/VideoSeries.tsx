@@ -12,6 +12,8 @@ interface VideoSeriesItem {
   status: 'active' | 'inactive' | 'draft';
   createdDate: string;
   completionRate: number;
+  instructor?: string;
+  thumbnail?: string;
 }
 
 interface Props {
@@ -25,15 +27,15 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
   const [editingSeries, setEditingSeries] = useState<VideoSeriesItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('createdDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   const [formData, setFormData] = useState({
     seriesName: '',
     course: '',
     subject: '',
+    instructor: '',
     totalVideos: '',
     description: '',
     status: 'draft' as 'active' | 'inactive' | 'draft'
@@ -55,19 +57,11 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const filteredSeries = series
-    .filter(item => {
-      const matchesSearch = !searchQuery || (item.seriesName && item.seriesName.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesStatus = !filterStatus || item.status === filterStatus;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      const aVal = a[sortBy as keyof VideoSeriesItem];
-      const bVal = b[sortBy as keyof VideoSeriesItem];
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
+  const filteredSeries = series.filter(item => {
+    const matchesSearch = !searchQuery || (item.seriesName && item.seriesName.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = !filterStatus || item.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredSeries.length / itemsPerPage);
   const paginatedSeries = filteredSeries.slice(
@@ -82,13 +76,14 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
         seriesName: item.seriesName,
         course: item.course,
         subject: item.subject,
+        instructor: item.instructor || '',
         totalVideos: item.totalVideos.toString(),
         description: item.description,
         status: item.status
       });
     } else {
       setEditingSeries(null);
-      setFormData({ seriesName: '', course: '', subject: '', totalVideos: '', description: '', status: 'draft' });
+      setFormData({ seriesName: '', course: '', subject: '', instructor: '', totalVideos: '', description: '', status: 'draft' });
     }
     setShowModal(true);
   };
@@ -105,6 +100,7 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
         seriesName: formData.seriesName,
         course: formData.course,
         subject: formData.subject,
+        instructor: formData.instructor,
         totalVideos: parseInt(formData.totalVideos),
         description: formData.description,
         status: formData.status,
@@ -123,7 +119,7 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingSeries(null);
-      setFormData({ seriesName: '', course: '', subject: '', totalVideos: '', description: '', status: 'draft' });
+      setFormData({ seriesName: '', course: '', subject: '', instructor: '', totalVideos: '', description: '', status: 'draft' });
       loadSeries();
     } catch (error) {
       showToast('Failed to save Video Series', 'error');
@@ -142,59 +138,117 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-      inactive: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-      draft: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' }
+  const getStatusColor = (status: string) => {
+    const colors = {
+      active: 'from-green-500/20 to-emerald-500/20',
+      inactive: 'from-red-500/20 to-pink-500/20',
+      draft: 'from-yellow-500/20 to-orange-500/20'
     };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return (
-      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${config.bg} ${config.text} ${config.border}`}>
-        {status}
-      </span>
-    );
+    return colors[status as keyof typeof colors];
+  };
+
+  const getStatusTextColor = (status: string) => {
+    const colors = {
+      active: 'text-green-700',
+      inactive: 'text-red-700',
+      draft: 'text-yellow-700'
+    };
+    return colors[status as keyof typeof colors];
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-bold">Loading series...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h3 className="text-lg font-black text-navy uppercase tracking-widest">Video Series Management</h3>
-          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {series.length} Series</p>
+    <div className="space-y-8">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-indigo-500 to-blue-600 rounded-3xl p-8 text-white shadow-2xl">
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/3 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                  <span className="material-icons-outlined text-2xl">playlist_play</span>
+                </div>
+                <h1 className="text-4xl font-black tracking-tight">Video Series</h1>
+              </div>
+              <p className="text-white/80 text-sm font-semibold">Organize and manage video playlists</p>
+            </div>
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-3 rounded-2xl font-black text-sm uppercase shadow-lg border border-white/20 transition-all hover:shadow-xl hover:scale-105"
+            >
+              <span className="flex items-center gap-2">
+                <span className="material-icons-outlined">add_circle</span>
+                New Series
+              </span>
+            </button>
+          </div>
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-4 gap-4 mt-8">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Series</p>
+              <p className="text-3xl font-black mt-2">{series.length}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Videos</p>
+              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + s.totalVideos, 0)}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Enrolled Students</p>
+              <p className="text-3xl font-black mt-2">{series.reduce((sum, s) => sum + s.studentsEnrolled, 0)}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Active</p>
+              <p className="text-3xl font-black mt-2">{series.filter(s => s.status === 'active').length}</p>
+            </div>
+          </div>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
-        >
-          <span className="material-icons-outlined text-base">add</span>
-          Create Series
-        </button>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      {/* Filters & Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
+          <h3 className="text-lg font-black text-navy">Filters & Search</h3>
+          <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+            >
+              <span className="material-icons-outlined">dashboard</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}
+            >
+              <span className="material-icons-outlined">table_chart</span>
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+            <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
             <input
               type="text"
-              placeholder="Search series name..."
+              placeholder="Search series..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
             />
           </div>
           <select
@@ -203,7 +257,7 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
               setFilterStatus(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -216,209 +270,364 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
               setItemsPerPage(parseInt(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
           >
-            <option value="10">10 per page</option>
-            <option value="25">25 per page</option>
-            <option value="50">50 per page</option>
+            <option value="12">12 per page</option>
+            <option value="24">24 per page</option>
+            <option value="48">48 per page</option>
           </select>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {paginatedSeries.length === 0 ? (
-          <div className="p-12 text-center">
-            <span className="material-icons-outlined text-5xl text-gray-200 mb-4 block">video_library</span>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No video series found</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">#</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Series Name</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Course</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Subject</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Videos</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Students</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Progress</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedSeries.map((item, idx) => (
-                    <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                      <td className="px-6 py-4 font-bold text-navy truncate max-w-xs">{item.seriesName}</td>
-                      <td className="px-6 py-4 text-gray-600 font-semibold">{item.course}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold">{item.subject}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center font-bold text-gray-700">{item.totalVideos}</td>
-                      <td className="px-6 py-4 text-center font-bold text-purple-600">{item.studentsEnrolled}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-green-400 to-emerald-600" style={{ width: `${item.completionRate}%` }}></div>
-                          </div>
-                          <span className="font-bold text-gray-600 w-8">{item.completionRate}%</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">{getStatusBadge(item.status)}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleOpenModal(item)}
-                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                            title="Edit"
-                          >
-                            <span className="material-icons-outlined text-base">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                            title="Delete"
-                          >
-                            <span className="material-icons-outlined text-base">delete</span>
-                          </button>
-                          <button
-                            className="p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-colors"
-                            title="View Details"
-                          >
-                            <span className="material-icons-outlined text-base">visibility</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-              <p className="text-[10px] font-bold text-gray-500 uppercase">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredSeries.length)} of {filteredSeries.length}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span className="material-icons-outlined text-base">chevron_left</span>
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${
-                        page === currentPage
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+      {/* Grid View */}
+      {paginatedSeries.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center">
+          <span className="material-icons-outlined text-6xl text-gray-200 block mb-4">playlist_play</span>
+          <p className="text-gray-400 font-bold text-lg">No series found</p>
+          <p className="text-gray-300 text-sm mt-2">Create your first video series</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedSeries.map((item) => (
+              <div key={item.id} className="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl hover:border-purple-200 transition-all duration-300 flex flex-col">
+                {/* Header with Gradient */}
+                <div className="h-32 bg-gradient-to-br from-purple-600 via-indigo-500 to-blue-600 relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="material-icons-outlined text-6xl text-white/30 group-hover:scale-110 transition-transform">playlist_play</span>
+                  </div>
+                  {/* Status Badge */}
+                  <div className="absolute top-4 right-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-gradient-to-r ${getStatusColor(item.status)} ${getStatusTextColor(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span className="material-icons-outlined text-base">chevron_right</span>
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Modal */}
+                {/* Content */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="mb-4">
+                    <p className="text-[11px] font-black text-purple-600 uppercase tracking-wider mb-1">{item.subject} / {item.course}</p>
+                    <h3 className="font-black text-navy text-sm leading-tight line-clamp-2 group-hover:text-purple-600 transition-colors">{item.seriesName}</h3>
+                  </div>
+
+                  {item.description && (
+                    <p className="text-xs text-gray-500 mb-4 line-clamp-2">{item.description}</p>
+                  )}
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 my-4 py-3 border-y border-gray-100 text-center">
+                    <div>
+                      <p className="text-gray-500 text-[10px] font-bold uppercase">Videos</p>
+                      <p className="font-black text-navy text-sm mt-1">{item.totalVideos}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-[10px] font-bold uppercase">Students</p>
+                      <p className="font-black text-purple-600 text-sm mt-1">{item.studentsEnrolled}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-[10px] font-bold uppercase">Progress</p>
+                      <p className="font-black text-indigo-600 text-sm mt-1">{item.completionRate}%</p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-gray-600">Completion</span>
+                      <span className="text-xs font-black text-purple-600">{item.completionRate}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${item.completionRate}%` }}></div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-auto">
+                    <button
+                      onClick={() => handleOpenModal(item)}
+                      className="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-600 font-bold py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <span className="material-icons-outlined text-base">edit</span>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <span className="material-icons-outlined text-base">delete</span>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p className="text-sm font-bold text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredSeries.length)} of {filteredSeries.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_left</span>
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg font-black text-sm transition-all ${
+                    page === currentPage
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        // Table View
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">#</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Series Name</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Subject</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Course</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Videos</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Students</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Progress</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedSeries.map((item, idx) => (
+                  <tr key={item.id} className="hover:bg-purple-50/50 transition-colors group">
+                    <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td className="px-6 py-4 font-bold text-navy max-w-xs truncate">{item.seriesName}</td>
+                    <td className="px-6 py-4 text-gray-700 font-semibold">{item.subject}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">{item.course}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center font-black text-purple-600">{item.totalVideos}</td>
+                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{item.studentsEnrolled}</td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${item.completionRate}%` }}></div>
+                        </div>
+                        <span className="font-bold text-gray-600 w-8 text-xs">{item.completionRate}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-gradient-to-r ${getStatusColor(item.status)} ${getStatusTextColor(item.status)}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleOpenModal(item)}
+                          className="p-2 hover:bg-purple-100 text-purple-600 rounded-lg transition-colors"
+                        >
+                          <span className="material-icons-outlined text-base">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                        >
+                          <span className="material-icons-outlined text-base">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between bg-gray-50 border-t border-gray-200 px-6 py-4">
+            <p className="text-sm font-bold text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredSeries.length)} of {filteredSeries.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 hover:bg-white rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_left</span>
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg font-black text-sm transition-all ${
+                    page === currentPage
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 hover:bg-white rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Professional Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-navy uppercase tracking-widest">
-                {editingSeries ? 'Edit Video Series' : 'Create New Video Series'}
-              </h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-white flex justify-between items-center border-b border-purple-700">
+              <div>
+                <h3 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                  <span className="material-icons-outlined text-3xl">{editingSeries ? 'edit' : 'playlist_play'}</span>
+                  {editingSeries ? 'Edit Video Series' : 'Create New Series'}
+                </h3>
+                <p className="text-white/80 text-sm mt-1">{editingSeries ? 'Update series details' : 'Organize your videos into a series'}</p>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+                className="p-2 hover:bg-white/20 rounded-xl transition-colors"
               >
-                <span className="material-icons-outlined">close</span>
+                <span className="material-icons-outlined text-2xl">close</span>
               </button>
             </div>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Series Name *"
-                value={formData.seriesName}
-                onChange={(e) => setFormData({ ...formData, seriesName: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-              <div className="grid grid-cols-2 gap-4">
+            {/* Modal Content */}
+            <div className="p-8 space-y-5">
+              {/* Series Name */}
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Series Name *</label>
                 <input
                   type="text"
-                  placeholder="Course *"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <input
-                  type="text"
-                  placeholder="Subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  placeholder="e.g., Physics Complete Course 2024"
+                  value={formData.seriesName}
+                  onChange={(e) => setFormData({ ...formData, seriesName: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
                 />
               </div>
+
+              {/* Subject & Course */}
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  placeholder="Total Videos *"
-                  value={formData.totalVideos}
-                  onChange={(e) => setFormData({ ...formData, totalVideos: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Subject *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Physics, Chemistry"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Course *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., NEET, JEE"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
+                  />
+                </div>
+              </div>
+
+              {/* Instructor & Total Videos */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Instructor</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Dr. John Doe"
+                    value={formData.instructor}
+                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Total Videos *</label>
+                  <input
+                    type="number"
+                    placeholder="25"
+                    value={formData.totalVideos}
+                    onChange={(e) => setFormData({ ...formData, totalVideos: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
+                  />
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'draft' })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30"
                 >
                   <option value="draft">Draft</option>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
-              />
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Description</label>
+                <textarea
+                  placeholder="Describe this video series..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+                />
+              </div>
             </div>
 
-            <div className="flex gap-4 mt-6">
+            {/* Modal Actions */}
+            <div className="sticky bottom-0 bg-gradient-to-t from-gray-50 to-transparent px-8 py-6 border-t border-gray-200 flex gap-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black text-sm uppercase hover:bg-gray-200 transition-colors"
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-black text-sm uppercase transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black text-sm uppercase hover:bg-indigo-700 transition-colors shadow-lg"
+                className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-xl font-black text-sm uppercase shadow-lg hover:shadow-xl transition-all"
               >
-                {editingSeries ? 'Update' : 'Create'}
+                {editingSeries ? 'Update Series' : 'Create Series'}
               </button>
             </div>
           </div>
