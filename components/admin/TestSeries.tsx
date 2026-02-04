@@ -97,9 +97,29 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
     }
 
     try {
-      showToast(editingSeries ? 'Series updated successfully!' : 'Series created successfully!');
+      const seriesData = {
+        id: editingSeries?.id || `series_${Date.now()}`,
+        seriesName: formData.seriesName,
+        totalTests: parseInt(formData.totalTests),
+        course: formData.course,
+        description: formData.description,
+        studentsEnrolled: editingSeries?.studentsEnrolled || 0,
+        status: formData.status,
+        createdDate: editingSeries?.createdDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        completionRate: editingSeries?.completionRate || 0
+      };
+
+      if (editingSeries) {
+        // Update existing series
+        setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
+        showToast('Series updated successfully!');
+      } else {
+        // Add new series
+        setSeries([...series, seriesData]);
+        showToast('Series created successfully!');
+      }
+
       handleCloseModal();
-      loadSeries();
     } catch (error) {
       showToast('Failed to save series', 'error');
     }
