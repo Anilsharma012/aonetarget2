@@ -511,7 +511,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
                     <td className="px-6 py-4 text-center">
                       <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${getQualityColor(video.quality)} text-white font-black text-[10px]`}>{video.quality}</span>
                     </td>
-                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{video.views.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{(video.views || 0).toLocaleString()}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-gradient-to-r ${getStatusColor(video.status)} ${getStatusTextColor(video.status)}`}>
                         {video.status}
