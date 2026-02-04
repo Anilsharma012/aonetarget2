@@ -65,7 +65,16 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
     },
     { id: 'store', label: 'Package Store', icon: 'store', color: 'text-emerald-400' },
     { id: 'institute', label: 'Institute Profile', icon: 'business', color: 'text-cyan-400' },
-    { id: 'questions', label: 'Manage Questions', icon: 'help_outline', color: 'text-amber-400' },
+    {
+      id: 'questions',
+      label: 'Manage Questions',
+      icon: 'help_outline',
+      color: 'text-amber-400',
+      submenu: [
+        { id: 'questions', label: 'Question List', icon: 'list' },
+        { id: 'question-bank', label: 'Question Bank', icon: 'library_books' }
+      ]
+    },
     {
       id: 'tests',
       label: 'Manage Test',
