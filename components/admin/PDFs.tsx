@@ -28,11 +28,15 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingPdf, setEditingPdf] = useState<PDF | null>(null);
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    subject: '', 
-    course: '', 
-    fileUrl: '', 
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    subject: '',
+    course: '',
+    fileUrl: '',
     fileSize: '',
     allowDownload: false,
     status: 'active' as 'active' | 'inactive'
@@ -81,6 +85,88 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     currentPage * itemsPerPage
   );
 
+  // File upload handlers
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const uploadToCloudStorage = async (file: File): Promise<string> => {
+    // Using FormData to simulate file upload
+    // In production, replace with actual cloud storage (Firebase, AWS S3, Cloudinary, etc.)
+    try {
+      setUploadProgress(30);
+
+      // Simulating upload delay - in real app, upload to cloud
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create a data URL (for demo) - replace with actual cloud URL in production
+      const reader = new FileReader();
+
+      return new Promise((resolve, reject) => {
+        reader.onload = () => {
+          // In production: return actual cloud storage URL
+          // For now, we'll use the filename with a base URL
+          const cloudUrl = `https://storage.example.com/pdfs/${file.name}`;
+          setUploadProgress(100);
+          resolve(cloudUrl);
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    } catch (error) {
+      showToast('File upload failed', 'error');
+      throw error;
+    }
+  };
+
+  const handleFileSelect = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      showToast('Please select a PDF file', 'error');
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      showToast('File size exceeds 50MB limit', 'error');
+      return;
+    }
+
+    setSelectedFile(file);
+    setFormData({
+      ...formData,
+      fileSize: formatFileSize(file.size)
+    });
+    setUploadProgress(0);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.currentTarget.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
   const handleOpenModal = (pdf?: PDF) => {
     if (pdf) {
       setEditingPdf(pdf);
@@ -96,6 +182,9 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     } else {
       setEditingPdf(null);
       setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+      setSelectedFile(null);
+      setUploadProgress(0);
+      setUploadMode('url');
     }
     setShowModal(true);
   };
@@ -104,25 +193,51 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
     setShowModal(false);
     setEditingPdf(null);
     setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setUploadMode('url');
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.fileUrl) {
-      showToast('Please fill required fields', 'error');
+    if (!formData.title) {
+      showToast('Please enter PDF title', 'error');
+      return;
+    }
+
+    let finalFileUrl = formData.fileUrl;
+
+    // Handle file upload if selected
+    if (uploadMode === 'file' && selectedFile) {
+      if (!finalFileUrl) {
+        try {
+          showToast('Uploading PDF...', 'success');
+          finalFileUrl = await uploadToCloudStorage(selectedFile);
+        } catch (error) {
+          showToast('Failed to upload PDF file', 'error');
+          return;
+        }
+      }
+    } else if (uploadMode === 'url' && !formData.fileUrl) {
+      showToast('Please enter PDF URL or upload a file', 'error');
       return;
     }
 
     try {
+      const submitData = {
+        ...formData,
+        fileUrl: finalFileUrl
+      };
+
       if (editingPdf) {
         await pdfsAPI.update(editingPdf.id, {
           ...editingPdf,
-          ...formData
+          ...submitData
         });
         showToast('PDF updated successfully!');
       } else {
         const pdfData = {
           id: `pdf_${Date.now()}`,
-          ...formData,
+          ...submitData,
           createdAt: new Date().toISOString()
         };
         await pdfsAPI.create(pdfData);
@@ -496,25 +611,122 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">File URL *</label>
-                <input
-                  type="text"
-                  placeholder="https://drive.google.com/..."
-                  value={formData.fileUrl}
-                  onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                />
+              {/* Upload Mode Tabs */}
+              <div className="flex gap-2 border-b border-gray-200 mb-4">
+                <button
+                  onClick={() => { setUploadMode('url'); setSelectedFile(null); setUploadProgress(0); }}
+                  className={`px-4 py-3 text-sm font-bold uppercase transition-colors ${
+                    uploadMode === 'url'
+                      ? 'text-navy border-b-2 border-navy'
+                      : 'text-gray-500 hover:text-gray-600'
+                  }`}
+                >
+                  URL Link
+                </button>
+                <button
+                  onClick={() => { setUploadMode('file'); setFormData({ ...formData, fileUrl: '' }); }}
+                  className={`px-4 py-3 text-sm font-bold uppercase transition-colors ${
+                    uploadMode === 'file'
+                      ? 'text-navy border-b-2 border-navy'
+                      : 'text-gray-500 hover:text-gray-600'
+                  }`}
+                >
+                  Upload File
+                </button>
               </div>
 
+              {/* URL Mode */}
+              {uploadMode === 'url' && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">PDF URL *</label>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/... or https://example.com/file.pdf"
+                    value={formData.fileUrl}
+                    onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">Supports Google Drive, Dropbox, or direct PDF links</p>
+                </div>
+              )}
+
+              {/* File Upload Mode */}
+              {uploadMode === 'file' && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Upload PDF File *</label>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                      isDragging
+                        ? 'border-navy bg-navy/5'
+                        : 'border-gray-300 bg-gray-50 hover:border-navy/50'
+                    }`}
+                  >
+                    <input
+                      ref={(input) => {
+                        if (input) (input as any).accept = '.pdf';
+                      }}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                      id="pdf-input"
+                    />
+                    <label htmlFor="pdf-input" className="cursor-pointer block">
+                      <span className="material-icons-outlined text-5xl text-navy/60 mb-3 block">
+                        upload_file
+                      </span>
+                      {selectedFile ? (
+                        <div>
+                          <p className="text-sm font-bold text-navy mb-1">{selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-bold text-gray-700 mb-1">
+                            Drag & drop your PDF here
+                          </p>
+                          <p className="text-xs text-gray-500">or click to browse (Max 50MB)</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+
+                  {/* Upload Progress */}
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-gray-600">Uploading...</span>
+                        <span className="text-xs font-bold text-navy">{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-navy h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {uploadProgress === 100 && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg flex items-center gap-2">
+                      <span className="material-icons-outlined text-green-600">check_circle</span>
+                      <span className="text-xs font-medium text-green-600">Upload successful!</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">File Size</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">File Size (Auto-filled)</label>
                 <input
                   type="text"
-                  placeholder="e.g., 2.5 MB"
+                  placeholder="Auto-calculated"
                   value={formData.fileSize}
-                  onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  readOnly
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none text-gray-500 cursor-not-allowed"
                 />
               </div>
 

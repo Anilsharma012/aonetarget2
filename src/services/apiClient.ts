@@ -493,6 +493,148 @@ export const testsAPI = {
   }
 };
 
+// Test Series API
+export const testSeriesAPI = {
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/test-series`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to fetch test series');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Test Series getAll error:', error);
+      throw error;
+    }
+  },
+  create: async (data: any) => {
+    try {
+      console.log('Creating test series with data:', data);
+      const response = await fetch(`${API_BASE_URL}/test-series`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        console.error('Server error response:', error);
+        throw new Error(error.error || error.details || `Failed to create test series (${response.status})`);
+      }
+      const result = await response.json();
+      console.log('Test series created successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Test Series create error:', error);
+      throw error;
+    }
+  },
+  update: async (id: string, data: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/test-series/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to update test series');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Test Series update error:', error);
+      throw error;
+    }
+  },
+  delete: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/test-series/${id}`, { method: 'DELETE' });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to delete test series');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Test Series delete error:', error);
+      throw error;
+    }
+  }
+};
+
+// Subjective Tests API
+export const subjectiveTestsAPI = {
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/subjective-tests`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to fetch subjective tests');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Subjective Tests getAll error:', error);
+      throw error;
+    }
+  },
+  create: async (data: any) => {
+    try {
+      console.log('Creating subjective test with data:', data);
+      const response = await fetch(`${API_BASE_URL}/subjective-tests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        console.error('Server error response:', error);
+        throw new Error(error.error || error.details || `Failed to create subjective test (${response.status})`);
+      }
+      const result = await response.json();
+      console.log('Subjective test created successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Subjective Test create error:', error);
+      throw error;
+    }
+  },
+  update: async (id: string, data: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/subjective-tests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to update subjective test');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Subjective Test update error:', error);
+      throw error;
+    }
+  },
+  delete: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/subjective-tests/${id}`, { method: 'DELETE' });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || 'Failed to delete subjective test');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Subjective Test delete error:', error);
+      throw error;
+    }
+  }
+};
+
 // Videos API
 export const videosAPI = {
   getAll: async () => {

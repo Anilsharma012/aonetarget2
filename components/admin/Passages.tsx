@@ -1,205 +1,212 @@
 import React, { useState, useEffect } from 'react';
 import { questionsAPI } from '../../src/services/apiClient';
 
-interface Question {
+interface Passage {
   id: string;
-  questionText: string;
+  title: string;
+  content: string;
   subject: string;
   topic: string;
+  type: 'comprehension' | 'case-study' | 'poem' | 'article' | 'story';
   difficulty: 'easy' | 'medium' | 'hard';
-  questionType: 'mcq' | 'short-answer' | 'long-answer' | 'true-false';
-  answer: string;
-  options?: string[];
+  questionsCount: number;
+  language: 'english' | 'hindi' | 'regional';
   createdDate: string;
 }
 
 interface Props {
   showToast: (m: string, type?: 'success' | 'error') => void;
-  view?: 'list' | 'bank';
 }
 
-const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+const Passages: React.FC<Props> = ({ showToast }) => {
+  const [passages, setPassages] = useState<Passage[]>([]);
+  const [filteredPassages, setFilteredPassages] = useState<Passage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
-  const [topicFilter, setTopicFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [selectedPassages, setSelectedPassages] = useState<string[]>([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [editingPassage, setEditingPassage] = useState<Passage | null>(null);
   
   const [formData, setFormData] = useState({
-    questionText: '',
+    title: '',
+    content: '',
     subject: '',
     topic: '',
+    type: 'comprehension' as 'comprehension' | 'case-study' | 'poem' | 'article' | 'story',
     difficulty: 'easy' as 'easy' | 'medium' | 'hard',
-    questionType: 'mcq' as 'mcq' | 'short-answer' | 'long-answer' | 'true-false',
-    answer: '',
-    options: ['', '', '', '']
+    questionsCount: '',
+    language: 'english' as 'english' | 'hindi' | 'regional'
   });
 
-  const subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'English'];
-  const topics = ['Kinematics', 'Thermodynamics', 'Optics', 'Atomic Structure', 'Organic Chemistry', 'Cell Division', 'Algebra', 'Geometry'];
+  const subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'English', 'History', 'Geography'];
+  const topics = ['Kinematics', 'Thermodynamics', 'Optics', 'Atomic Structure', 'Organic Chemistry', 'Cell Division', 'Algebra', 'Geometry', 'Literature', 'Social Studies'];
 
   useEffect(() => {
-    loadQuestions();
+    loadPassages();
   }, []);
 
   useEffect(() => {
-    let filtered = questions;
+    let filtered = passages;
 
     if (searchQuery) {
-      filtered = filtered.filter(q =>
-        q.questionText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.id.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(p =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     if (subjectFilter !== 'all') {
-      filtered = filtered.filter(q => q.subject === subjectFilter);
+      filtered = filtered.filter(p => p.subject === subjectFilter);
     }
 
-    if (topicFilter !== 'all') {
-      filtered = filtered.filter(q => q.topic === topicFilter);
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(p => p.type === typeFilter);
     }
 
-    setFilteredQuestions(filtered);
+    setFilteredPassages(filtered);
     setCurrentPage(1);
-  }, [questions, searchQuery, subjectFilter, topicFilter]);
+  }, [passages, searchQuery, subjectFilter, typeFilter]);
 
-  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPassages.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedQuestions = filteredQuestions.slice(startIndex, endIndex);
+  const paginatedPassages = filteredPassages.slice(startIndex, endIndex);
 
-  const loadQuestions = async () => {
+  const loadPassages = async () => {
     try {
       setLoading(true);
       const data = await questionsAPI.getAll();
-      setQuestions(Array.isArray(data) ? data : []);
+      // Filter only passages from the questions collection
+      const passageData = Array.isArray(data) ? data.filter((item: any) => item.type === 'passage') : [];
+      setPassages(passageData as Passage[]);
     } catch (error) {
       console.log('Starting with empty state - MongoDB may not have data yet');
-      setQuestions([]);
+      setPassages([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
+  const handleAddPassage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.questionText || !formData.subject || !formData.answer) {
+    if (!formData.title || !formData.content || !formData.subject) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
     try {
-      const questionData: Question = {
-        id: editingQuestion?.id || `Q-${String(Date.now()).slice(-6)}`,
-        questionText: formData.questionText,
+      const passageData: Passage = {
+        id: editingPassage?.id || `P-${String(Date.now()).slice(-6)}`,
+        title: formData.title,
+        content: formData.content,
         subject: formData.subject,
         topic: formData.topic,
+        type: formData.type,
         difficulty: formData.difficulty,
-        questionType: formData.questionType,
-        answer: formData.answer,
-        options: formData.questionType === 'mcq' ? formData.options.filter(o => o.trim()) : [],
-        createdDate: editingQuestion?.createdDate || new Date().toISOString().split('T')[0]
+        questionsCount: parseInt(formData.questionsCount) || 0,
+        language: formData.language,
+        createdDate: editingPassage?.createdDate || new Date().toISOString().split('T')[0]
       };
 
-      console.log('Adding question:', questionData);
+      console.log('Adding passage:', passageData);
 
-      if (editingQuestion) {
-        await questionsAPI.update(editingQuestion.id, questionData);
-        setQuestions(questions.map(q => q.id === editingQuestion.id ? questionData : q));
-        showToast('Question updated successfully!', 'success');
+      if (editingPassage) {
+        await questionsAPI.update(editingPassage.id, passageData);
+        setPassages(passages.map(p => p.id === editingPassage.id ? passageData : p));
+        showToast('Passage updated successfully!', 'success');
       } else {
-        await questionsAPI.create(questionData);
-        setQuestions([...questions, questionData]);
-        showToast('Question created successfully!', 'success');
+        await questionsAPI.create(passageData);
+        setPassages([...passages, passageData]);
+        showToast('Passage created successfully!', 'success');
       }
 
       resetForm();
       setShowAddModal(false);
     } catch (error) {
-      console.error('Error saving question:', error);
-      showToast('Failed to save question', 'error');
+      console.error('Error saving passage:', error);
+      showToast('Failed to save passage', 'error');
     }
   };
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this question?')) {
+  const handleDeletePassage = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this passage?')) {
       return;
     }
 
     try {
-      console.log('Deleting question:', id);
+      console.log('Deleting passage:', id);
       await questionsAPI.delete(id);
-      setQuestions(questions.filter(q => q.id !== id));
-      showToast('Question deleted successfully!', 'success');
+      setPassages(passages.filter(p => p.id !== id));
+      showToast('Passage deleted successfully!', 'success');
     } catch (error) {
-      console.error('Error deleting question:', error);
-      showToast('Failed to delete question', 'error');
+      console.error('Error deleting passage:', error);
+      showToast('Failed to delete passage', 'error');
     }
   };
 
   const handleBulkDelete = async () => {
-    if (selectedQuestions.length === 0) return;
-    if (!confirm(`Delete ${selectedQuestions.length} selected question(s)?`)) return;
+    if (selectedPassages.length === 0) return;
+    if (!confirm(`Delete ${selectedPassages.length} selected passage(s)?`)) return;
 
     try {
-      await Promise.all(selectedQuestions.map(id => questionsAPI.delete(id)));
-      setQuestions(questions.filter(q => !selectedQuestions.includes(q.id)));
-      setSelectedQuestions([]);
-      showToast(`${selectedQuestions.length} question(s) deleted successfully!`, 'success');
+      await Promise.all(selectedPassages.map(id => questionsAPI.delete(id)));
+      setPassages(passages.filter(p => !selectedPassages.includes(p.id)));
+      setSelectedPassages([]);
+      showToast(`${selectedPassages.length} passage(s) deleted successfully!`, 'success');
     } catch (error) {
-      console.error('Error deleting questions:', error);
-      showToast('Failed to delete questions', 'error');
+      console.error('Error deleting passages:', error);
+      showToast('Failed to delete passages', 'error');
     }
   };
 
-  const handleEditClick = (question: Question) => {
-    setEditingQuestion(question);
+  const handleEditClick = (passage: Passage) => {
+    setEditingPassage(passage);
     setFormData({
-      questionText: question.questionText,
-      subject: question.subject,
-      topic: question.topic,
-      difficulty: question.difficulty,
-      questionType: question.questionType,
-      answer: question.answer,
-      options: question.options || ['', '', '', '']
+      title: passage.title,
+      content: passage.content,
+      subject: passage.subject,
+      topic: passage.topic,
+      type: passage.type,
+      difficulty: passage.difficulty,
+      questionsCount: passage.questionsCount.toString(),
+      language: passage.language
     });
     setShowAddModal(true);
   };
 
   const toggleSelectAll = () => {
-    if (selectedQuestions.length === paginatedQuestions.length) {
-      setSelectedQuestions([]);
+    if (selectedPassages.length === paginatedPassages.length) {
+      setSelectedPassages([]);
     } else {
-      setSelectedQuestions(paginatedQuestions.map(q => q.id));
+      setSelectedPassages(paginatedPassages.map(p => p.id));
     }
   };
 
-  const toggleSelectQuestion = (id: string) => {
-    setSelectedQuestions(prev =>
-      prev.includes(id) ? prev.filter(q => q !== id) : [...prev, id]
+  const toggleSelectPassage = (id: string) => {
+    setSelectedPassages(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
 
   const resetForm = () => {
     setFormData({
-      questionText: '',
+      title: '',
+      content: '',
       subject: '',
       topic: '',
+      type: 'comprehension',
       difficulty: 'easy',
-      questionType: 'mcq',
-      answer: '',
-      options: ['', '', '', '']
+      questionsCount: '',
+      language: 'english'
     });
-    setEditingQuestion(null);
+    setEditingPassage(null);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -213,10 +220,11 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'mcq': return 'bg-blue-100 text-blue-600';
-      case 'short-answer': return 'bg-purple-100 text-purple-600';
-      case 'long-answer': return 'bg-indigo-100 text-indigo-600';
-      case 'true-false': return 'bg-orange-100 text-orange-600';
+      case 'comprehension': return 'bg-blue-100 text-blue-600';
+      case 'case-study': return 'bg-purple-100 text-purple-600';
+      case 'poem': return 'bg-pink-100 text-pink-600';
+      case 'article': return 'bg-indigo-100 text-indigo-600';
+      case 'story': return 'bg-orange-100 text-orange-600';
       default: return 'bg-gray-100 text-gray-600';
     }
   };
@@ -226,21 +234,17 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black text-navy">
-            {view === 'bank' ? 'Question Bank' : 'Question List'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {view === 'bank' ? 'Complete repository of exam questions' : 'Manage all questions in the system'}
-          </p>
+          <h2 className="text-2xl font-black text-navy">Passages Management</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage reading passages and comprehension materials</p>
         </div>
         <div className="flex gap-3 flex-wrap">
-          {selectedQuestions.length > 0 && (
+          {selectedPassages.length > 0 && (
             <button
               onClick={handleBulkDelete}
               className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
             >
               <span className="material-icons-outlined text-lg">delete</span>
-              Delete ({selectedQuestions.length})
+              Delete ({selectedPassages.length})
             </button>
           )}
           <button
@@ -248,7 +252,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
             className="px-6 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy/90 transition-colors flex items-center gap-2"
           >
             <span className="material-icons-outlined text-lg">add</span>
-            Add Question
+            Add Passage
           </button>
         </div>
       </div>
@@ -261,7 +265,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20 transition-all"
-            placeholder="Search by question or ID..."
+            placeholder="Search by title, content or ID..."
           />
         </div>
         <select
@@ -273,12 +277,16 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
           {subjects.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select
-          value={topicFilter}
-          onChange={(e) => setTopicFilter(e.target.value)}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
           className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-navy/20"
         >
-          <option value="all">All Topics</option>
-          {topics.map(t => <option key={t} value={t}>{t}</option>)}
+          <option value="all">All Types</option>
+          <option value="comprehension">Comprehension</option>
+          <option value="case-study">Case Study</option>
+          <option value="poem">Poem</option>
+          <option value="article">Article</option>
+          <option value="story">Story</option>
         </select>
       </div>
 
@@ -288,12 +296,12 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
           {loading ? (
             <div className="p-8 text-center text-gray-400">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-2"></div>
-              Loading questions...
+              Loading passages...
             </div>
-          ) : filteredQuestions.length === 0 ? (
+          ) : filteredPassages.length === 0 ? (
             <div className="p-8 text-center text-gray-400">
-              <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">help_outline</span>
-              No questions found
+              <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">description</span>
+              No passages found
             </div>
           ) : (
             <table className="w-full">
@@ -302,28 +310,29 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                   <th className="px-4 py-4 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedQuestions.length === paginatedQuestions.length && paginatedQuestions.length > 0}
+                      checked={selectedPassages.length === paginatedPassages.length && paginatedPassages.length > 0}
                       onChange={toggleSelectAll}
                       className="w-4 h-4 rounded border-gray-300 text-navy"
                     />
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Question</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Topic</th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Questions</th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Difficulty</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Language</th>
                   <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {paginatedQuestions.map((question, index) => (
-                  <tr key={question.id} className="hover:bg-gray-50 transition-colors group">
+                {paginatedPassages.map((passage, index) => (
+                  <tr key={passage.id} className="hover:bg-gray-50 transition-colors group">
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedQuestions.includes(question.id)}
-                        onChange={() => toggleSelectQuestion(question.id)}
+                        checked={selectedPassages.includes(passage.id)}
+                        onChange={() => toggleSelectPassage(passage.id)}
                         className="w-4 h-4 rounded border-gray-300 text-navy"
                       />
                     </td>
@@ -331,36 +340,39 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm font-semibold text-navy line-clamp-2">{question.questionText}</span>
-                      <span className="text-xs text-gray-400 mt-1 block">ID: {question.id}</span>
+                      <span className="text-sm font-semibold text-navy line-clamp-2">{passage.title}</span>
+                      <span className="text-xs text-gray-400 mt-1 block">ID: {passage.id}</span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm text-gray-600">{question.subject}</span>
+                      <span className="text-sm text-gray-600">{passage.subject}</span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm text-gray-600">{question.topic}</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getTypeColor(question.questionType)}`}>
-                        {question.questionType.replace('-', ' ')}
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getTypeColor(passage.type)}`}>
+                        {passage.type.replace('-', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getDifficultyColor(question.difficulty)}`}>
-                        {question.difficulty}
+                      <span className="text-sm font-bold text-navy">{passage.questionsCount}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getDifficultyColor(passage.difficulty)}`}>
+                        {passage.difficulty}
                       </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-600 capitalize">{passage.language}</span>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => handleEditClick(question)}
+                          onClick={() => handleEditClick(passage)}
                           className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <span className="material-icons-outlined text-lg">edit</span>
                         </button>
                         <button
-                          onClick={() => handleDeleteQuestion(question.id)}
+                          onClick={() => handleDeletePassage(passage.id)}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete"
                         >
@@ -376,7 +388,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
         </div>
 
         {/* Pagination */}
-        {filteredQuestions.length > 0 && (
+        {filteredPassages.length > 0 && (
           <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Show</span>
@@ -395,7 +407,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
               </select>
             </div>
             <p className="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredQuestions.length)} of {filteredQuestions.length} entries
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredPassages.length)} of {filteredPassages.length} entries
             </p>
             <div className="flex gap-1">
               <button
@@ -439,10 +451,10 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
       {/* Add/Edit Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
               <h3 className="text-xl font-black text-navy uppercase">
-                {editingQuestion ? 'Edit Question' : 'Add New Question'}
+                {editingPassage ? 'Edit Passage' : 'Add New Passage'}
               </h3>
               <button
                 onClick={() => { resetForm(); setShowAddModal(false); }}
@@ -451,15 +463,26 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <form onSubmit={handleAddQuestion} className="p-6 space-y-4">
+            <form onSubmit={handleAddPassage} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Question Text *</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Passage Title *</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                  placeholder="Enter passage title"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Passage Content *</label>
                 <textarea
-                  value={formData.questionText}
-                  onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20 resize-none"
-                  placeholder="Enter the question"
-                  rows={4}
+                  placeholder="Enter the full passage text"
+                  rows={6}
                   required
                 />
               </div>
@@ -490,19 +513,34 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Question Type *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Passage Type *</label>
                   <select
-                    value={formData.questionType}
-                    onChange={(e) => setFormData({ ...formData, questionType: e.target.value as any })}
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                     required
                   >
-                    <option value="mcq">Multiple Choice</option>
-                    <option value="short-answer">Short Answer</option>
-                    <option value="long-answer">Long Answer</option>
-                    <option value="true-false">True/False</option>
+                    <option value="comprehension">Comprehension</option>
+                    <option value="case-study">Case Study</option>
+                    <option value="poem">Poem</option>
+                    <option value="article">Article</option>
+                    <option value="story">Story</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Language</label>
+                  <select
+                    value={formData.language}
+                    onChange={(e) => setFormData({ ...formData, language: e.target.value as any })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                  >
+                    <option value="english">English</option>
+                    <option value="hindi">Hindi</option>
+                    <option value="regional">Regional</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Difficulty Level</label>
                   <select
@@ -515,38 +553,17 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                     <option value="hard">Hard</option>
                   </select>
                 </div>
-              </div>
-              {formData.questionType === 'mcq' && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Options</label>
-                  <div className="space-y-2">
-                    {formData.options.map((opt, idx) => (
-                      <input
-                        key={idx}
-                        type="text"
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...formData.options];
-                          newOpts[idx] = e.target.value;
-                          setFormData({ ...formData, options: newOpts });
-                        }}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                        placeholder={`Option ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Number of Questions</label>
+                  <input
+                    type="number"
+                    value={formData.questionsCount}
+                    onChange={(e) => setFormData({ ...formData, questionsCount: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                    placeholder="Number of questions in this passage"
+                    min="0"
+                  />
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Answer *</label>
-                <input
-                  type="text"
-                  value={formData.answer}
-                  onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                  placeholder="Enter the correct answer"
-                  required
-                />
               </div>
               <div className="flex gap-3 pt-4">
                 <button
@@ -560,7 +577,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                   type="submit"
                   className="flex-1 px-4 py-3 bg-navy text-white text-sm font-bold rounded-lg hover:bg-navy/90 transition-colors"
                 >
-                  {editingQuestion ? 'Update Question' : 'Add Question'}
+                  {editingPassage ? 'Update Passage' : 'Add Passage'}
                 </button>
               </div>
             </form>
@@ -571,4 +588,4 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
   );
 };
 
-export default Questions;
+export default Passages;

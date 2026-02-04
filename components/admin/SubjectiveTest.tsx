@@ -1,84 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { testsAPI, coursesAPI } from '../../src/services/apiClient';
+import { subjectiveTestsAPI } from '../../src/services/apiClient';
 
-interface Test {
-  id: string;
-  name: string;
-  course: string;
-  questions: number;
-  status: 'active' | 'inactive' | 'scheduled' | 'draft';
-  date: string;
-  openDate?: string;
-  closeDate?: string;
-  duration?: number;
-  featured?: boolean;
-  totalAttempts?: number;
-  avgScore?: number;
-}
-
-interface Course {
+interface SubjectiveTest {
   id: string;
   title: string;
+  course: string;
+  totalQuestions: number;
+  evaluationPending: number;
+  status: 'active' | 'inactive' | 'draft';
+  createdDate: string;
+  studentsEnrolled: number;
 }
 
 interface Props {
   showToast: (m: string, type?: 'success' | 'error') => void;
 }
 
-const Tests: React.FC<Props> = ({ showToast }) => {
-  const [tests, setTests] = useState<Test[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
+  const [tests, setTests] = useState<SubjectiveTest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingTest, setEditingTest] = useState<Test | null>(null);
-
-  // Filter & Search
+  const [editingTest, setEditingTest] = useState<SubjectiveTest | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCourse, setFilterCourse] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     course: '',
-    questions: '',
-    duration: '180',
-    status: 'draft' as 'active' | 'inactive' | 'scheduled' | 'draft',
-    openDate: '',
-    closeDate: '',
-    featured: false
+    totalQuestions: '',
+    status: 'draft' as 'active' | 'inactive' | 'draft'
   });
 
   useEffect(() => {
-    loadData();
+    loadTests();
   }, []);
 
-  const loadData = async () => {
+  const loadTests = async () => {
     try {
-      const [testData, courseData] = await Promise.all([
-        testsAPI.getAll().catch(() => []),
-        coursesAPI.getAll().catch(() => [])
-      ]);
-      setTests(Array.isArray(testData) ? testData : []);
-      setCourses(Array.isArray(courseData) ? courseData : []);
+      // Try to load from API (database)
+      const data = await subjectiveTestsAPI.getAll().catch(() => []);
+      setTests(Array.isArray(data) ? data : []);
     } catch (error) {
       console.log('Starting with empty state - MongoDB may not have data yet');
       setTests([]);
-      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter logic
   const filteredTests = tests.filter(test => {
-    const matchesSearch = !searchQuery || (test.name && test.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCourse = !filterCourse || (test.course === filterCourse);
-    const matchesStatus = !filterStatus || (test.status === filterStatus);
-    return matchesSearch && matchesCourse && matchesStatus;
+    const matchesSearch = !searchQuery || (test.title && test.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = !filterStatus || test.status === filterStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredTests.length / itemsPerPage);
@@ -87,31 +63,18 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     currentPage * itemsPerPage
   );
 
-  const handleOpenModal = (test?: Test) => {
+  const handleOpenModal = (test?: SubjectiveTest) => {
     if (test) {
       setEditingTest(test);
       setFormData({
-        name: test.name,
+        title: test.title,
         course: test.course,
-        questions: test.questions.toString(),
-        duration: test.duration?.toString() || '180',
-        status: test.status,
-        openDate: test.openDate || '',
-        closeDate: test.closeDate || '',
-        featured: test.featured || false
+        totalQuestions: test.totalQuestions.toString(),
+        status: test.status
       });
     } else {
       setEditingTest(null);
-      setFormData({
-        name: '',
-        course: '',
-        questions: '',
-        duration: '180',
-        status: 'draft',
-        openDate: '',
-        closeDate: '',
-        featured: false
-      });
+      setFormData({ title: '', course: '', totalQuestions: '', status: 'draft' });
     }
     setShowModal(true);
   };
@@ -119,46 +82,35 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingTest(null);
-    setFormData({
-      name: '',
-      course: '',
-      questions: '',
-      duration: '180',
-      status: 'draft',
-      openDate: '',
-      closeDate: '',
-      featured: false
-    });
+    setFormData({ title: '', course: '', totalQuestions: '', status: 'draft' });
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.course || !formData.questions) {
+    if (!formData.title || !formData.course || !formData.totalQuestions) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
     try {
       const testData = {
-        id: editingTest?.id || `test_${Date.now()}`,
-        name: formData.name,
+        id: editingTest?.id || `subtest_${Date.now()}`,
+        title: formData.title,
         course: formData.course,
-        questions: parseInt(formData.questions) || 0,
-        duration: parseInt(formData.duration),
+        totalQuestions: parseInt(formData.totalQuestions),
         status: formData.status,
-        openDate: formData.openDate,
-        closeDate: formData.closeDate,
-        featured: formData.featured,
-        date: editingTest?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        createdDate: editingTest?.createdDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        evaluationPending: editingTest?.evaluationPending || 0,
+        studentsEnrolled: editingTest?.studentsEnrolled || 0
       };
 
-      console.log('Sending test data:', testData);
+      console.log('Sending subjective test data:', testData);
 
       if (editingTest) {
-        // Update existing test in API and state
+        // Update existing test
         try {
-          await testsAPI.update(editingTest.id, testData);
+          await subjectiveTestsAPI.update(editingTest.id, testData);
           setTests(tests.map(t => t.id === editingTest.id ? testData : t));
-          showToast('Test updated successfully!');
+          showToast('Subjective test updated successfully!');
         } catch (apiError) {
           console.error('API update error:', apiError);
           // Fallback: just update state if API fails
@@ -168,9 +120,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       } else {
         // Add new test to API and state
         try {
-          await testsAPI.create(testData);
+          await subjectiveTestsAPI.create(testData);
           setTests([...tests, testData]);
-          showToast('Test created successfully!');
+          showToast('Subjective test created successfully!');
         } catch (apiError) {
           console.error('API create error:', apiError);
           // Fallback: just update state if API fails
@@ -189,25 +141,11 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this test?')) {
       try {
-        await testsAPI.delete(id);
+        await subjectiveTestsAPI.delete(id);
         setTests(tests.filter(t => t.id !== id));
-        showToast('Test deleted successfully!');
+        showToast('Subjective test deleted successfully!');
       } catch (error) {
         showToast('Failed to delete test', 'error');
-      }
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedTests.length === 0) return;
-    if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
-      try {
-        await Promise.all(selectedTests.map(id => testsAPI.delete(id)));
-        setTests(tests.filter(t => !selectedTests.includes(t.id)));
-        setSelectedTests([]);
-        showToast(`${selectedTests.length} tests deleted!`);
-      } catch (error) {
-        showToast('Failed to delete tests', 'error');
       }
     }
   };
@@ -226,41 +164,19 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     );
   };
 
-  const toggleFeatured = async (test: Test) => {
-    try {
-      const updatedTest = { ...test, featured: !test.featured };
-      await testsAPI.update(test.id, updatedTest);
-      setTests(tests.map(t => t.id === test.id ? updatedTest : t));
-      showToast(test.featured ? 'Removed from featured!' : 'Added to featured!');
-    } catch (error) {
-      showToast('Failed to update test', 'error');
+  const handleBulkDelete = async () => {
+    if (selectedTests.length === 0) return;
+    if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
+      try {
+        await Promise.all(selectedTests.map(id => subjectiveTestsAPI.delete(id)));
+        setTests(tests.filter(t => !selectedTests.includes(t.id)));
+        setSelectedTests([]);
+        showToast(`${selectedTests.length} tests deleted!`);
+      } catch (error) {
+        showToast('Failed to delete tests', 'error');
+      }
     }
   };
-
-  const toggleStatus = async (test: Test) => {
-    const newStatus = test.status === 'active' ? 'inactive' : 'active';
-    try {
-      const updatedTest = { ...test, status: newStatus };
-      await testsAPI.update(test.id, updatedTest);
-      setTests(tests.map(t => t.id === test.id ? updatedTest : t));
-      showToast(`Test ${newStatus}!`);
-    } catch (error) {
-      showToast('Failed to update status', 'error');
-    }
-  };
-
-  const actions = [
-    { label: 'Edit Configuration', icon: 'edit', color: 'text-blue-500', action: (t: Test) => openEditModal(t) },
-    { label: 'Add Questions Manual', icon: 'add_circle', color: 'text-emerald-500' },
-    { label: 'Import from DOCX', icon: 'description', color: 'text-blue-600' },
-    { label: 'Import from Excel', icon: 'table_view', color: 'text-green-600' },
-    { label: 'Question Re-arrange', icon: 'sort', color: 'text-orange-500' },
-    { label: 'Student Analytics', icon: 'analytics', color: 'text-purple-500' },
-    { label: 'Duplicate Exam', icon: 'content_copy', color: 'text-cyan-500' },
-    { label: 'Take Preview', icon: 'play_arrow', color: 'text-navy' },
-    { label: 'Archive Test', icon: 'archive', color: 'text-gray-400' },
-    { label: 'Permanently Delete', icon: 'delete', color: 'text-red-500', action: (t: Test) => handleDelete(t.id) }
-  ];
 
   if (loading) {
     return (
@@ -275,8 +191,8 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black text-navy">Mock Tests</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage and publish exams</p>
+          <h2 className="text-2xl font-black text-navy">Subjective Tests</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage essay and answer-based exams</p>
         </div>
         <div className="flex gap-3">
           {selectedTests.length > 0 && (
@@ -293,7 +209,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
             className="bg-navy text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-navy/90 transition-colors flex items-center gap-2"
           >
             <span className="material-icons-outlined text-lg">add</span>
-            Create Test
+            Create Subjective Test
           </button>
         </div>
       </div>
@@ -312,20 +228,8 @@ const Tests: React.FC<Props> = ({ showToast }) => {
               <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
-              <option value={100}>100</option>
             </select>
           </div>
-
-          <select
-            value={filterCourse}
-            onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}
-            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
-          >
-            <option value="">All Courses</option>
-            {[...new Set(tests.map(t => t.course))].map(course => (
-              <option key={course} value={course}>{course}</option>
-            ))}
-          </select>
 
           <select
             value={filterStatus}
@@ -335,7 +239,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-            <option value="scheduled">Scheduled</option>
             <option value="draft">Draft</option>
           </select>
 
@@ -369,20 +272,19 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Test Title</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Course</th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Open Date</th>
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Close Date</th>
                 <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Questions</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Pending Eval</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Students</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Featured</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {paginatedTests.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center">
-                    <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">quiz</span>
-                    <p className="text-gray-400 font-medium">No tests found</p>
+                  <td colSpan={9} className="px-4 py-12 text-center">
+                    <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">description</span>
+                    <p className="text-gray-400 font-medium">No subjective tests found</p>
                   </td>
                 </tr>
               ) : (
@@ -400,35 +302,27 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm font-semibold text-navy uppercase">{test.name}</span>
-                      <p className="text-xs text-gray-400 mt-0.5">Added: {test.date}</p>
+                      <span className="text-sm font-semibold text-navy">{test.title}</span>
+                      <p className="text-xs text-gray-400 mt-0.5">Created: {test.createdDate}</p>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-600">{test.course}</td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{test.openDate || 'N/A'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{test.closeDate || 'N/A'}</td>
                     <td className="px-4 py-4 text-center">
-                      <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{test.questions}</span>
+                      <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{test.totalQuestions}</span>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="inline-block bg-orange-50 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold">{test.evaluationPending}</span>
+                    </td>
+                    <td className="px-4 py-4 text-center text-sm font-bold text-gray-600">{test.studentsEnrolled}</td>
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => toggleStatus(test)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          test.status === 'active'
-                            ? 'bg-green-100 text-green-600'
-                            : 'bg-red-100 text-red-600'
-                        }`}
-                      >
-                        {test.status === 'active' ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <button
-                        onClick={() => toggleFeatured(test)}
-                        className={`transition-colors ${test.featured ? 'text-yellow-500' : 'text-gray-300'}`}
-                        title={test.featured ? 'Remove from featured' : 'Add to featured'}
-                      >
-                        <span className="material-icons-outlined text-lg">star</span>
-                      </button>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        test.status === 'active'
+                          ? 'bg-green-100 text-green-600'
+                          : test.status === 'draft'
+                          ? 'bg-gray-100 text-gray-600'
+                          : 'bg-red-100 text-red-600'
+                      }`}>
+                        {test.status}
+                      </span>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
@@ -465,19 +359,13 @@ const Tests: React.FC<Props> = ({ showToast }) => {
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
               >
                 First
               </button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
+                let pageNum = i + 1;
+                if (totalPages > 5 && currentPage > 3) {
                   pageNum = currentPage - 2 + i;
                 }
                 return (
@@ -497,16 +385,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
               >
                 Next
-              </button>
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Last
               </button>
             </div>
           </div>
@@ -527,7 +408,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
           >
             <div className="p-6 border-b border-gray-100">
               <h3 className="text-xl font-black text-navy uppercase tracking-wide">
-                {editingTest ? 'Edit Test' : 'Create Test'}
+                {editingTest ? 'Edit Test' : 'Create Subjective Test'}
               </h3>
             </div>
 
@@ -537,8 +418,8 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                 <input
                   type="text"
                   placeholder="Enter test title"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                 />
               </div>
@@ -552,18 +433,12 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   >
                     <option value="">Select Course</option>
-                    <option value="NEET">NEET</option>
-                    <option value="IIT-JEE">IIT-JEE</option>
-                    <option value="BOARDS">BOARDS</option>
-                    <option value="AIIMS">AIIMS</option>
-                    <option value="JIPMER">JIPMER</option>
-                    <option value="KVPY">KVPY</option>
-                    <option value="OLYMPIAD">OLYMPIAD</option>
-                    {[...new Set(tests.map(t => t.course))].map(course => (
-                      !['NEET', 'IIT-JEE', 'BOARDS', 'AIIMS', 'JIPMER', 'KVPY', 'OLYMPIAD'].includes(course) && (
-                        <option key={course} value={course}>{course}</option>
-                      )
-                    ))}
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="History">History</option>
+                    <option value="Science">Science</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Social Studies">Social Studies</option>
                   </select>
                 </div>
                 <div>
@@ -571,72 +446,24 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                   <input
                     type="number"
                     placeholder="Number of questions"
-                    value={formData.questions}
-                    onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
+                    value={formData.totalQuestions}
+                    onChange={(e) => setFormData({ ...formData, totalQuestions: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Duration (mins)</label>
-                  <input
-                    type="number"
-                    placeholder="Duration in minutes"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Open Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.openDate}
-                    onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Close Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.closeDate}
-                    onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Mark as Featured</span>
-                </label>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
               </div>
             </div>
 
@@ -661,4 +488,4 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   );
 };
 
-export default Tests;
+export default SubjectiveTest;

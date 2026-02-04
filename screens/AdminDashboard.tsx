@@ -6,7 +6,11 @@ import Students from '../components/admin/Students';
 import Store from '../components/admin/Store';
 import Institute from '../components/admin/Institute';
 import Questions from '../components/admin/Questions';
+import Passages from '../components/admin/Passages';
 import Tests from '../components/admin/Tests';
+import SubjectiveTest from '../components/admin/SubjectiveTest';
+import TestSeries from '../components/admin/TestSeries';
+import AllReports from '../components/admin/AllReports';
 import Videos from '../components/admin/Videos';
 import LiveVideos from '../components/admin/LiveVideos';
 import PDFs from '../components/admin/PDFs';
@@ -19,7 +23,7 @@ import Buyers from '../components/admin/shopping/Buyers';
 import Tokens from '../components/admin/shopping/Tokens';
 import Coupons from '../components/admin/shopping/Coupons';
 
-export type AdminView = 'dashboard' | 'misc' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'tests' | 'videos' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
+export type AdminView = 'dashboard' | 'misc' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -62,8 +66,29 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
     },
     { id: 'store', label: 'Package Store', icon: 'store', color: 'text-emerald-400' },
     { id: 'institute', label: 'Institute Profile', icon: 'business', color: 'text-cyan-400' },
-    { id: 'questions', label: 'Manage Questions', icon: 'help_outline', color: 'text-amber-400' },
-    { id: 'tests', label: 'Manage Test', icon: 'quiz', color: 'text-red-400' },
+    {
+      id: 'questions',
+      label: 'Manage Questions',
+      icon: 'help_outline',
+      color: 'text-amber-400',
+      submenu: [
+        { id: 'questions', label: 'Question List', icon: 'list' },
+        { id: 'question-bank', label: 'Question Bank', icon: 'library_books' },
+        { id: 'passages', label: 'Passages', icon: 'article' }
+      ]
+    },
+    {
+      id: 'tests',
+      label: 'Manage Test',
+      icon: 'quiz',
+      color: 'text-red-400',
+      submenu: [
+        { id: 'tests', label: 'Test', icon: 'assignment' },
+        { id: 'subjective-test', label: 'Subjective Test', icon: 'description' },
+        { id: 'test-series', label: 'Test Series', icon: 'playlist_add' },
+        { id: 'all-reports', label: 'All Reports', icon: 'assessment' }
+      ]
+    },
     { id: 'videos', label: 'Video Library', icon: 'play_circle', color: 'text-indigo-400' },
     { id: 'live-videos', label: 'Live Sessions', icon: 'live_tv', color: 'text-rose-500' },
     { id: 'pdfs', label: 'Manage PDFs', icon: 'picture_as_pdf', color: 'text-red-500' },
@@ -92,7 +117,12 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'store': return <Store {...props} />;
       case 'institute': return <Institute {...props} />;
       case 'questions': return <Questions {...props} />;
+      case 'question-bank': return <Questions {...props} view="bank" />;
+      case 'passages': return <Passages {...props} />;
       case 'tests': return <Tests {...props} />;
+      case 'subjective-test': return <SubjectiveTest {...props} />;
+      case 'test-series': return <TestSeries {...props} />;
+      case 'all-reports': return <AllReports {...props} />;
       case 'videos': return <Videos {...props} />;
       case 'live-videos': return <LiveVideos {...props} />;
       case 'pdfs': return <PDFs {...props} />;
