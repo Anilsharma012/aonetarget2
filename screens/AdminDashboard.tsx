@@ -52,7 +52,22 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', color: 'text-blue-400' },
-    { id: 'misc', label: 'Misc Manager', icon: 'category', color: 'text-purple-400' },
+    {
+      id: 'misc',
+      label: 'Misc Manager',
+      icon: 'category',
+      color: 'text-purple-400',
+      submenu: [
+        { id: 'courses', label: 'Courses', icon: 'school' },
+        { id: 'subcourses', label: 'Sub Courses', icon: 'menu_book' },
+        { id: 'subjects', label: 'Subjects', icon: 'subject' },
+        { id: 'topics', label: 'Topics', icon: 'topic' },
+        { id: 'instructions', label: 'Instructions', icon: 'description' },
+        { id: 'exam-documents', label: 'Exam Documents', icon: 'file_present' },
+        { id: 'global-news', label: 'Global News', icon: 'newspaper' },
+        { id: 'push-notifications', label: 'Push Notifications', icon: 'notifications' }
+      ]
+    },
     { id: 'students', label: 'Students', icon: 'people', color: 'text-orange-400' },
     {
       id: 'shopping',
