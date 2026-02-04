@@ -211,8 +211,10 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
            </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 lg:p-10 hide-scrollbar bg-[#F8F9FA]">
-           {renderContent()}
+        <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-[#F8F9FA] min-h-0">
+           <div className="h-full">
+             {renderContent()}
+           </div>
         </div>
       </main>
     </div>

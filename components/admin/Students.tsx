@@ -290,106 +290,167 @@ const Students: React.FC<Props> = ({ showToast }) => {
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden animate-fade-in">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 animate-fade-in flex flex-col h-full min-h-0">
       {/* Header */}
-      <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center bg-gray-50/30 gap-6">
+      <div className="p-6 border-b border-gray-100 flex flex-wrap justify-between items-center bg-gradient-to-r from-navy/5 to-blue-50 gap-4 shrink-0">
         <div>
-          <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">Student Directory</h3>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Monitor Enrollment & Student Lifecycle</p>
+          <h3 className="text-xl font-black text-navy uppercase tracking-tight flex items-center gap-3">
+            <span className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center text-white">
+              <span className="material-icons-outlined">school</span>
+            </span>
+            Student Directory
+          </h3>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mt-1 ml-13">Total: {students.length} students enrolled</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExportCSV} className="px-6 py-3 bg-white border border-gray-200 text-navy text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm">Export CSV</button>
-          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="px-6 py-4 bg-navy text-white text-[10px] font-black rounded-2xl shadow-xl uppercase tracking-widest hover:scale-105 transition-all">+ Add New Student</button>
+        <div className="flex gap-3 flex-wrap">
+          <button onClick={loadStudents} className="px-4 py-3 bg-white border border-gray-200 text-navy text-[10px] font-bold rounded-xl uppercase tracking-wide hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
+            <span className="material-icons-outlined text-sm">refresh</span>
+            Refresh
+          </button>
+          <button onClick={handleExportCSV} className="px-4 py-3 bg-white border border-gray-200 text-green-600 text-[10px] font-bold rounded-xl uppercase tracking-wide hover:bg-green-50 transition-all shadow-sm flex items-center gap-2">
+            <span className="material-icons-outlined text-sm">download</span>
+            Export CSV
+          </button>
+          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="px-5 py-3 bg-gradient-to-r from-navy to-blue-600 text-white text-[10px] font-bold rounded-xl shadow-lg uppercase tracking-wide hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+            <span className="material-icons-outlined text-sm">person_add</span>
+            Add Student
+          </button>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="p-6 border-b border-gray-50 flex flex-wrap gap-4 items-center">
-        <div className="flex-1 relative min-w-[300px]">
-          <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+      <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center bg-white shrink-0">
+        <div className="flex-1 relative min-w-[250px]">
+          <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5 transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-navy/10 focus:border-navy/30 transition-all placeholder:text-gray-400"
             placeholder="Search by name, email, ID or mobile..."
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase text-gray-400 outline-none"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none cursor-pointer hover:border-navy/30 transition-all"
           >
-            <option value="all">Status: All</option>
+            <option value="all">All Status</option>
             <option value="active">Active Only</option>
             <option value="inactive">Inactive Only</option>
           </select>
+          <div className="text-xs font-bold text-gray-400 px-3 py-2 bg-gray-50 rounded-lg">
+            Showing {filteredStudents.length} of {students.length}
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="flex-1 overflow-auto min-h-0">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading students...</div>
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="animate-spin w-10 h-10 border-4 border-navy/20 border-t-navy rounded-full mb-4"></div>
+            <p className="text-sm font-medium">Loading students...</p>
+          </div>
         ) : filteredStudents.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No students found</div>
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <span className="material-icons-outlined text-6xl mb-4 text-gray-200">school</span>
+            <p className="text-sm font-medium mb-2">No students found</p>
+            <p className="text-xs text-gray-400">Add your first student to get started</p>
+            <button onClick={() => { resetForm(); setShowAddModal(true); }} className="mt-4 px-4 py-2 bg-navy text-white text-xs font-bold rounded-lg">
+              + Add Student
+            </button>
+          </div>
         ) : (
-          <table className="w-full text-left text-[11px]">
-            <thead className="bg-[#F8F9FA] font-black text-gray-400 uppercase tracking-widest sticky top-0">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gray-50 font-bold text-gray-500 uppercase text-[10px] tracking-wider sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-4 border-b border-gray-100">Name</th>
-                <th className="px-4 py-4 border-b border-gray-100">Email</th>
-                <th className="px-4 py-4 border-b border-gray-100">Contact</th>
-                <th className="px-4 py-4 border-b border-gray-100">DOB</th>
-                <th className="px-4 py-4 border-b border-gray-100">Course</th>
-                <th className="px-4 py-4 border-b border-gray-100">Reg. Date</th>
-                <th className="px-4 py-4 border-b border-gray-100">Reg. Type</th>
-                <th className="px-4 py-4 border-b border-gray-100 text-center">Status</th>
-                <th className="px-4 py-4 border-b border-gray-100 text-center">Actions</th>
+                <th className="px-4 py-3 border-b border-gray-200">Student</th>
+                <th className="px-4 py-3 border-b border-gray-200">Contact</th>
+                <th className="px-4 py-3 border-b border-gray-200">Course</th>
+                <th className="px-4 py-3 border-b border-gray-200">Registration</th>
+                <th className="px-4 py-3 border-b border-gray-200 text-center">Status</th>
+                <th className="px-4 py-3 border-b border-gray-200 text-center">Payment</th>
+                <th className="px-4 py-3 border-b border-gray-200 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {paginatedStudents.map(s => (
-                <tr key={s.id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 group">
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-navy/10 rounded-lg flex items-center justify-center font-black text-navy text-[9px]">
-                        {s.name.charAt(0)}
+                <tr key={s.id} className="hover:bg-blue-50/50 transition-colors group">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-navy to-blue-500 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-sm">
+                        {s.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-bold text-navy">{s.name}</span>
-                      <span className="text-[9px] text-gray-400">{s.id}</span>
+                      <div>
+                        <p className="font-bold text-navy text-sm">{s.name}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">{s.id}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[10px] text-gray-600">{s.email}</span>
+                  <td className="px-4 py-3">
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <span className="material-icons-outlined text-xs text-gray-400">email</span>
+                        {s.email}
+                      </p>
+                      <p className="text-xs font-bold text-navy flex items-center gap-1">
+                        <span className="material-icons-outlined text-xs text-gray-400">phone</span>
+                        {s.phone}
+                      </p>
+                    </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[10px] font-bold text-navy">{s.phone}</span>
+                  <td className="px-4 py-3">
+                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 font-bold text-[10px] uppercase rounded-lg inline-block">
+                      {s.course}
+                    </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[10px] text-gray-600">{new Date(s.dob).toLocaleDateString('en-IN')}</span>
+                  <td className="px-4 py-3">
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-600">{new Date(s.registrationDate).toLocaleDateString('en-IN')}</p>
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 font-medium text-[9px] uppercase rounded">
+                        {s.registrationType}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[9px] font-black text-navy/40 uppercase bg-gray-100 px-2 py-1 rounded-md w-fit inline-block">{s.course}</span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[10px] text-gray-600">{new Date(s.registrationDate).toLocaleDateString('en-IN')}</span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[9px] font-bold text-navy uppercase bg-blue-100 px-2 py-1 rounded-md">{s.registrationType}</span>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase inline-block ${s.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase inline-flex items-center gap-1 ${
+                      s.status === 'active' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${s.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       {s.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-center">
-                    <div className="flex justify-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity flex-wrap">
-                      <button onClick={() => handleViewStudent(s)} title="View" className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">visibility</span></button>
-                      <button onClick={() => handleEditClick(s)} title="Edit" className="p-2 bg-teal-100 text-teal-600 hover:bg-teal-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">edit</span></button>
-                      <button onClick={() => handleFeesClick(s)} title="Fees" className="p-2 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">account_balance_wallet</span></button>
-                      <button onClick={() => handleNotesClick(s)} title="Notes" className="p-2 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">note</span></button>
-                      <button onClick={() => handleDeleteStudent(s.id, s.name)} title="Delete" className="p-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">delete</span></button>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                      s.paymentStatus === 'paid' 
+                        ? 'bg-green-100 text-green-700' 
+                        : s.paymentStatus === 'pending' 
+                          ? 'bg-yellow-100 text-yellow-700' 
+                          : 'bg-red-100 text-red-700'
+                    }`}>
+                      {s.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex justify-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleViewStudent(s)} title="View Details" className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all">
+                        <span className="material-icons-outlined text-sm">visibility</span>
+                      </button>
+                      <button onClick={() => handleEditClick(s)} title="Edit Student" className="p-2 bg-teal-100 text-teal-600 hover:bg-teal-600 hover:text-white rounded-lg transition-all">
+                        <span className="material-icons-outlined text-sm">edit</span>
+                      </button>
+                      <button onClick={() => handleFeesClick(s)} title="Manage Fees" className="p-2 bg-green-100 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-all">
+                        <span className="material-icons-outlined text-sm">payments</span>
+                      </button>
+                      <button onClick={() => handleNotesClick(s)} title="Add Notes" className="p-2 bg-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white rounded-lg transition-all">
+                        <span className="material-icons-outlined text-sm">sticky_note_2</span>
+                      </button>
+                      <button onClick={() => handleDeleteStudent(s.id, s.name)} title="Delete Student" className="p-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all">
+                        <span className="material-icons-outlined text-sm">delete</span>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -401,38 +462,47 @@ const Students: React.FC<Props> = ({ showToast }) => {
 
       {/* Pagination Controls */}
       {filteredStudents.length > 0 && (
-        <div className="p-6 border-t border-gray-100 flex flex-wrap justify-between items-center gap-4">
+        <div className="p-4 border-t border-gray-200 flex flex-wrap justify-between items-center gap-4 bg-gray-50 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black text-gray-400 uppercase">Items Per Page:</span>
+            <span className="text-xs font-medium text-gray-500">Show:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(parseInt(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-black uppercase text-gray-600 outline-none hover:border-navy"
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none cursor-pointer hover:border-navy/30 transition-all"
             >
               <option value="5">5</option>
               <option value="10">10</option>
               <option value="25">25</option>
               <option value="50">50</option>
             </select>
+            <span className="text-xs font-medium text-gray-500">per page</span>
           </div>
 
-          <div className="text-[10px] font-black text-gray-400 uppercase">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} students
+          <div className="text-xs font-medium text-gray-500">
+            Showing <span className="font-bold text-navy">{startIndex + 1}</span> to <span className="font-bold text-navy">{Math.min(endIndex, filteredStudents.length)}</span> of <span className="font-bold text-navy">{filteredStudents.length}</span> students
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="p-2 bg-white border border-gray-200 text-navy rounded-lg hover:bg-navy hover:text-white hover:border-navy transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="First Page"
+            >
+              <span className="material-icons-outlined text-sm">first_page</span>
+            </button>
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg uppercase hover:bg-navy hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 bg-white border border-gray-200 text-navy rounded-lg hover:bg-navy hover:text-white hover:border-navy transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-icons-outlined text-sm">chevron_left</span>
             </button>
 
-            <div className="flex gap-1">
+            <div className="flex gap-1 mx-2">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -451,10 +521,10 @@ const Students: React.FC<Props> = ({ showToast }) => {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
                       currentPage === pageNum
-                        ? 'bg-navy text-white'
-                        : 'bg-gray-100 text-navy hover:bg-gray-200'
+                        ? 'bg-navy text-white shadow-md'
+                        : 'bg-white border border-gray-200 text-navy hover:bg-gray-100'
                     }`}
                   >
                     {pageNum}
@@ -466,9 +536,17 @@ const Students: React.FC<Props> = ({ showToast }) => {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg uppercase hover:bg-navy hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 bg-white border border-gray-200 text-navy rounded-lg hover:bg-navy hover:text-white hover:border-navy transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-icons-outlined text-sm">chevron_right</span>
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="p-2 bg-white border border-gray-200 text-navy rounded-lg hover:bg-navy hover:text-white hover:border-navy transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Last Page"
+            >
+              <span className="material-icons-outlined text-sm">last_page</span>
             </button>
           </div>
         </div>
