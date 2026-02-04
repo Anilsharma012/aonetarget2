@@ -28,11 +28,15 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingPdf, setEditingPdf] = useState<PDF | null>(null);
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    subject: '', 
-    course: '', 
-    fileUrl: '', 
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    subject: '',
+    course: '',
+    fileUrl: '',
     fileSize: '',
     allowDownload: false,
     status: 'active' as 'active' | 'inactive'
