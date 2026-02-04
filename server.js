@@ -1179,6 +1179,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
+// Root route fix
+app.get('/', (req, res) => {
+  res.send('API Server Running Successfully 🚀');
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
