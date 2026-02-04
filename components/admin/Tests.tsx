@@ -211,7 +211,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
 
   const toggleFeatured = async (test: Test) => {
     try {
-      setTests(tests.map(t => t.id === test.id ? { ...t, featured: !t.featured } : t));
+      const updatedTest = { ...test, featured: !test.featured };
+      await testsAPI.update(test.id, updatedTest);
+      setTests(tests.map(t => t.id === test.id ? updatedTest : t));
       showToast(test.featured ? 'Removed from featured!' : 'Added to featured!');
     } catch (error) {
       showToast('Failed to update test', 'error');
