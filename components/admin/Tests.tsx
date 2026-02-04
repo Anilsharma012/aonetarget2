@@ -75,9 +75,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
 
   // Filter logic
   const filteredTests = tests.filter(test => {
-    const matchesSearch = test.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCourse = !filterCourse || test.course === filterCourse;
-    const matchesStatus = !filterStatus || test.status === filterStatus;
+    const matchesSearch = !searchQuery || (test.name && test.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCourse = !filterCourse || (test.course === filterCourse);
+    const matchesStatus = !filterStatus || (test.status === filterStatus);
     return matchesSearch && matchesCourse && matchesStatus;
   });
 
