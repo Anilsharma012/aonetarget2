@@ -125,6 +125,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this series?')) {
       try {
+        await testsAPI.delete(id);
         setSeries(series.filter(s => s.id !== id));
         showToast('Series deleted successfully!');
       } catch (error) {
