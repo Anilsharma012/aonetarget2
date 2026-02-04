@@ -165,6 +165,14 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'blog': return <Blog {...props} />;
       case 'settings': return <Settings {...props} />;
       case 'banners': return <Banners {...props} />;
+      case 'courses': return <Courses {...props} />;
+      case 'subcourses': return <SubCourses {...props} />;
+      case 'subjects': return <Subjects {...props} />;
+      case 'topics': return <Topics {...props} />;
+      case 'instructions': return <Instructions {...props} />;
+      case 'exam-documents': return <ExamDocuments {...props} />;
+      case 'global-news': return <GlobalNews {...props} />;
+      case 'push-notifications': return <PushNotifications {...props} />;
       default: return <Dashboard {...props} />;
     }
   };
