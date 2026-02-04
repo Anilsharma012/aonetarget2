@@ -48,8 +48,9 @@ const AllReports: React.FC<Props> = ({ showToast }) => {
   };
 
   const filteredReports = reports.filter(report => {
-    const matchesSearch = report.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         report.testName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery ||
+                         (report.studentName && report.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (report.testName && report.testName.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = !filterStatus || report.status === filterStatus;
     const matchesCourse = !filterCourse || report.course === filterCourse;
     return matchesSearch && matchesStatus && matchesCourse;
