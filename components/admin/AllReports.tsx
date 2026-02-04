@@ -36,10 +36,12 @@ const AllReports: React.FC<Props> = ({ showToast }) => {
 
   const loadReports = async () => {
     try {
-      // Start with empty state - reports will be generated when students complete tests
-      setReports([]);
+      // Try to load reports from API (database)
+      const data = await testsAPI.getAll().catch(() => []);
+      setReports(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load reports', 'error');
+      console.log('Starting with empty reports - will be generated when students take tests');
+      setReports([]);
     } finally {
       setLoading(false);
     }
