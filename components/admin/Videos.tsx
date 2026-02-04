@@ -14,6 +14,7 @@ interface Video {
   status: 'active' | 'inactive' | 'archived';
   videoUrl?: string;
   thumbnail?: string;
+  instructor?: string;
 }
 
 interface Props {
@@ -28,17 +29,16 @@ const Videos: React.FC<Props> = ({ showToast }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterQuality, setFilterQuality] = useState('');
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('uploadDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
     topic: '',
     course: '',
+    instructor: '',
     duration: '',
     quality: 'HD 1080P',
     videoUrl: '',
@@ -61,20 +61,14 @@ const Videos: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const filteredVideos = videos
-    .filter(video => {
-      const matchesSearch = !searchQuery || video.title.toLowerCase().includes(searchQuery.toLowerCase()) || video.subject.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = !filterStatus || video.status === filterStatus;
-      const matchesQuality = !filterQuality || video.quality === filterQuality;
-      return matchesSearch && matchesStatus && matchesQuality;
-    })
-    .sort((a, b) => {
-      const aVal = a[sortBy as keyof Video];
-      const bVal = b[sortBy as keyof Video];
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
+  const filteredVideos = videos.filter(video => {
+    const matchesSearch = !searchQuery || 
+      video.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      video.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !filterStatus || video.status === filterStatus;
+    const matchesQuality = !filterQuality || video.quality === filterQuality;
+    return matchesSearch && matchesStatus && matchesQuality;
+  });
 
   const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
   const paginatedVideos = filteredVideos.slice(
@@ -95,6 +89,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
         subject: formData.subject,
         topic: formData.topic,
         course: formData.course,
+        instructor: formData.instructor,
         duration: formData.duration,
         quality: formData.quality,
         views: editingVideo?.views || 0,
@@ -114,7 +109,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingVideo(null);
-      setFormData({ title: '', subject: '', topic: '', course: '', duration: '', quality: 'HD 1080P', videoUrl: '', thumbnail: '', status: 'active' });
+      setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', thumbnail: '', status: 'active' });
       loadVideos();
     } catch (error) {
       showToast('Failed to save video', 'error');
@@ -133,25 +128,6 @@ const Videos: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (selectedVideos.length === 0) {
-      showToast('No videos selected', 'error');
-      return;
-    }
-    if (confirm(`Delete ${selectedVideos.length} videos?`)) {
-      try {
-        for (const id of selectedVideos) {
-          await videosAPI.delete(id);
-        }
-        showToast(`${selectedVideos.length} videos deleted successfully!`);
-        setSelectedVideos([]);
-        loadVideos();
-      } catch (error) {
-        showToast('Failed to delete videos', 'error');
-      }
-    }
-  };
-
   const openEditModal = (video: Video) => {
     setEditingVideo(video);
     setFormData({
@@ -159,6 +135,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
       subject: video.subject,
       topic: video.topic,
       course: video.course,
+      instructor: video.instructor || '',
       duration: video.duration,
       quality: video.quality,
       thumbnail: video.thumbnail || '',
@@ -168,59 +145,122 @@ const Videos: React.FC<Props> = ({ showToast }) => {
     setShowModal(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-      inactive: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-      archived: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
+  const getQualityColor = (quality: string) => {
+    const colors = {
+      'HD 1080P': 'from-blue-500 to-cyan-500',
+      'HD 720P': 'from-purple-500 to-pink-500',
+      'SD 480P': 'from-orange-500 to-red-500'
     };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return (
-      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${config.bg} ${config.text} ${config.border}`}>
-        {status}
-      </span>
-    );
+    return colors[quality as keyof typeof colors] || 'from-gray-500 to-gray-600';
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      active: 'from-green-500/20 to-emerald-500/20',
+      inactive: 'from-red-500/20 to-pink-500/20',
+      archived: 'from-gray-500/20 to-slate-500/20'
+    };
+    return colors[status as keyof typeof colors];
+  };
+
+  const getStatusTextColor = (status: string) => {
+    const colors = {
+      active: 'text-green-700',
+      inactive: 'text-red-700',
+      archived: 'text-gray-700'
+    };
+    return colors[status as keyof typeof colors];
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-bold">Loading videos...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h3 className="text-lg font-black text-navy uppercase tracking-widest">Video Library</h3>
-          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {videos.length} Videos</p>
+    <div className="space-y-8">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 rounded-3xl p-8 text-white shadow-2xl">
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/3 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                  <span className="material-icons-outlined text-2xl">video_library</span>
+                </div>
+                <h1 className="text-4xl font-black tracking-tight">Video Library</h1>
+              </div>
+              <p className="text-white/80 text-sm font-semibold">Manage and organize your video lectures</p>
+            </div>
+            <button 
+              onClick={() => { setEditingVideo(null); setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', thumbnail: '', status: 'active' }); setShowModal(true); }}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-3 rounded-2xl font-black text-sm uppercase shadow-lg border border-white/20 transition-all hover:shadow-xl hover:scale-105"
+            >
+              <span className="flex items-center gap-2">
+                <span className="material-icons-outlined">add_circle</span>
+                Upload Video
+              </span>
+            </button>
+          </div>
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-4 mt-8">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Videos</p>
+              <p className="text-3xl font-black mt-2">{videos.length}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Total Views</p>
+              <p className="text-3xl font-black mt-2">{videos.reduce((sum, v) => sum + v.views, 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Active</p>
+              <p className="text-3xl font-black mt-2">{videos.filter(v => v.status === 'active').length}</p>
+            </div>
+          </div>
         </div>
-        <button 
-          onClick={() => { setEditingVideo(null); setFormData({ title: '', subject: '', topic: '', course: '', duration: '', quality: 'HD 1080P', videoUrl: '', thumbnail: '', status: 'active' }); setShowModal(true); }}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
-        >
-          <span className="material-icons-outlined text-base">add</span>
-          Upload Video
-        </button>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      {/* Filters & Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
+          <h3 className="text-lg font-black text-navy">Filters & Search</h3>
+          <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+            >
+              <span className="material-icons-outlined">dashboard</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}
+            >
+              <span className="material-icons-outlined">table_chart</span>
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
-            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+            <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
             <input
               type="text"
-              placeholder="Search by title or subject..."
+              placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
             />
           </div>
           <select
@@ -229,7 +269,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
               setFilterStatus(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -242,7 +282,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
               setFilterQuality(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">All Quality</option>
             <option value="HD 1080P">HD 1080P</option>
@@ -255,243 +295,394 @@ const Videos: React.FC<Props> = ({ showToast }) => {
               setItemsPerPage(parseInt(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
-            <option value="10">10 per page</option>
-            <option value="25">25 per page</option>
-            <option value="50">50 per page</option>
+            <option value="12">12 per page</option>
+            <option value="24">24 per page</option>
+            <option value="48">48 per page</option>
           </select>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {paginatedVideos.length === 0 ? (
-          <div className="p-12 text-center">
-            <span className="material-icons-outlined text-5xl text-gray-200 mb-4 block">video_library</span>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No videos found</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">#</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Title</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Subject</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Course</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Quality</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Views</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedVideos.map((video, idx) => (
-                    <tr key={video.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={video.thumbnail || `https://picsum.photos/40/40?sig=${video.id}`}
-                            alt={video.title}
-                            className="w-10 h-10 rounded-lg object-cover bg-gray-200"
-                          />
-                          <span className="font-bold text-navy max-w-xs truncate">{video.title}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600 font-semibold">{video.subject}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold">{video.course}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-bold">{video.quality}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center font-bold text-gray-700">{video.duration}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="material-icons-outlined text-sm text-gray-400">visibility</span>
-                          <span className="font-bold text-gray-600">{video.views.toLocaleString()}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">{getStatusBadge(video.status)}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => openEditModal(video)}
-                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                            title="Edit"
-                          >
-                            <span className="material-icons-outlined text-base">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(video.id)}
-                            className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                            title="Delete"
-                          >
-                            <span className="material-icons-outlined text-base">delete</span>
-                          </button>
-                          <button
-                            className="p-2 hover:bg-purple-50 rounded-lg text-purple-600 transition-colors"
-                            title="View Details"
-                          >
-                            <span className="material-icons-outlined text-base">visibility</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-              <p className="text-[10px] font-bold text-gray-500 uppercase">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredVideos.length)} of {filteredVideos.length}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span className="material-icons-outlined text-base">chevron_left</span>
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${
-                        page === currentPage
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+      {/* Videos Grid/Table View */}
+      {paginatedVideos.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center">
+          <span className="material-icons-outlined text-6xl text-gray-200 block mb-4">video_library</span>
+          <p className="text-gray-400 font-bold text-lg">No videos found</p>
+          <p className="text-gray-300 text-sm mt-2">Try adjusting your search or filters</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedVideos.map((video) => (
+              <div key={video.id} className="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all duration-300">
+                {/* Thumbnail */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 aspect-video">
+                  <img 
+                    src={video.thumbnail || `https://picsum.photos/500/280?sig=${video.id}`}
+                    alt={video.title}
+                    className="w-full h-full object-cover opacity-75 group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-white/40 group-hover:scale-110 transition-transform">
+                      <span className="material-icons-outlined text-white text-3xl">play_arrow</span>
+                    </div>
+                  </div>
+                  
+                  {/* Quality Badge */}
+                  <div className={`absolute top-4 right-4 bg-gradient-to-r ${getQualityColor(video.quality)} text-white px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-lg`}>
+                    {video.quality}
+                  </div>
+                  
+                  {/* Duration */}
+                  <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-[10px] font-bold">
+                    {video.duration}
+                  </div>
                 </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span className="material-icons-outlined text-base">chevron_right</span>
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Modal */}
+                {/* Content */}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1">
+                      <p className="text-[11px] font-black text-indigo-600 uppercase tracking-wider mb-1">{video.subject}</p>
+                      <h3 className="font-black text-navy text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 transition-colors">{video.title}</h3>
+                    </div>
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getStatusColor(video.status)} border ${getStatusTextColor(video.status)}`}>
+                      <span className="w-2 h-2 rounded-full bg-current"></span>
+                      <span className="text-[10px] font-bold uppercase">{video.status}</span>
+                    </div>
+                  </div>
+
+                  {/* Meta Info */}
+                  <div className="grid grid-cols-2 gap-2 mb-4 py-3 border-y border-gray-100">
+                    <div className="text-center">
+                      <p className="text-gray-500 text-[10px] font-bold uppercase">Course</p>
+                      <p className="font-black text-navy text-xs mt-1">{video.course}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-gray-500 text-[10px] font-bold uppercase">Views</p>
+                      <p className="font-black text-indigo-600 text-xs mt-1">{(video.views / 1000).toFixed(1)}K</p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditModal(video)}
+                      className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <span className="material-icons-outlined text-base">edit</span>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(video.id)}
+                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                      <span className="material-icons-outlined text-base">delete</span>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p className="text-sm font-bold text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredVideos.length)} of {filteredVideos.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_left</span>
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg font-black text-sm transition-all ${
+                    page === currentPage
+                      ? 'bg-indigo-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        // Table View
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">#</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Subject</th>
+                  <th className="px-6 py-4 text-left font-black text-gray-700 text-xs uppercase tracking-wider">Course</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Quality</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Views</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-center font-black text-gray-700 text-xs uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedVideos.map((video, idx) => (
+                  <tr key={video.id} className="hover:bg-indigo-50/50 transition-colors group">
+                    <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={video.thumbnail || `https://picsum.photos/40/40?sig=${video.id}`}
+                          alt={video.title}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                        <span className="font-bold text-navy max-w-xs truncate">{video.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-700 font-semibold">{video.subject}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">{video.course}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${getQualityColor(video.quality)} text-white font-black text-[10px]`}>{video.quality}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center font-bold text-indigo-600">{video.views.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-gradient-to-r ${getStatusColor(video.status)} ${getStatusTextColor(video.status)}`}>
+                        {video.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => openEditModal(video)}
+                          className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+                        >
+                          <span className="material-icons-outlined text-base">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(video.id)}
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                        >
+                          <span className="material-icons-outlined text-base">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between bg-gray-50 border-t border-gray-200 px-6 py-4">
+            <p className="text-sm font-bold text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredVideos.length)} of {filteredVideos.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 hover:bg-white rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_left</span>
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg font-black text-sm transition-all ${
+                    page === currentPage
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 hover:bg-white rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <span className="material-icons-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Professional Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-navy uppercase tracking-widest">
-                {editingVideo ? 'Edit Video' : 'Upload New Video'}
-              </h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-white flex justify-between items-center border-b border-indigo-700">
+              <div>
+                <h3 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                  <span className="material-icons-outlined text-3xl">{editingVideo ? 'edit' : 'video_library'}</span>
+                  {editingVideo ? 'Edit Video' : 'Upload New Video'}
+                </h3>
+                <p className="text-white/80 text-sm mt-1">{editingVideo ? 'Update video details' : 'Create a new video lecture'}</p>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+                className="p-2 hover:bg-white/20 rounded-xl transition-colors"
               >
-                <span className="material-icons-outlined">close</span>
+                <span className="material-icons-outlined text-2xl">close</span>
               </button>
             </div>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Video Title *"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-              <div className="grid grid-cols-2 gap-4">
+            {/* Modal Content */}
+            <div className="p-8 space-y-5">
+              {/* Title */}
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Video Title *</label>
                 <input
                   type="text"
-                  placeholder="Subject *"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <input
-                  type="text"
-                  placeholder="Topic"
-                  value={formData.topic}
-                  onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  placeholder="Enter video title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                 />
               </div>
+
+              {/* Subject, Topic, Course */}
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Subject *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Physics, Chemistry"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Topic</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Newton's Laws"
+                    value={formData.topic}
+                    onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Course *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., NEET, JEE"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Instructor</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Dr. John Doe"
+                    value={formData.instructor}
+                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+              </div>
+
+              {/* Duration, Quality, Status */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Duration</label>
+                  <input
+                    type="text"
+                    placeholder="45:30 MINS"
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Quality</label>
+                  <select
+                    value={formData.quality}
+                    onChange={(e) => setFormData({ ...formData, quality: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  >
+                    <option value="HD 1080P">HD 1080P</option>
+                    <option value="HD 720P">HD 720P</option>
+                    <option value="SD 480P">SD 480P</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'archived' })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* URLs */}
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Video URL</label>
                 <input
                   type="text"
-                  placeholder="Course *"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  placeholder="https://example.com/video.mp4"
+                  value={formData.videoUrl}
+                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">Thumbnail URL</label>
                 <input
                   type="text"
-                  placeholder="Duration (e.g., 45:10 MINS)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  placeholder="https://example.com/thumbnail.jpg"
+                  value={formData.thumbnail}
+                  onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  value={formData.quality}
-                  onChange={(e) => setFormData({ ...formData, quality: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-                >
-                  <option value="HD 1080P">HD 1080P</option>
-                  <option value="HD 720P">HD 720P</option>
-                  <option value="SD 480P">SD 480P</option>
-                </select>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'archived' })}
-                  className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Video URL"
-                value={formData.videoUrl}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-              <input
-                type="text"
-                placeholder="Thumbnail URL (optional)"
-                value={formData.thumbnail}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
             </div>
 
-            <div className="flex gap-4 mt-6">
+            {/* Modal Actions */}
+            <div className="sticky bottom-0 bg-gradient-to-t from-gray-50 to-transparent px-8 py-6 border-t border-gray-200 flex gap-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black text-sm uppercase hover:bg-gray-200 transition-colors"
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-black text-sm uppercase transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black text-sm uppercase hover:bg-indigo-700 transition-colors shadow-lg"
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-xl font-black text-sm uppercase shadow-lg hover:shadow-xl transition-all"
               >
-                {editingVideo ? 'Update' : 'Upload'}
+                {editingVideo ? 'Update Video' : 'Upload Video'}
               </button>
             </div>
           </div>
