@@ -149,6 +149,7 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
     if (selectedTests.length === 0) return;
     if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
       try {
+        await Promise.all(selectedTests.map(id => testsAPI.delete(id)));
         setTests(tests.filter(t => !selectedTests.includes(t.id)));
         setSelectedTests([]);
         showToast(`${selectedTests.length} tests deleted!`);
