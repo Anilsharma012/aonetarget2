@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { studentsAPI } from '../../api';
+import { studentsAPI } from '../../src/services/apiClient';
 
 interface Student {
   id: string;

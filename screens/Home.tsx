@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI } from '../api';
+import { coursesAPI } from '../src/services/apiClient';
+
 import { COURSES } from '../constants';
 
 const Home: React.FC = () => {

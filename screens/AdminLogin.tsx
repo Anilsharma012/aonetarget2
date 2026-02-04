@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminAPI } from '../api';
+import { adminAPI } from '../src/services/apiClient';
 
 interface Props {
   setAuth: (val: boolean) => void;

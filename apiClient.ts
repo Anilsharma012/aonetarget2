@@ -1,26 +1,5 @@
-// Determine API base URL based on environment
-const getApiBaseUrl = () => {
-  if (typeof window === 'undefined') return '/api';
-
-  const hostname = window.location.hostname;
-
-  // Check if we're running on localhost/127.0.0.1
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // Use direct connection to Express server on port 5000
-    return 'http://localhost:5000/api';
-  }
-
-  // Check if hostname contains 172. (Docker container IP)
-  if (hostname.includes('172.')) {
-    // Use direct connection to Express server on port 5000
-    return 'http://localhost:5000/api';
-  }
-
-  // For deployed apps, use relative path to same domain
-  return '/api';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// Use relative path - Vite proxy handles forwarding to backend
+const API_BASE_URL = '/api';
 if (typeof window !== 'undefined') {
   console.log('Hostname:', window.location.hostname);
   console.log('Port:', window.location.port);

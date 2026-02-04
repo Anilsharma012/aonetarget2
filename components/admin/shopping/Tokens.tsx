@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { tokensAPI } from '../../../api';
+import { tokensAPI } from '../../../src/services/apiClient';
 
 interface Token {
   id: string;

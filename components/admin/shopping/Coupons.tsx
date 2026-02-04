@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { couponsAPI } from '../../../api';
+import { couponsAPI } from '../../../src/services/apiClient';
 
 interface Coupon {
   id: string;
