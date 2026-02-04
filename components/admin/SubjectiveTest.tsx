@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { testsAPI } from '../../src/services/apiClient';
+import { subjectiveTestsAPI } from '../../src/services/apiClient';
 
 interface SubjectiveTest {
   id: string;
