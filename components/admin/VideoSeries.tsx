@@ -330,7 +330,7 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
                     </div>
                     <div>
                       <p className="text-gray-500 text-[10px] font-bold uppercase">Progress</p>
-                      <p className="font-black text-indigo-600 text-sm mt-1">{item.completionRate}%</p>
+                      <p className="font-black text-indigo-600 text-sm mt-1">{(item.completionRate || 0)}%</p>
                     </div>
                   </div>
 
@@ -338,10 +338,10 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-gray-600">Completion</span>
-                      <span className="text-xs font-black text-purple-600">{item.completionRate}%</span>
+                      <span className="text-xs font-black text-purple-600">{(item.completionRate || 0)}%</span>
                     </div>
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${item.completionRate}%` }}></div>
+                      <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${(item.completionRate || 0)}%` }}></div>
                     </div>
                   </div>
 
@@ -435,9 +435,9 @@ const VideoSeries: React.FC<Props> = ({ showToast }) => {
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${item.completionRate}%` }}></div>
+                          <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500" style={{ width: `${(item.completionRate || 0)}%` }}></div>
                         </div>
-                        <span className="font-bold text-gray-600 w-8 text-xs">{item.completionRate}%</span>
+                        <span className="font-bold text-gray-600 w-8 text-xs">{(item.completionRate || 0)}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
