@@ -41,10 +41,12 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
 
   const loadSeries = async () => {
     try {
-      // Start with empty state - users will add data via the form
-      setSeries([]);
+      // Try to load from API (database)
+      const data = await testsAPI.getAll().catch(() => []);
+      setSeries(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load series', 'error');
+      console.log('Starting with empty state - MongoDB may not have data yet');
+      setSeries([]);
     } finally {
       setLoading(false);
     }
