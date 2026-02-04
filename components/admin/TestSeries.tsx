@@ -105,11 +105,13 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
       };
 
       if (editingSeries) {
-        // Update existing series
+        // Use testsAPI for series operations (they use same backend routes)
+        await testsAPI.update(editingSeries.id, seriesData);
         setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
         showToast('Series updated successfully!');
       } else {
-        // Add new series
+        // Add new series to API and state
+        await testsAPI.create(seriesData);
         setSeries([...series, seriesData]);
         showToast('Series created successfully!');
       }
