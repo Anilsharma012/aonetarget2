@@ -152,15 +152,16 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       };
 
       if (editingTest) {
-        await testsAPI.update(editingTest.id, testData);
+        // Update existing test
+        setTests(tests.map(t => t.id === editingTest.id ? testData : t));
         showToast('Test updated successfully!');
       } else {
-        await testsAPI.create(testData);
+        // Add new test
+        setTests([...tests, testData]);
         showToast('Test created successfully!');
       }
 
       handleCloseModal();
-      loadData();
     } catch (error) {
       showToast('Failed to save test', 'error');
     }
