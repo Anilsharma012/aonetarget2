@@ -461,7 +461,7 @@ const Blog: React.FC<Props> = ({ showToast }) => {
             {/* Footer */}
             <div className="flex gap-4 px-8 py-6 border-t border-gray-100 bg-gray-50">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setThumbnailFile(null); }}
                 className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-black text-xs uppercase hover:bg-gray-200 transition-colors"
               >
                 Cancel
