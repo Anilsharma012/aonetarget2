@@ -41,13 +41,8 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
 
   const loadSeries = async () => {
     try {
-      setSeries([
-        { id: '1', seriesName: 'NEET Complete Series 2024', totalTests: 25, course: 'NEET', description: 'Full length practice tests', studentsEnrolled: 450, status: 'active', createdDate: '10-06-2024', completionRate: 78 },
-        { id: '2', seriesName: 'IIT-JEE Mock Series', totalTests: 30, course: 'IIT-JEE', description: 'Advanced level practice', studentsEnrolled: 320, status: 'active', createdDate: '15-06-2024', completionRate: 65 },
-        { id: '3', seriesName: 'Board Exam Preparation', totalTests: 15, course: 'CBSE', description: 'Class 12 board level tests', studentsEnrolled: 280, status: 'active', createdDate: '20-06-2024', completionRate: 82 },
-        { id: '4', seriesName: 'Daily Practice Series', totalTests: 60, course: 'NEET', description: 'Chapter-wise daily tests', studentsEnrolled: 580, status: 'active', createdDate: '25-06-2024', completionRate: 91 },
-        { id: '5', seriesName: 'Advanced Level Series', totalTests: 20, course: 'IIT-JEE', description: 'Expert level problems', studentsEnrolled: 0, status: 'draft', createdDate: '28-07-2024', completionRate: 0 },
-      ]);
+      // Start with empty state - users will add data via the form
+      setSeries([]);
     } catch (error) {
       showToast('Failed to load series', 'error');
     } finally {
