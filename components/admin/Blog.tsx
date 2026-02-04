@@ -180,7 +180,7 @@ const Blog: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {posts.length}</p>
         </div>
         <button
-          onClick={() => { setEditingPost(null); setFormData({ title: '', content: '', excerpt: '', author: '', category: '', tags: '', status: 'draft', featured: false, readingTime: 0, views: 0, publishDate: new Date().toISOString().split('T')[0], thumbnail: '' }); setShowModal(true); }}
+          onClick={() => { setEditingPost(null); setThumbnailFile(null); setFormData({ title: '', content: '', excerpt: '', author: '', category: '', tags: '', status: 'draft', featured: false, readingTime: 0, views: 0, publishDate: new Date().toISOString().split('T')[0], thumbnail: '' }); setShowModal(true); }}
           className="bg-navy text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-sm hover:shadow-md hover:scale-105 transition-all flex items-center gap-2"
         >
           <span className="material-icons-outlined text-base">add</span> Add Post
