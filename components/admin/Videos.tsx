@@ -411,7 +411,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
                     </div>
                     <div className="text-center">
                       <p className="text-gray-500 text-[10px] font-bold uppercase">Views</p>
-                      <p className="font-black text-indigo-600 text-xs mt-1">{(video.views / 1000).toFixed(1)}K</p>
+                      <p className="font-black text-indigo-600 text-xs mt-1">{((video.views || 0) / 1000).toFixed(1)}K</p>
                     </div>
                   </div>
 
