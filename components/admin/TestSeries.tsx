@@ -106,21 +106,38 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
         completionRate: editingSeries?.completionRate || 0
       };
 
+      console.log('Sending series data:', seriesData);
+
       if (editingSeries) {
-        // Use testsAPI for series operations (they use same backend routes)
-        await testsAPI.update(editingSeries.id, seriesData);
-        setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
-        showToast('Series updated successfully!');
+        // Update existing series
+        try {
+          await testsAPI.update(editingSeries.id, seriesData);
+          setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
+          showToast('Series updated successfully!');
+        } catch (apiError) {
+          console.error('API update error:', apiError);
+          // Fallback: just update state if API fails
+          setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
+          showToast('Series updated (local only)');
+        }
       } else {
         // Add new series to API and state
-        await testsAPI.create(seriesData);
-        setSeries([...series, seriesData]);
-        showToast('Series created successfully!');
+        try {
+          await testsAPI.create(seriesData);
+          setSeries([...series, seriesData]);
+          showToast('Series created successfully!');
+        } catch (apiError) {
+          console.error('API create error:', apiError);
+          // Fallback: just update state if API fails
+          setSeries([...series, seriesData]);
+          showToast('Series created (local only)');
+        }
       }
 
       handleCloseModal();
     } catch (error) {
-      showToast('Failed to save series', 'error');
+      console.error('Series save error:', error);
+      showToast(`Error: ${error instanceof Error ? error.message : 'Failed to save series'}`, 'error');
     }
   };
 
