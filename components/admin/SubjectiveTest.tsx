@@ -176,13 +176,24 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
           <h2 className="text-2xl font-black text-navy">Subjective Tests</h2>
           <p className="text-sm text-gray-500 mt-1">Manage essay and answer-based exams</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-navy text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-navy/90 transition-colors flex items-center gap-2"
-        >
-          <span className="material-icons-outlined text-lg">add</span>
-          Create Subjective Test
-        </button>
+        <div className="flex gap-3">
+          {selectedTests.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons-outlined text-lg">delete</span>
+              Delete ({selectedTests.length})
+            </button>
+          )}
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-navy text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-navy/90 transition-colors flex items-center gap-2"
+          >
+            <span className="material-icons-outlined text-lg">add</span>
+            Create Subjective Test
+          </button>
+        </div>
       </div>
 
       {/* Main Card */}
