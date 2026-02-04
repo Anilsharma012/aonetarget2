@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { pdfsAPI } from '../../src/services/apiClient';
+import { pdfsAPI, coursesAPI } from '../../src/services/apiClient';
 
 interface PDF {
   id: string;
@@ -8,7 +8,14 @@ interface PDF {
   course: string;
   fileUrl: string;
   fileSize?: string;
+  allowDownload?: boolean;
+  status?: 'active' | 'inactive';
   createdAt: string;
+}
+
+interface Course {
+  id: string;
+  title: string;
 }
 
 interface Props {
@@ -17,45 +24,115 @@ interface Props {
 
 const PDFs: React.FC<Props> = ({ showToast }) => {
   const [pdfs, setPdfs] = useState<PDF[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ title: '', subject: '', course: '', fileUrl: '', fileSize: '' });
+  const [editingPdf, setEditingPdf] = useState<PDF | null>(null);
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    subject: '', 
+    course: '', 
+    fileUrl: '', 
+    fileSize: '',
+    allowDownload: false,
+    status: 'active' as 'active' | 'inactive'
+  });
+
+  // Filter & Pagination State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCourse, setFilterCourse] = useState('');
+  const [filterSubject, setFilterSubject] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPdfs, setSelectedPdfs] = useState<string[]>([]);
+
+  const subjects = ['Physics', 'Chemistry', 'Biology', 'Zoology', 'Botany', 'General'];
 
   useEffect(() => {
-    loadPDFs();
+    loadData();
   }, []);
 
-  const loadPDFs = async () => {
+  const loadData = async () => {
     try {
-      const data = await pdfsAPI.getAll();
-      setPdfs(data);
+      const [pdfData, courseData] = await Promise.all([
+        pdfsAPI.getAll(),
+        coursesAPI.getAll()
+      ]);
+      setPdfs(pdfData);
+      setCourses(courseData);
     } catch (error) {
-      showToast('Failed to load PDFs', 'error');
+      showToast('Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredPdfs = pdfs.filter(pdf => {
+    const matchesSearch = pdf.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         pdf.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCourse = !filterCourse || pdf.course === filterCourse;
+    const matchesSubject = !filterSubject || pdf.subject === filterSubject;
+    return matchesSearch && matchesCourse && matchesSubject;
+  });
+
+  const totalPages = Math.ceil(filteredPdfs.length / itemsPerPage);
+  const paginatedPdfs = filteredPdfs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleOpenModal = (pdf?: PDF) => {
+    if (pdf) {
+      setEditingPdf(pdf);
+      setFormData({
+        title: pdf.title,
+        subject: pdf.subject,
+        course: pdf.course,
+        fileUrl: pdf.fileUrl,
+        fileSize: pdf.fileSize || '',
+        allowDownload: pdf.allowDownload || false,
+        status: pdf.status || 'active'
+      });
+    } else {
+      setEditingPdf(null);
+      setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingPdf(null);
+    setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '', allowDownload: false, status: 'active' });
+  };
+
   const handleSubmit = async () => {
+    if (!formData.title || !formData.fileUrl) {
+      showToast('Please fill required fields', 'error');
+      return;
+    }
+
     try {
-      const pdfData = {
-        id: `pdf_${Date.now()}`,
-        title: formData.title,
-        subject: formData.subject,
-        course: formData.course,
-        fileUrl: formData.fileUrl,
-        fileSize: formData.fileSize,
-        createdAt: new Date().toISOString()
-      };
+      if (editingPdf) {
+        await pdfsAPI.update(editingPdf.id, {
+          ...editingPdf,
+          ...formData
+        });
+        showToast('PDF updated successfully!');
+      } else {
+        const pdfData = {
+          id: `pdf_${Date.now()}`,
+          ...formData,
+          createdAt: new Date().toISOString()
+        };
+        await pdfsAPI.create(pdfData);
+        showToast('PDF uploaded successfully!');
+      }
 
-      await pdfsAPI.create(pdfData);
-      showToast('PDF uploaded successfully!');
-
-      setShowModal(false);
-      setFormData({ title: '', subject: '', course: '', fileUrl: '', fileSize: '' });
-      loadPDFs();
+      handleCloseModal();
+      loadData();
     } catch (error) {
-      showToast('Failed to upload PDF', 'error');
+      showToast('Failed to save PDF', 'error');
     }
   };
 
@@ -64,10 +141,49 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
       try {
         await pdfsAPI.delete(id);
         showToast('PDF deleted successfully!');
-        loadPDFs();
+        loadData();
       } catch (error) {
         showToast('Failed to delete PDF', 'error');
       }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedPdfs.length === 0) return;
+    if (confirm(`Delete ${selectedPdfs.length} selected PDFs?`)) {
+      try {
+        await Promise.all(selectedPdfs.map(id => pdfsAPI.delete(id)));
+        showToast(`${selectedPdfs.length} PDFs deleted!`);
+        setSelectedPdfs([]);
+        loadData();
+      } catch (error) {
+        showToast('Failed to delete PDFs', 'error');
+      }
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPdfs.length === paginatedPdfs.length) {
+      setSelectedPdfs([]);
+    } else {
+      setSelectedPdfs(paginatedPdfs.map(p => p.id));
+    }
+  };
+
+  const toggleSelectPdf = (id: string) => {
+    setSelectedPdfs(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const toggleStatus = async (pdf: PDF) => {
+    try {
+      const newStatus = pdf.status === 'active' ? 'inactive' : 'active';
+      await pdfsAPI.update(pdf.id, { ...pdf, status: newStatus });
+      showToast(`PDF ${newStatus === 'active' ? 'activated' : 'deactivated'}!`);
+      loadData();
+    } catch (error) {
+      showToast('Failed to update status', 'error');
     }
   };
 
@@ -80,105 +196,364 @@ const PDFs: React.FC<Props> = ({ showToast }) => {
   }
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 animate-fade-in overflow-hidden">
-      <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-xl font-black text-navy uppercase tracking-widest">PDF Assets</h3>
-          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {pdfs.length} Documents</p>
+          <h2 className="text-2xl font-black text-navy">PDFs</h2>
+          <p className="text-sm text-gray-500 mt-1">PDF List</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="bg-navy text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase shadow-xl tracking-widest"
-        >
-          + Upload PDF
-        </button>
+        <div className="flex gap-3">
+          {selectedPdfs.length > 0 && (
+            <button 
+              onClick={handleBulkDelete}
+              className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons-outlined text-lg">delete</span>
+              Delete ({selectedPdfs.length})
+            </button>
+          )}
+          <button 
+            onClick={() => handleOpenModal()}
+            className="bg-navy text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-navy/90 transition-colors flex items-center gap-2"
+          >
+            <span className="material-icons-outlined text-lg">add</span>
+            Upload PDF
+          </button>
+        </div>
       </div>
 
-      {pdfs.length === 0 ? (
-        <div className="h-64 flex flex-col items-center justify-center">
-          <span className="material-icons-outlined text-7xl text-red-200">picture_as_pdf</span>
-          <p className="font-black mt-2 uppercase tracking-widest text-gray-300">No Documents Found</p>
-        </div>
-      ) : (
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pdfs.map(pdf => (
-            <div key={pdf.id} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-navy/20 transition-all group">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-icons-outlined text-red-500">picture_as_pdf</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-black text-navy text-sm truncate">{pdf.title}</h4>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{pdf.subject} • {pdf.course}</p>
-                  <p className="text-[9px] text-gray-300 mt-2">{pdf.fileSize || 'N/A'}</p>
-                </div>
-                <button 
-                  onClick={() => handleDelete(pdf.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <span className="material-icons-outlined text-sm">delete</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Main Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Filters Row */}
+        <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Show</span>
+            <select 
+              value={itemsPerPage}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
 
+          <select 
+            value={filterCourse}
+            onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
+          >
+            <option value="">Select Course</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.title}>{course.title}</option>
+            ))}
+          </select>
+
+          <select 
+            value={filterSubject}
+            onChange={(e) => { setFilterSubject(e.target.value); setCurrentPage(1); }}
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
+          >
+            <option value="">Select Subject</option>
+            {subjects.map(subject => (
+              <option key={subject} value={subject}>{subject}</option>
+            ))}
+          </select>
+
+          <div className="flex-1"></div>
+
+          <div className="relative">
+            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+            <input
+              type="text"
+              placeholder="Search PDF"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 w-48"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-4 py-4 text-left">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedPdfs.length === paginatedPdfs.length && paginatedPdfs.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
+                  />
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PDF Title</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PDF File</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Allow Download</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {paginatedPdfs.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-12 text-center">
+                    <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">picture_as_pdf</span>
+                    <p className="text-gray-400 font-medium">No PDFs found</p>
+                  </td>
+                </tr>
+              ) : (
+                paginatedPdfs.map((pdf, index) => (
+                  <tr key={pdf.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedPdfs.includes(pdf.id)}
+                        onChange={() => toggleSelectPdf(pdf.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
+                      />
+                    </td>
+                    <td className="px-4 py-4 text-sm font-medium text-gray-600">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-semibold text-navy">{pdf.title}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <a 
+                        href={pdf.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-500 hover:underline font-medium"
+                      >
+                        Download
+                      </a>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{pdf.course || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{pdf.subject || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{pdf.allowDownload ? 'yes' : 'no'}</td>
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => toggleStatus(pdf)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          pdf.status === 'active' 
+                            ? 'bg-green-100 text-green-600' 
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        {pdf.status === 'active' ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleOpenModal(pdf)}
+                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <span className="material-icons-outlined text-lg">edit</span>
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(pdf.id)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <span className="material-icons-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {filteredPdfs.length > 0 && (
+          <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredPdfs.length)} of {filteredPdfs.length} entries
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-10 h-10 text-sm font-bold rounded-lg ${
+                      currentPage === pageNum
+                        ? 'bg-navy text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
-            <h3 className="text-lg font-black text-navy uppercase tracking-widest mb-6">Upload PDF</h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Document Title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              />
-              <div className="grid grid-cols-2 gap-4">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={handleCloseModal}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+          
+          {/* Modal Content */}
+          <div 
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-xl font-black text-navy uppercase tracking-wide">
+                {editingPdf ? 'Edit PDF' : 'Upload PDF'}
+              </h3>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Document Title *</label>
                 <input
                   type="text"
-                  placeholder="Subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Course"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
+                  placeholder="Enter PDF title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                 />
               </div>
-              <input
-                type="text"
-                placeholder="File URL"
-                value={formData.fileUrl}
-                onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              />
-              <input
-                type="text"
-                placeholder="File Size (e.g., 2.5 MB)"
-                value={formData.fileSize}
-                onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
-              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Subject</label>
+                  <select
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  >
+                    <option value="">Select Subject</option>
+                    {subjects.map(subject => (
+                      <option key={subject} value={subject}>{subject}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course</label>
+                  <select
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                  >
+                    <option value="">Select Course</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.title}>{course.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">File URL *</label>
+                <input
+                  type="text"
+                  placeholder="https://drive.google.com/..."
+                  value={formData.fileUrl}
+                  onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">File Size</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 2.5 MB"
+                  value={formData.fileSize}
+                  onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                />
+              </div>
+
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowDownload}
+                    onChange={(e) => setFormData({ ...formData, allowDownload: e.target.checked })}
+                    className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Allow Download</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.status === 'active'}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.checked ? 'active' : 'inactive' })}
+                    className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Active</span>
+                </label>
+              </div>
             </div>
-            <div className="flex gap-4 mt-6">
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-100 flex gap-4">
               <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-black text-xs uppercase"
+                onClick={handleCloseModal}
+                className="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-xl font-bold text-sm uppercase hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 bg-navy text-white py-3 rounded-xl font-black text-xs uppercase"
+                className="flex-1 bg-navy text-white py-3.5 rounded-xl font-bold text-sm uppercase hover:bg-navy/90 transition-colors"
               >
-                Upload
+                {editingPdf ? 'Update' : 'Upload'}
               </button>
             </div>
           </div>
