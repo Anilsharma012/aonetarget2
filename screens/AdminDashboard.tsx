@@ -12,6 +12,7 @@ import SubjectiveTest from '../components/admin/SubjectiveTest';
 import TestSeries from '../components/admin/TestSeries';
 import AllReports from '../components/admin/AllReports';
 import Videos from '../components/admin/Videos';
+import VideoSeries from '../components/admin/VideoSeries';
 import LiveVideos from '../components/admin/LiveVideos';
 import PDFs from '../components/admin/PDFs';
 import Packages from '../components/admin/Packages';
@@ -22,8 +23,16 @@ import Banners from '../components/admin/Banners';
 import Buyers from '../components/admin/shopping/Buyers';
 import Tokens from '../components/admin/shopping/Tokens';
 import Coupons from '../components/admin/shopping/Coupons';
+import Courses from '../components/admin/misc/Courses';
+import SubCourses from '../components/admin/misc/SubCourses';
+import Subjects from '../components/admin/misc/Subjects';
+import Topics from '../components/admin/misc/Topics';
+import Instructions from '../components/admin/misc/Instructions';
+import ExamDocuments from '../components/admin/misc/ExamDocuments';
+import GlobalNews from '../components/admin/misc/GlobalNews';
+import PushNotifications from '../components/admin/misc/PushNotifications';
 
-export type AdminView = 'dashboard' | 'misc' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -51,7 +60,22 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', color: 'text-blue-400' },
-    { id: 'misc', label: 'Misc Manager', icon: 'category', color: 'text-purple-400' },
+    {
+      id: 'misc',
+      label: 'Misc Manager',
+      icon: 'category',
+      color: 'text-purple-400',
+      submenu: [
+        { id: 'courses', label: 'Courses', icon: 'school' },
+        { id: 'subcourses', label: 'Sub Courses', icon: 'menu_book' },
+        { id: 'subjects', label: 'Subjects', icon: 'subject' },
+        { id: 'topics', label: 'Topics', icon: 'topic' },
+        { id: 'instructions', label: 'Instructions', icon: 'description' },
+        { id: 'exam-documents', label: 'Exam Documents', icon: 'file_present' },
+        { id: 'global-news', label: 'Global News', icon: 'newspaper' },
+        { id: 'push-notifications', label: 'Push Notifications', icon: 'notifications' }
+      ]
+    },
     { id: 'students', label: 'Students', icon: 'people', color: 'text-orange-400' },
     {
       id: 'shopping',
@@ -89,7 +113,16 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
         { id: 'all-reports', label: 'All Reports', icon: 'assessment' }
       ]
     },
-    { id: 'videos', label: 'Video Library', icon: 'play_circle', color: 'text-indigo-400' },
+    {
+      id: 'videos',
+      label: 'Video Library',
+      icon: 'play_circle',
+      color: 'text-indigo-400',
+      submenu: [
+        { id: 'videos', label: 'Videos', icon: 'video_library' },
+        { id: 'video-series', label: 'Video Series', icon: 'playlist_play' }
+      ]
+    },
     { id: 'live-videos', label: 'Live Sessions', icon: 'live_tv', color: 'text-rose-500' },
     { id: 'pdfs', label: 'Manage PDFs', icon: 'picture_as_pdf', color: 'text-red-500' },
     { id: 'packages', label: 'Batches/Pkgs', icon: 'inventory_2', color: 'text-teal-400' },
@@ -124,6 +157,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'test-series': return <TestSeries {...props} />;
       case 'all-reports': return <AllReports {...props} />;
       case 'videos': return <Videos {...props} />;
+      case 'video-series': return <VideoSeries {...props} />;
       case 'live-videos': return <LiveVideos {...props} />;
       case 'pdfs': return <PDFs {...props} />;
       case 'packages': return <Packages {...props} />;
@@ -131,6 +165,14 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'blog': return <Blog {...props} />;
       case 'settings': return <Settings {...props} />;
       case 'banners': return <Banners {...props} />;
+      case 'courses': return <Courses {...props} />;
+      case 'subcourses': return <SubCourses {...props} />;
+      case 'subjects': return <Subjects {...props} />;
+      case 'topics': return <Topics {...props} />;
+      case 'instructions': return <Instructions {...props} />;
+      case 'exam-documents': return <ExamDocuments {...props} />;
+      case 'global-news': return <GlobalNews {...props} />;
+      case 'push-notifications': return <PushNotifications {...props} />;
       default: return <Dashboard {...props} />;
     }
   };
