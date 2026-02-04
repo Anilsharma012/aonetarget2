@@ -147,6 +147,19 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
     );
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedTests.length === 0) return;
+    if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
+      try {
+        setTests(tests.filter(t => !selectedTests.includes(t.id)));
+        setSelectedTests([]);
+        showToast(`${selectedTests.length} tests deleted!`);
+      } catch (error) {
+        showToast('Failed to delete tests', 'error');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
