@@ -51,6 +51,49 @@ const Videos: React.FC<Props> = ({ showToast }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  const handleVideoFile = (file: File) => {
+    if (file.type.startsWith('video/')) {
+      setFormData(prev => ({ ...prev, videoFile: file, videoUrl: file.name }));
+      showToast(`Video file selected: ${file.name}`);
+    } else {
+      showToast('Please select a valid video file', 'error');
+    }
+  };
+
+  const handleThumbnailFile = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      setFormData(prev => ({ ...prev, thumbnailFile: file, thumbnail: file.name }));
+      showToast(`Thumbnail selected: ${file.name}`);
+    } else {
+      showToast('Please select a valid image file', 'error');
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'video' | 'thumbnail') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      if (type === 'video') {
+        handleVideoFile(files[0]);
+      } else {
+        handleThumbnailFile(files[0]);
+      }
+    }
+  };
+
   useEffect(() => {
     loadVideos();
   }, []);
