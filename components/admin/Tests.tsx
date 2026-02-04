@@ -223,7 +223,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const toggleStatus = async (test: Test) => {
     const newStatus = test.status === 'active' ? 'inactive' : 'active';
     try {
-      setTests(tests.map(t => t.id === test.id ? { ...t, status: newStatus } : t));
+      const updatedTest = { ...test, status: newStatus };
+      await testsAPI.update(test.id, updatedTest);
+      setTests(tests.map(t => t.id === test.id ? updatedTest : t));
       showToast(`Test ${newStatus}!`);
     } catch (error) {
       showToast('Failed to update status', 'error');
