@@ -96,7 +96,56 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     currentPage * itemsPerPage
   );
 
+  const handleOpenModal = (test?: Test) => {
+    if (test) {
+      setEditingTest(test);
+      setFormData({
+        name: test.name,
+        course: test.course,
+        questions: test.questions.toString(),
+        duration: test.duration?.toString() || '180',
+        status: test.status,
+        openDate: test.openDate || '',
+        closeDate: test.closeDate || '',
+        featured: test.featured || false
+      });
+    } else {
+      setEditingTest(null);
+      setFormData({
+        name: '',
+        course: '',
+        questions: '',
+        duration: '180',
+        status: 'draft',
+        openDate: '',
+        closeDate: '',
+        featured: false
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingTest(null);
+    setFormData({
+      name: '',
+      course: '',
+      questions: '',
+      duration: '180',
+      status: 'draft',
+      openDate: '',
+      closeDate: '',
+      featured: false
+    });
+  };
+
   const handleSubmit = async () => {
+    if (!formData.name || !formData.course || !formData.questions) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+
     try {
       const testData = {
         id: editingTest?.id || `test_${Date.now()}`,
@@ -105,7 +154,10 @@ const Tests: React.FC<Props> = ({ showToast }) => {
         questions: parseInt(formData.questions) || 0,
         duration: parseInt(formData.duration),
         status: formData.status,
-        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        openDate: formData.openDate,
+        closeDate: formData.closeDate,
+        featured: formData.featured,
+        date: editingTest?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
       };
 
       if (editingTest) {
@@ -116,10 +168,8 @@ const Tests: React.FC<Props> = ({ showToast }) => {
         showToast('Test created successfully!');
       }
 
-      setShowModal(false);
-      setEditingTest(null);
-      setFormData({ name: '', course: '', questions: '', duration: '180', status: 'Active' });
-      loadTests();
+      handleCloseModal();
+      loadData();
     } catch (error) {
       showToast('Failed to save test', 'error');
     }
@@ -130,23 +180,60 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       try {
         await testsAPI.delete(id);
         showToast('Test deleted successfully!');
-        loadTests();
+        loadData();
       } catch (error) {
         showToast('Failed to delete test', 'error');
       }
     }
   };
 
-  const openEditModal = (test: Test) => {
-    setEditingTest(test);
-    setFormData({
-      name: test.name,
-      course: test.course,
-      questions: test.questions.toString(),
-      duration: test.duration?.toString() || '180',
-      status: test.status
-    });
-    setShowModal(true);
+  const handleBulkDelete = async () => {
+    if (selectedTests.length === 0) return;
+    if (confirm(`Delete ${selectedTests.length} selected tests?`)) {
+      try {
+        await Promise.all(selectedTests.map(id => testsAPI.delete(id)));
+        showToast(`${selectedTests.length} tests deleted!`);
+        setSelectedTests([]);
+        loadData();
+      } catch (error) {
+        showToast('Failed to delete tests', 'error');
+      }
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTests.length === paginatedTests.length) {
+      setSelectedTests([]);
+    } else {
+      setSelectedTests(paginatedTests.map(t => t.id));
+    }
+  };
+
+  const toggleSelectTest = (id: string) => {
+    setSelectedTests(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
+
+  const toggleFeatured = async (test: Test) => {
+    try {
+      await testsAPI.update(test.id, { ...test, featured: !test.featured });
+      showToast(test.featured ? 'Removed from featured!' : 'Added to featured!');
+      loadData();
+    } catch (error) {
+      showToast('Failed to update test', 'error');
+    }
+  };
+
+  const toggleStatus = async (test: Test) => {
+    const newStatus = test.status === 'active' ? 'inactive' : 'active';
+    try {
+      await testsAPI.update(test.id, { ...test, status: newStatus });
+      showToast(`Test ${newStatus}!`);
+      loadData();
+    } catch (error) {
+      showToast('Failed to update status', 'error');
+    }
   };
 
   const actions = [
