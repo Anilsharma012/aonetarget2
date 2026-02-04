@@ -157,7 +157,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingVideo(null);
-      setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', thumbnail: '', status: 'active' });
+      setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', videoFile: null, thumbnail: '', thumbnailFile: null, status: 'active' });
       loadVideos();
     } catch (error) {
       showToast('Failed to save video', 'error');
