@@ -25,6 +25,7 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,8 +33,8 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
   
   const [formData, setFormData] = useState({
     code: '',
-    value: 0,
-    quantity: 0,
+    value: '',
+    quantity: '',
     expiryDate: '',
     type: 'credit' as 'credit' | 'exam' | 'class',
     status: 'active' as 'active' | 'expired' | 'inactive'
@@ -72,54 +73,8 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
       const data = await tokensAPI.getAll();
       setTokens(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load tokens', 'error');
-      // Use demo data if API fails
-      setTokens([
-        {
-          id: 'TKN-001',
-          code: 'SAVE20',
-          value: 500,
-          quantity: 100,
-          usedQuantity: 45,
-          expiryDate: '2025-12-31',
-          type: 'credit',
-          status: 'active',
-          createdDate: '2025-01-01'
-        },
-        {
-          id: 'TKN-002',
-          code: 'WELCOME100',
-          value: 1000,
-          quantity: 50,
-          usedQuantity: 30,
-          expiryDate: '2025-06-30',
-          type: 'exam',
-          status: 'active',
-          createdDate: '2025-01-05'
-        },
-        {
-          id: 'TKN-003',
-          code: 'CLASS50',
-          value: 250,
-          quantity: 200,
-          usedQuantity: 120,
-          expiryDate: '2025-03-31',
-          type: 'class',
-          status: 'active',
-          createdDate: '2025-01-10'
-        },
-        {
-          id: 'TKN-004',
-          code: 'EXPIRED2024',
-          value: 750,
-          quantity: 75,
-          usedQuantity: 75,
-          expiryDate: '2024-12-31',
-          type: 'credit',
-          status: 'expired',
-          createdDate: '2024-06-01'
-        }
-      ]);
+      console.log('Starting with empty state - MongoDB may not have data yet');
+      setTokens([]);
     } finally {
       setLoading(false);
     }
@@ -135,19 +90,26 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
 
     try {
       const newToken: Token = {
-        id: `TKN-${String(tokens.length + 1).padStart(3, '0')}`,
-        ...formData,
+        id: `TKN-${String(Date.now()).slice(-6)}`,
+        code: formData.code.toUpperCase(),
+        value: parseFloat(formData.value),
+        quantity: parseInt(formData.quantity),
         usedQuantity: 0,
+        expiryDate: formData.expiryDate,
+        type: formData.type,
+        status: formData.status,
         createdDate: new Date().toISOString().split('T')[0]
       };
 
+      console.log('Adding new token:', newToken);
       await tokensAPI.create(newToken);
       setTokens([...tokens, newToken]);
       resetForm();
       setShowAddModal(false);
-      showToast(`Token ${newToken.code} created successfully`, 'success');
+      showToast(`Token ${newToken.code} created successfully!`, 'success');
     } catch (error) {
-      showToast('Failed to create token', 'error');
+      console.error('Error adding token:', error);
+      showToast('Failed to add token', 'error');
     }
   };
 
@@ -159,16 +121,23 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     try {
       const updatedToken: Token = {
         ...selectedToken,
-        ...formData
+        code: formData.code.toUpperCase(),
+        value: parseFloat(formData.value),
+        quantity: parseInt(formData.quantity),
+        expiryDate: formData.expiryDate,
+        type: formData.type,
+        status: formData.status
       };
 
+      console.log('Updating token:', updatedToken);
       await tokensAPI.update(selectedToken.id, updatedToken);
       setTokens(tokens.map(t => t.id === selectedToken.id ? updatedToken : t));
       resetForm();
       setShowEditModal(false);
       setSelectedToken(null);
-      showToast('Token updated successfully', 'success');
+      showToast('Token updated successfully!', 'success');
     } catch (error) {
+      console.error('Error updating token:', error);
       showToast('Failed to update token', 'error');
     }
   };
@@ -179,11 +148,28 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     }
 
     try {
+      console.log('Deleting token:', tokenId);
       await tokensAPI.delete(tokenId);
       setTokens(tokens.filter(t => t.id !== tokenId));
-      showToast(`${code} has been deleted`, 'success');
+      showToast(`${code} has been deleted successfully!`, 'success');
     } catch (error) {
+      console.error('Error deleting token:', error);
       showToast('Failed to delete token', 'error');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTokens.length === 0) return;
+    if (!confirm(`Delete ${selectedTokens.length} selected token(s)?`)) return;
+
+    try {
+      await Promise.all(selectedTokens.map(id => tokensAPI.delete(id)));
+      setTokens(tokens.filter(t => !selectedTokens.includes(t.id)));
+      setSelectedTokens([]);
+      showToast(`${selectedTokens.length} token(s) deleted successfully!`, 'success');
+    } catch (error) {
+      console.error('Error deleting tokens:', error);
+      showToast('Failed to delete tokens', 'error');
     }
   };
 
@@ -191,8 +177,8 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     setSelectedToken(token);
     setFormData({
       code: token.code,
-      value: token.value,
-      quantity: token.quantity,
+      value: token.value.toString(),
+      quantity: token.quantity.toString(),
       expiryDate: token.expiryDate,
       type: token.type,
       status: token.status
@@ -200,11 +186,25 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
     setShowEditModal(true);
   };
 
+  const toggleSelectAll = () => {
+    if (selectedTokens.length === paginatedTokens.length) {
+      setSelectedTokens([]);
+    } else {
+      setSelectedTokens(paginatedTokens.map(t => t.id));
+    }
+  };
+
+  const toggleSelectToken = (id: string) => {
+    setSelectedTokens(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
+
   const resetForm = () => {
     setFormData({
       code: '',
-      value: 0,
-      quantity: 0,
+      value: '',
+      quantity: '',
       expiryDate: '',
       type: 'credit',
       status: 'active'
@@ -243,41 +243,57 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
 
       showToast(`Exported ${filteredTokens.length} token(s) to CSV`, 'success');
     } catch (error) {
+      console.error('Export error:', error);
       showToast('Failed to export CSV', 'error');
     }
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden animate-fade-in">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center bg-gray-50/30 gap-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">Tokens Management</h3>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Manage Credit & Exam Tokens</p>
+          <h2 className="text-2xl font-black text-navy">Tokens Management</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage credit and exam tokens</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExportCSV} className="px-6 py-3 bg-white border border-gray-200 text-navy text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm">Export CSV</button>
-          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="px-6 py-4 bg-navy text-white text-[10px] font-black rounded-2xl shadow-xl uppercase tracking-widest hover:scale-105 transition-all">+ Create Token</button>
+        <div className="flex gap-3 flex-wrap">
+          {selectedTokens.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons-outlined text-lg">delete</span>
+              Delete ({selectedTokens.length})
+            </button>
+          )}
+          <button onClick={handleExportCSV} className="px-6 py-3 bg-white border border-gray-200 text-navy text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <span className="material-icons-outlined text-lg">download</span>
+            Export CSV
+          </button>
+          <button onClick={() => { resetForm(); setShowAddModal(true); }} className="px-6 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy/90 transition-colors flex items-center gap-2">
+            <span className="material-icons-outlined text-lg">add</span>
+            Create Token
+          </button>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="p-6 border-b border-gray-50 flex flex-wrap gap-4 items-center">
-        <div className="flex-1 relative min-w-[300px]">
-          <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-4 items-center">
+        <div className="flex-1 relative min-w-[250px]">
+          <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5 transition-all"
+            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20 transition-all"
             placeholder="Search by token code or ID..."
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase text-gray-400 outline-none"
+          className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-navy/20"
         >
-          <option value="all">Status: All</option>
+          <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="expired">Expired</option>
           <option value="inactive">Inactive</option>
@@ -285,144 +301,171 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading tokens...</div>
-        ) : filteredTokens.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No tokens found</div>
-        ) : (
-          <table className="w-full text-left text-[11px]">
-            <thead className="bg-[#F8F9FA] font-black text-gray-400 uppercase tracking-widest sticky top-0">
-              <tr>
-                <th className="px-6 py-4 border-b border-gray-100">Token Code</th>
-                <th className="px-6 py-4 border-b border-gray-100">Value</th>
-                <th className="px-6 py-4 border-b border-gray-100">Total Qty</th>
-                <th className="px-6 py-4 border-b border-gray-100">Used</th>
-                <th className="px-6 py-4 border-b border-gray-100">Available</th>
-                <th className="px-6 py-4 border-b border-gray-100">Expiry Date</th>
-                <th className="px-6 py-4 border-b border-gray-100">Type</th>
-                <th className="px-6 py-4 border-b border-gray-100 text-center">Status</th>
-                <th className="px-6 py-4 border-b border-gray-100 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedTokens.map(t => (
-                <tr key={t.id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-navy/10 rounded-lg flex items-center justify-center font-black text-navy text-[9px]">
-                        {t.code.charAt(0)}
-                      </div>
-                      <span className="font-bold text-navy">{t.code}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-navy">₹{t.value}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-gray-600">{t.quantity}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-red-600">{t.usedQuantity}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-green-600">{t.quantity - t.usedQuantity}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] text-gray-600">{new Date(t.expiryDate).toLocaleDateString('en-IN')}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[9px] font-black text-navy uppercase bg-blue-100 px-2 py-1 rounded-md w-fit inline-block capitalize">{t.type}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase inline-block ${
-                      t.status === 'active' ? 'bg-green-100 text-green-600' :
-                      t.status === 'expired' ? 'bg-red-100 text-red-600' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {t.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity flex-wrap">
-                      <button onClick={() => handleEditClick(t)} title="Edit" className="p-2 bg-teal-100 text-teal-600 hover:bg-teal-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">edit</span></button>
-                      <button onClick={() => handleDeleteToken(t.id, t.code)} title="Delete" className="p-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-md transition-all text-[11px]"><span className="material-icons-outlined text-sm">delete</span></button>
-                    </div>
-                  </td>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-8 text-center text-gray-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-2"></div>
+              Loading tokens...
+            </div>
+          ) : filteredTokens.length === 0 ? (
+            <div className="p-8 text-center text-gray-400">
+              <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">card_giftcard</span>
+              No tokens found
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-4 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedTokens.length === paginatedTokens.length && paginatedTokens.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-gray-300 text-navy"
+                    />
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Token Code</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Value</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total Qty</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Used</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Available</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedTokens.map((token, index) => (
+                  <tr key={token.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedTokens.includes(token.id)}
+                        onChange={() => toggleSelectToken(token.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-navy"
+                      />
+                    </td>
+                    <td className="px-4 py-4 text-sm font-medium text-gray-600">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="inline-block bg-navy/10 text-navy px-3 py-1 rounded-lg text-sm font-bold">{token.code}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-bold text-navy">₹{token.value}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-600">{token.quantity}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-bold text-red-600">{token.usedQuantity}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-bold text-green-600">{token.quantity - token.usedQuantity}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="inline-block bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold capitalize">{token.type}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-600">{token.expiryDate}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold ${
+                        token.status === 'active' ? 'bg-green-100 text-green-600' :
+                        token.status === 'expired' ? 'bg-red-100 text-red-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {token.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEditClick(token)}
+                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <span className="material-icons-outlined text-lg">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteToken(token.id, token.code)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <span className="material-icons-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
 
-      {/* Pagination */}
-      {filteredTokens.length > 0 && (
-        <div className="p-6 border-t border-gray-100 flex flex-wrap justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black text-gray-400 uppercase">Items Per Page:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(parseInt(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-black uppercase text-gray-600 outline-none"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-          <div className="text-[10px] font-black text-gray-400 uppercase">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredTokens.length)} of {filteredTokens.length}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg disabled:opacity-50"
-            >
-              <span className="material-icons-outlined text-sm">chevron_left</span>
-            </button>
+        {/* Pagination */}
+        {filteredTokens.length > 0 && (
+          <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Show</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(parseInt(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <p className="text-sm text-gray-500">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredTokens.length)} of {filteredTokens.length} entries
+            </p>
             <div className="flex gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 bg-gray-100 text-navy text-sm font-bold rounded-lg disabled:opacity-50"
+              >
+                First
+              </button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else {
-                  if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
+                let pageNum = i + 1;
+                if (totalPages > 5 && currentPage > 3) {
+                  pageNum = currentPage - 2 + i;
                 }
                 return (
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase ${
-                      currentPage === pageNum ? 'bg-navy text-white' : 'bg-gray-100 text-navy'
+                    className={`w-10 h-10 text-sm font-bold rounded-lg ${
+                      currentPage === pageNum
+                        ? 'bg-navy text-white'
+                        : 'bg-gray-100 text-navy hover:bg-gray-200'
                     }`}
                   >
                     {pageNum}
                   </button>
                 );
               })}
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 bg-gray-100 text-navy text-sm font-bold rounded-lg disabled:opacity-50"
+              >
+                Last
+              </button>
             </div>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-100 text-navy text-[10px] font-black rounded-lg disabled:opacity-50"
-            >
-              <span className="material-icons-outlined text-sm">chevron_right</span>
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Add Token Modal */}
       {showAddModal && (
@@ -430,57 +473,63 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
               <h3 className="text-xl font-black text-navy uppercase">Create New Token</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
             <form onSubmit={handleAddToken} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Token Code *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Token Code *</label>
                   <input
                     type="text"
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                     placeholder="E.g., SAVE20"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Value (₹) *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Value (₹) *</label>
                   <input
                     type="number"
                     value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                     placeholder="Enter token value"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Quantity *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity *</label>
                   <input
                     type="number"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                     placeholder="Enter quantity"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Expiry Date</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Expiry Date</label>
                   <input
                     type="date"
                     value={formData.expiryDate}
                     onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Type</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Type</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as 'credit' | 'exam' | 'class' })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                   >
                     <option value="credit">Credit</option>
                     <option value="exam">Exam</option>
@@ -488,11 +537,11 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Status</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'expired' | 'inactive' })}
-                    className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5"
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'expired' })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -501,8 +550,19 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-3 bg-gray-100 text-navy text-[10px] font-black rounded-xl uppercase hover:bg-gray-200 transition-all">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 bg-navy text-white text-[10px] font-black rounded-xl uppercase hover:bg-blue-900 transition-all">Create Token</button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-navy text-white text-sm font-bold rounded-lg hover:bg-navy/90 transition-colors"
+                >
+                  Create Token
+                </button>
               </div>
             </form>
           </div>
@@ -515,35 +575,70 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
               <h3 className="text-xl font-black text-navy uppercase">Edit Token</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
             <form onSubmit={handleEditToken} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Token ID</label>
-                  <input type="text" disabled value={selectedToken.id} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold bg-gray-50 cursor-not-allowed" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Token ID</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedToken.id}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium bg-gray-50 cursor-not-allowed"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Token Code *</label>
-                  <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5" placeholder="E.g., SAVE20" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Token Code *</label>
+                  <input
+                    type="text"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Value (₹) *</label>
-                  <input type="number" value={formData.value} onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5" placeholder="Enter token value" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Value (₹) *</label>
+                  <input
+                    type="number"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Quantity *</label>
-                  <input type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5" placeholder="Enter quantity" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity *</label>
+                  <input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Expiry Date</label>
-                  <input type="date" value={formData.expiryDate} onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Expiry Date</label>
+                  <input
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">Type</label>
-                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as 'credit' | 'exam' | 'class' })} className="w-full px-4 py-3 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-navy/5">
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as 'credit' | 'exam' | 'class' })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                  >
                     <option value="credit">Credit</option>
                     <option value="exam">Exam</option>
                     <option value="class">Class</option>
@@ -551,8 +646,19 @@ const Tokens: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-3 bg-gray-100 text-navy text-[10px] font-black rounded-xl uppercase hover:bg-gray-200 transition-all">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 bg-navy text-white text-[10px] font-black rounded-xl uppercase hover:bg-blue-900 transition-all">Save Changes</button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-navy text-white text-sm font-bold rounded-lg hover:bg-navy/90 transition-colors"
+                >
+                  Save Changes
+                </button>
               </div>
             </form>
           </div>
