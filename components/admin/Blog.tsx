@@ -126,8 +126,19 @@ const Blog: React.FC<Props> = ({ showToast }) => {
     }
   };
 
+  const handleThumbnailFile = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      setThumbnailFile(file);
+      setFormData(prev => ({ ...prev, thumbnail: file.name }));
+      showToast(`Thumbnail selected: ${file.name}`);
+    } else {
+      showToast('Please select a valid image file', 'error');
+    }
+  };
+
   const openEditModal = (post: BlogPost) => {
     setEditingPost(post);
+    setThumbnailFile(null);
     setFormData({
       title: post.title,
       content: post.content,
