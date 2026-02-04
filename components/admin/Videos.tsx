@@ -187,7 +187,9 @@ const Videos: React.FC<Props> = ({ showToast }) => {
       duration: video.duration,
       quality: video.quality,
       thumbnail: video.thumbnail || '',
+      thumbnailFile: null,
       videoUrl: video.videoUrl || '',
+      videoFile: null,
       status: video.status
     });
     setShowModal(true);
