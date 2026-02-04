@@ -357,29 +357,53 @@ const Blog: React.FC<Props> = ({ showToast }) => {
                 />
               </div>
 
-              {/* Thumbnail & Reading Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-navy uppercase tracking-widest block mb-2">Thumbnail URL</label>
+              {/* Thumbnail Upload */}
+              <div>
+                <label className="text-[10px] font-black text-navy uppercase tracking-widest block mb-2">Thumbnail Image</label>
+                <div
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleThumbnailFile(file);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="border-2 border-dashed border-gray-100 rounded-xl p-6 text-center cursor-pointer hover:border-navy hover:bg-gray-50 transition-all"
+                >
                   <input
-                    type="text"
-                    placeholder="Image URL"
-                    value={formData.thumbnail}
-                    onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl text-xs font-bold outline-none placeholder-gray-400 focus:border-navy transition-colors"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files && handleThumbnailFile(e.target.files[0])}
+                    className="hidden"
+                    id="thumbnail-input"
                   />
+                  <label htmlFor="thumbnail-input" className="cursor-pointer block">
+                    {thumbnailFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="material-icons-outlined text-green-600 text-3xl">check_circle</span>
+                        <p className="text-[11px] font-black text-green-600 uppercase">{thumbnailFile.name}</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="material-icons-outlined text-gray-300 text-3xl">image</span>
+                        <p className="text-[11px] font-black text-gray-600 uppercase">Drop image or click to browse</p>
+                        <p className="text-[9px] text-gray-400">PNG, JPG, JPEG up to 5MB</p>
+                      </div>
+                    )}
+                  </label>
                 </div>
-                <div>
-                  <label className="text-[10px] font-black text-navy uppercase tracking-widest block mb-2">Reading Time (minutes)</label>
-                  <input
-                    type="number"
-                    placeholder="5"
-                    value={formData.readingTime}
-                    onChange={(e) => setFormData({ ...formData, readingTime: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl text-xs font-bold outline-none placeholder-gray-400 focus:border-navy transition-colors"
-                    min="1"
-                  />
-                </div>
+              </div>
+
+              {/* Reading Time */}
+              <div>
+                <label className="text-[10px] font-black text-navy uppercase tracking-widest block mb-2">Reading Time (minutes)</label>
+                <input
+                  type="number"
+                  placeholder="5"
+                  value={formData.readingTime}
+                  onChange={(e) => setFormData({ ...formData, readingTime: parseInt(e.target.value) || 0 })}
+                  className="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl text-xs font-bold outline-none placeholder-gray-400 focus:border-navy transition-colors"
+                  min="1"
+                />
               </div>
 
               {/* Publish Date & Views */}
