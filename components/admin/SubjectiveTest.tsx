@@ -40,10 +40,12 @@ const SubjectiveTest: React.FC<Props> = ({ showToast }) => {
 
   const loadTests = async () => {
     try {
-      // Start with empty state - users will add data via the form
-      setTests([]);
+      // Try to load from API (database)
+      const data = await testsAPI.getAll().catch(() => []);
+      setTests(Array.isArray(data) ? data : []);
     } catch (error) {
-      showToast('Failed to load tests', 'error');
+      console.log('Starting with empty state - MongoDB may not have data yet');
+      setTests([]);
     } finally {
       setLoading(false);
     }
