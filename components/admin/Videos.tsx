@@ -22,6 +22,8 @@ interface Video {
   videoUrl?: string;
   thumbnail?: string;
   instructor?: string;
+  isFree?: boolean;
+  isLiveRecording?: boolean;
 }
 
 interface Props {
@@ -52,7 +54,9 @@ const Videos: React.FC<Props> = ({ showToast }) => {
     videoFile: null as File | null,
     thumbnail: '',
     thumbnailFile: null as File | null,
-    status: 'active' as 'active' | 'inactive' | 'archived'
+    status: 'active' as 'active' | 'inactive' | 'archived',
+    isFree: false,
+    isLiveRecording: false
   });
 
   const [dragActive, setDragActive] = useState(false);
@@ -151,7 +155,9 @@ const Videos: React.FC<Props> = ({ showToast }) => {
         thumbnail: formData.thumbnail,
         videoUrl: formData.videoUrl,
         uploadDate: editingVideo?.uploadDate || new Date().toISOString(),
-        status: formData.status
+        status: formData.status,
+        isFree: formData.isFree,
+        isLiveRecording: formData.isLiveRecording
       };
 
       if (editingVideo) {
@@ -164,7 +170,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingVideo(null);
-      setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', videoFile: null, thumbnail: '', thumbnailFile: null, status: 'active' });
+      setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', videoFile: null, thumbnail: '', thumbnailFile: null, status: 'active', isFree: false, isLiveRecording: false });
       loadVideos();
     } catch (error) {
       showToast('Failed to save video', 'error');
@@ -197,7 +203,9 @@ const Videos: React.FC<Props> = ({ showToast }) => {
       thumbnailFile: null,
       videoUrl: video.videoUrl || '',
       videoFile: null,
-      status: video.status
+      status: video.status,
+      isFree: video.isFree || false,
+      isLiveRecording: video.isLiveRecording || false
     });
     setShowModal(true);
   };
@@ -258,7 +266,7 @@ const Videos: React.FC<Props> = ({ showToast }) => {
               <p className="text-white/80 text-sm font-semibold">Manage and organize your video lectures</p>
             </div>
             <button 
-              onClick={() => { setEditingVideo(null); setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', videoFile: null, thumbnail: '', thumbnailFile: null, status: 'active' }); setShowModal(true); }}
+              onClick={() => { setEditingVideo(null); setFormData({ title: '', subject: '', topic: '', course: '', instructor: '', duration: '', quality: 'HD 1080P', videoUrl: '', videoFile: null, thumbnail: '', thumbnailFile: null, status: 'active', isFree: false, isLiveRecording: false }); setShowModal(true); }}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-3 rounded-2xl font-black text-sm uppercase shadow-lg border border-white/20 transition-all hover:shadow-xl hover:scale-105"
             >
               <span className="flex items-center gap-2">
@@ -702,6 +710,34 @@ const Videos: React.FC<Props> = ({ showToast }) => {
                     <option value="archived">Archived</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Free Preview & Live Recording Options */}
+              <div className="grid grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl cursor-pointer hover:bg-green-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.isFree}
+                    onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
+                    className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                  />
+                  <div>
+                    <p className="font-bold text-gray-800 text-sm">Free Preview</p>
+                    <p className="text-xs text-gray-500">Visible to all students</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-200 rounded-xl cursor-pointer hover:bg-purple-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.isLiveRecording}
+                    onChange={(e) => setFormData({ ...formData, isLiveRecording: e.target.checked })}
+                    className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                  />
+                  <div>
+                    <p className="font-bold text-gray-800 text-sm">Live Recording</p>
+                    <p className="text-xs text-gray-500">From live class session</p>
+                  </div>
+                </label>
               </div>
 
               {/* Video Upload */}
