@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { videosAPI } from '../../src/services/apiClient';
+import { videosAPI, coursesAPI } from '../../src/services/apiClient';
+
+interface Course {
+  id: string;
+  name: string;
+  title?: string;
+}
 
 interface Video {
   id: string;
@@ -7,6 +13,7 @@ interface Video {
   subject: string;
   topic: string;
   course: string;
+  courseId?: string;
   duration: string;
   quality: string;
   views: number;

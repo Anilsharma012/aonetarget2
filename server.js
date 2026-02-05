@@ -2,12 +2,16 @@ import express from 'express';
 import { MongoClient } from 'mongodb';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
@@ -27,6 +31,10 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+
+app.use(express.static(path.join(__dirname, "dist")));
+
 
 let db;
 
@@ -528,12 +536,24 @@ app.delete('/api/questions/:id', async (req, res) => {
 // Routes for Tests
 app.get('/api/tests', async (req, res) => {
   try {
-    const tests = await db.collection('tests').find({}).toArray();
+    const { courseId } = req.query;
+    const query = courseId ? { courseId } : {};
+    const tests = await db.collection('tests').find(query).toArray();
     console.log('GET /api/tests - Found', tests.length, 'tests');
     res.json(tests);
   } catch (error) {
     console.error('Error fetching tests:', error);
     res.status(500).json({ error: 'Failed to fetch tests' });
+  }
+});
+
+// Get tests by course
+app.get('/api/courses/:courseId/tests', async (req, res) => {
+  try {
+    const tests = await db.collection('tests').find({ courseId: req.params.courseId }).toArray();
+    res.json(tests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course tests' });
   }
 });
 
@@ -687,10 +707,22 @@ app.delete('/api/subjective-tests/:id', async (req, res) => {
 // Routes for Videos
 app.get('/api/videos', async (req, res) => {
   try {
-    const videos = await db.collection('videos').find({}).toArray();
+    const { courseId } = req.query;
+    const query = courseId ? { courseId } : {};
+    const videos = await db.collection('videos').find(query).toArray();
     res.json(videos);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch videos' });
+  }
+});
+
+// Get videos by course
+app.get('/api/courses/:courseId/videos', async (req, res) => {
+  try {
+    const videos = await db.collection('videos').find({ courseId: req.params.courseId }).toArray();
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course videos' });
   }
 });
 
@@ -768,13 +800,25 @@ app.delete('/api/live-videos/:id', async (req, res) => {
   }
 });
 
-// Routes for PDFs
+// Routes for PDFs/Notes
 app.get('/api/pdfs', async (req, res) => {
   try {
-    const pdfs = await db.collection('pdfs').find({}).toArray();
+    const { courseId } = req.query;
+    const query = courseId ? { courseId } : {};
+    const pdfs = await db.collection('pdfs').find(query).toArray();
     res.json(pdfs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch PDFs' });
+  }
+});
+
+// Get notes/PDFs by course
+app.get('/api/courses/:courseId/notes', async (req, res) => {
+  try {
+    const notes = await db.collection('pdfs').find({ courseId: req.params.courseId }).toArray();
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course notes' });
   }
 });
 
@@ -1386,6 +1430,120 @@ app.get('/api/students/:id/courses', async (req, res) => {
   }
 });
 
+// Enroll student in a course
+app.post('/api/students/:id/enroll', async (req, res) => {
+  try {
+    const { courseId } = req.body;
+    if (!courseId) {
+      return res.status(400).json({ error: 'Course ID is required' });
+    }
+    
+    const student = await db.collection('students').findOne({ id: req.params.id });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    
+    const course = await db.collection('courses').findOne({ id: courseId });
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    const enrolledCourses = student.enrolledCourses || [];
+    if (enrolledCourses.includes(courseId)) {
+      return res.status(400).json({ error: 'Already enrolled in this course' });
+    }
+    
+    await db.collection('students').updateOne(
+      { id: req.params.id },
+      { $push: { enrolledCourses: courseId } }
+    );
+    
+    // Update course enrollment count
+    await db.collection('courses').updateOne(
+      { id: courseId },
+      { $inc: { studentsEnrolled: 1 } }
+    );
+    
+    // Create enrollment record
+    await db.collection('enrollments').insertOne({
+      id: `enroll_${Date.now()}`,
+      studentId: req.params.id,
+      courseId,
+      enrolledAt: new Date(),
+      progress: { completedVideos: [], completedTests: [] }
+    });
+    
+    res.json({ success: true, message: 'Enrolled successfully' });
+  } catch (error) {
+    console.error('Error enrolling student:', error);
+    res.status(500).json({ error: 'Failed to enroll' });
+  }
+});
+
+// Check if student is enrolled in a course
+app.get('/api/students/:id/enrolled/:courseId', async (req, res) => {
+  try {
+    const student = await db.collection('students').findOne({ id: req.params.id });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    
+    const isEnrolled = (student.enrolledCourses || []).includes(req.params.courseId);
+    res.json({ enrolled: isEnrolled });
+  } catch (error) {
+    console.error('Error checking enrollment:', error);
+    res.status(500).json({ error: 'Failed to check enrollment' });
+  }
+});
+
+// Get student's enrollment progress for a course
+app.get('/api/students/:id/courses/:courseId/progress', async (req, res) => {
+  try {
+    const enrollment = await db.collection('enrollments').findOne({
+      studentId: req.params.id,
+      courseId: req.params.courseId
+    });
+    
+    if (!enrollment) {
+      return res.json({ completedVideos: [], completedTests: [], completedNotes: [] });
+    }
+    
+    res.json(enrollment.progress || { completedVideos: [], completedTests: [], completedNotes: [] });
+  } catch (error) {
+    console.error('Error fetching enrollment progress:', error);
+    res.status(500).json({ error: 'Failed to fetch progress' });
+  }
+});
+
+// Update student's progress in a course
+app.put('/api/students/:id/courses/:courseId/progress', async (req, res) => {
+  try {
+    const { videoId, testId, noteId, action } = req.body;
+    
+    const updateField = videoId ? 'progress.completedVideos' : 
+                        testId ? 'progress.completedTests' : 
+                        'progress.completedNotes';
+    const itemId = videoId || testId || noteId;
+    
+    if (action === 'complete') {
+      await db.collection('enrollments').updateOne(
+        { studentId: req.params.id, courseId: req.params.courseId },
+        { $addToSet: { [updateField]: itemId } }
+      );
+    } else {
+      await db.collection('enrollments').updateOne(
+        { studentId: req.params.id, courseId: req.params.courseId },
+        { $pull: { [updateField]: itemId } }
+      );
+    }
+    
+    res.json({ success: true, message: 'Progress updated' });
+  } catch (error) {
+    console.error('Error updating progress:', error);
+    res.status(500).json({ error: 'Failed to update progress' });
+  }
+});
+
 // Messages Routes for Chat
 app.get('/api/messages', async (req, res) => {
   try {
@@ -1610,9 +1768,10 @@ app.get('/health', (req, res) => {
 });
 
 // Root route fix
-app.get('/', (req, res) => {
-  res.send('API Server Running Successfully 🚀');
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

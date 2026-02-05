@@ -55,7 +55,7 @@ const MyCourses: React.FC = () => {
             <div 
               key={idx} 
               className="bg-white rounded-xl p-4 shadow-sm flex gap-4 cursor-pointer hover:shadow-md transition-all"
-              onClick={() => navigate(`/study/${course.id}`)}
+              onClick={() => navigate(`/course/${course.id}`)}
             >
               <div className="w-20 h-20 bg-gradient-to-br from-brandBlue to-[#1A237E] rounded-xl flex items-center justify-center shrink-0">
                 <span className="material-symbols-rounded text-white text-3xl">play_circle</span>

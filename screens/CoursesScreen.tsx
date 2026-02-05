@@ -4,9 +4,14 @@ import { useNavigate } from 'react-router-dom';
 const CoursesScreen: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const studentId = localStorage.getItem('studentId') || '';
+  const studentData = localStorage.getItem('studentData');
+  const student = studentData ? JSON.parse(studentData) : null;
 
   const categories = [
     { key: 'all', label: 'All Courses' },
@@ -22,15 +27,24 @@ const CoursesScreen: React.FC = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch('/api/courses');
-      const data = await response.json();
-      setCourses(Array.isArray(data) ? data : []);
+      const [allCoursesRes, enrolledCoursesRes] = await Promise.all([
+        fetch('/api/courses'),
+        student?.id ? fetch(`/api/students/${student.id}/courses`) : Promise.resolve({ json: () => [] })
+      ]);
+      
+      const allCourses = await allCoursesRes.json();
+      const enrolled = await enrolledCoursesRes.json();
+      
+      setCourses(Array.isArray(allCourses) ? allCourses : []);
+      setEnrolledCourses(Array.isArray(enrolled) ? enrolled : []);
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
     }
   };
+  
+  const enrolledCourseIds = enrolledCourses.map(c => c.id);
 
   const filteredCourses = courses.filter(course => {
     const matchesCategory = activeCategory === 'all' || 
@@ -89,9 +103,49 @@ const CoursesScreen: React.FC = () => {
           <div className="flex justify-center py-12">
             <span className="material-symbols-rounded animate-spin text-4xl text-brandBlue">progress_activity</span>
           </div>
-        ) : filteredCourses.length > 0 ? (
-          <div className="grid gap-4">
-            {filteredCourses.map((course, idx) => (
+        ) : (
+          <>
+            {enrolledCourses.length > 0 && (
+              <section className="mb-6">
+                <h2 className="text-lg font-bold mb-3">My Enrolled Courses</h2>
+                <div className="space-y-3">
+                  {enrolledCourses.map((course, idx) => (
+                    <div
+                      key={`enrolled-${idx}`}
+                      onClick={() => navigate(`/course/${course.id}`)}
+                      className="bg-white rounded-xl p-4 shadow-sm flex gap-4 cursor-pointer active:scale-[0.98] transition-transform"
+                    >
+                      <div className="w-20 h-20 bg-gradient-to-br from-brandBlue to-[#1A237E] rounded-xl shrink-0 flex items-center justify-center overflow-hidden">
+                        {course.thumbnail ? (
+                          <img src={course.thumbnail} alt={course.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-rounded text-white text-3xl">play_circle</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-sm">{course.name || course.title}</h3>
+                        <p className="text-[10px] text-gray-400">{course.instructor || 'Instructor'}</p>
+                        <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">
+                          <span>{course.videos || 0} Videos</span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-500 rounded-full" style={{ width: `${course.progress || 30}%` }}></div>
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-500">{course.progress || 30}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <h2 className="text-lg font-bold mb-3">Recommended For You</h2>
+              {filteredCourses.filter(c => !enrolledCourseIds.includes(c.id)).length > 0 ? (
+                <div className="grid gap-4">
+                  {filteredCourses.filter(c => !enrolledCourseIds.includes(c.id)).map((course, idx) => (
               <div
                 key={idx}
                 onClick={() => navigate(`/course/${course.id}`)}
@@ -140,13 +194,16 @@ const CoursesScreen: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <span className="material-symbols-rounded text-6xl text-gray-300">school</span>
-            <p className="text-gray-400 mt-4">No courses found</p>
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <span className="material-symbols-rounded text-6xl text-gray-300">school</span>
+                  <p className="text-gray-400 mt-4">No courses found</p>
+                </div>
+              )}
+            </section>
+          </>
         )}
       </main>
     </div>

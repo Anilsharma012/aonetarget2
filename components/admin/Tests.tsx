@@ -250,7 +250,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   };
 
   const actions = [
-    { label: 'Edit Configuration', icon: 'edit', color: 'text-blue-500', action: (t: Test) => openEditModal(t) },
+    { label: 'Edit Configuration', icon: 'edit', color: 'text-blue-500', action: (t: Test) => handleOpenModal(t) },
     { label: 'Add Questions Manual', icon: 'add_circle', color: 'text-emerald-500' },
     { label: 'Import from DOCX', icon: 'description', color: 'text-blue-600' },
     { label: 'Import from Excel', icon: 'table_view', color: 'text-green-600' },
