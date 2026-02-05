@@ -9,7 +9,7 @@ import fs from 'fs';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.API_PORT || 5000;
+const PORT = 3001; // Backend API always on 3001, Vite frontend on 5000
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const __filename = fileURLToPath(import.meta.url);

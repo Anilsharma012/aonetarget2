@@ -46,6 +46,8 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - DELETE /api/{collection}/:id - Delete item
 
 ## Recent Changes (Feb 5, 2026)
+- **FIXED: Port conflict issue** - Backend now hardcoded to port 3001, prevents frontend/API conflict
+- Added Global News modal popup to student Home screen (shows announcements with dismiss feature)
 - Added Live Class Scheduler for admin (calendar + list view per course)
 - Added LiveClassesCalendar for students (course-specific live class viewing)
 - Added image URL field for course thumbnails with preview
