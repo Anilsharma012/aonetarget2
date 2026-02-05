@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../src/services/apiClient';
+import RichTextEditor from '../../shared/RichTextEditor';
 
 interface Course {
   id: string;
   name: string;
   description: string;
+  imageUrl: string;
   subjects: number;
   studentsEnrolled: number;
   status: 'active' | 'inactive';
@@ -27,6 +29,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    imageUrl: '',
     subjects: '',
     status: 'active' as 'active' | 'inactive'
   });
@@ -55,6 +58,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
         id: editingItem?.id || `course_${Date.now()}`,
         name: formData.name,
         description: formData.description,
+        imageUrl: formData.imageUrl,
         subjects: parseInt(formData.subjects) || 0,
         studentsEnrolled: editingItem?.studentsEnrolled || 0,
         status: formData.status,
@@ -69,7 +73,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
       }
       setShowModal(false);
       setEditingItem(null);
-      setFormData({ name: '', description: '', subjects: '', status: 'active' });
+      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active' });
       loadCourses();
     } catch (error) {
       showToast('Failed to save course', 'error');
@@ -99,7 +103,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {courses.length} Courses</p>
         </div>
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', subjects: '', status: 'active' }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active' }); setShowModal(true); }}
           className="bg-navy text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-sm hover:shadow-md hover:scale-105 transition-all flex items-center gap-2"
         >
           <span className="material-icons-outlined text-base">add</span>
@@ -169,7 +173,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, subjects: item.subjects.toString(), status: item.status }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: item.subjects.toString(), status: item.status }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
                             <span className="material-icons-outlined text-base">edit</span>
                           </button>
                           <button onClick={() => handleDelete(item.id)} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
@@ -214,14 +218,31 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <div className="p-8 space-y-4">
+            <div className="p-8 space-y-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <label className="block text-xs font-black text-gray-700 uppercase mb-2">Course Name *</label>
                 <input type="text" placeholder="Enter course name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
               </div>
               <div>
-                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Description</label>
-                <textarea placeholder="Enter description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10 resize-none" />
+                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Course Image URL</label>
+                <div className="flex gap-3">
+                  <input type="url" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                  {formData.imageUrl && (
+                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                      <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">Enter a URL for the course thumbnail image</p>
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Description (Rich Text)</label>
+                <RichTextEditor 
+                  content={formData.description} 
+                  onChange={(html) => setFormData({ ...formData, description: html })} 
+                  placeholder="Enter course description..."
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Use the toolbar to add bold, italic, lists, etc.</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

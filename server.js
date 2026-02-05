@@ -1882,6 +1882,66 @@ app.delete('/api/ebooks/:id', async (req, res) => {
   }
 });
 
+// Routes for Live Classes
+app.get('/api/courses/:courseId/live-classes', async (req, res) => {
+  try {
+    const classes = await db.collection('liveClasses').find({ courseId: req.params.courseId }).toArray();
+    res.json(classes);
+  } catch (error) {
+    console.error('Error fetching live classes:', error);
+    res.status(500).json({ error: 'Failed to fetch live classes' });
+  }
+});
+
+app.post('/api/courses/:courseId/live-classes', async (req, res) => {
+  try {
+    const classData = { ...req.body, courseId: req.params.courseId };
+    const result = await db.collection('liveClasses').insertOne(classData);
+    res.status(201).json({ _id: result.insertedId, ...classData });
+  } catch (error) {
+    console.error('Error creating live class:', error);
+    res.status(500).json({ error: 'Failed to create live class' });
+  }
+});
+
+app.put('/api/courses/:courseId/live-classes/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveClasses').updateOne(
+      { id: req.params.id, courseId: req.params.courseId },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Live class not found' });
+    res.json({ success: true, message: 'Live class updated' });
+  } catch (error) {
+    console.error('Error updating live class:', error);
+    res.status(500).json({ error: 'Failed to update live class' });
+  }
+});
+
+app.delete('/api/courses/:courseId/live-classes/:id', async (req, res) => {
+  try {
+    const result = await db.collection('liveClasses').deleteOne({ id: req.params.id, courseId: req.params.courseId });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Live class not found' });
+    res.json({ success: true, message: 'Live class deleted' });
+  } catch (error) {
+    console.error('Error deleting live class:', error);
+    res.status(500).json({ error: 'Failed to delete live class' });
+  }
+});
+
+// Get all live classes for enrolled student courses
+app.get('/api/students/:studentId/live-classes', async (req, res) => {
+  try {
+    const enrollments = await db.collection('enrollments').find({ studentId: req.params.studentId }).toArray();
+    const courseIds = enrollments.map(e => e.courseId);
+    const classes = await db.collection('liveClasses').find({ courseId: { $in: courseIds } }).toArray();
+    res.json(classes);
+  } catch (error) {
+    console.error('Error fetching student live classes:', error);
+    res.status(500).json({ error: 'Failed to fetch live classes' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });

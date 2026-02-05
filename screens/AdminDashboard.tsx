@@ -25,6 +25,7 @@ import Tokens from '../components/admin/shopping/Tokens';
 import Coupons from '../components/admin/shopping/Coupons';
 import Courses from '../components/admin/misc/Courses';
 import CourseContentManager from '../components/admin/CourseContentManager';
+import LiveClassScheduler from '../components/admin/LiveClassScheduler';
 import SubCourses from '../components/admin/misc/SubCourses';
 import Subjects from '../components/admin/misc/Subjects';
 import Topics from '../components/admin/misc/Topics';
@@ -33,7 +34,7 @@ import ExamDocuments from '../components/admin/misc/ExamDocuments';
 import GlobalNews from '../components/admin/misc/GlobalNews';
 import PushNotifications from '../components/admin/misc/PushNotifications';
 
-export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -69,6 +70,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       submenu: [
         { id: 'courses', label: 'Courses', icon: 'school' },
         { id: 'course-content', label: 'Course Content', icon: 'video_library' },
+        { id: 'live-class-scheduler', label: 'Live Classes', icon: 'event' },
         { id: 'subcourses', label: 'Sub Courses', icon: 'menu_book' },
         { id: 'subjects', label: 'Subjects', icon: 'subject' },
         { id: 'topics', label: 'Topics', icon: 'topic' },
@@ -169,6 +171,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'banners': return <Banners {...props} />;
       case 'courses': return <Courses {...props} />;
       case 'course-content': return <CourseContentManager {...props} />;
+      case 'live-class-scheduler': return <LiveClassScheduler {...props} />;
       case 'subcourses': return <SubCourses {...props} />;
       case 'subjects': return <Subjects {...props} />;
       case 'topics': return <Topics {...props} />;

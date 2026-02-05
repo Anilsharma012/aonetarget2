@@ -39,6 +39,9 @@ interface Test {
   duration: number;
   totalMarks: number;
   passingMarks: number;
+  numberOfQuestions: number;
+  openDate: string;
+  closeDate: string;
   isFree: boolean;
   status: 'active' | 'inactive';
   questions: Question[];
@@ -109,6 +112,9 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
     duration: 60,
     totalMarks: 100,
     passingMarks: 40,
+    numberOfQuestions: 0,
+    openDate: '',
+    closeDate: '',
     isFree: false,
     status: 'active' as 'active' | 'inactive'
   });
@@ -383,7 +389,7 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
   };
 
   const resetTestForm = () => {
-    setTestForm({ name: '', description: '', duration: 60, totalMarks: 100, passingMarks: 40, isFree: false, status: 'active' });
+    setTestForm({ name: '', description: '', duration: 60, totalMarks: 100, passingMarks: 40, numberOfQuestions: 0, openDate: '', closeDate: '', isFree: false, status: 'active' });
     setEditingTest(null);
   };
 
@@ -617,6 +623,9 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                                     duration: test.duration,
                                     totalMarks: test.totalMarks,
                                     passingMarks: test.passingMarks,
+                                    numberOfQuestions: test.numberOfQuestions || 0,
+                                    openDate: test.openDate || '',
+                                    closeDate: test.closeDate || '',
                                     isFree: test.isFree,
                                     status: test.status
                                   });
@@ -933,7 +942,7 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Test Name *</label>
                 <input
@@ -953,7 +962,39 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                   rows={2}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Open Date *</label>
+                  <input
+                    type="datetime-local"
+                    value={testForm.openDate}
+                    onChange={(e) => setTestForm({ ...testForm, openDate: e.target.value })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Test will be available from this date</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Close Date *</label>
+                  <input
+                    type="datetime-local"
+                    value={testForm.closeDate}
+                    onChange={(e) => setTestForm({ ...testForm, closeDate: e.target.value })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Test will close after this date</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">No. of Questions</label>
+                  <input
+                    type="number"
+                    value={testForm.numberOfQuestions}
+                    onChange={(e) => setTestForm({ ...testForm, numberOfQuestions: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                    placeholder="0"
+                  />
+                </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Duration (mins)</label>
                   <input

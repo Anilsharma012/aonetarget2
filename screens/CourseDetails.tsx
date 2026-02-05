@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import LiveClassesCalendar from '../components/student/LiveClassesCalendar';
 
 interface Video {
   id: string;
@@ -51,7 +52,7 @@ const CourseDetails: React.FC = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [progress, setProgress] = useState<Progress>({ completedVideos: [], completedTests: [], completedNotes: [] });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'videos' | 'notes' | 'tests'>('videos');
+  const [activeTab, setActiveTab] = useState<'videos' | 'notes' | 'tests' | 'live'>('videos');
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   
@@ -213,7 +214,7 @@ const CourseDetails: React.FC = () => {
         </div>
         
         <div className="flex bg-white">
-          {(['videos', 'notes', 'tests'] as const).map((tab) => (
+          {(['videos', 'notes', 'tests', 'live'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -386,6 +387,12 @@ const CourseDetails: React.FC = () => {
                     );
                   })
                 )}
+              </div>
+            )}
+
+            {activeTab === 'live' && (
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <LiveClassesCalendar studentId={studentId} courseId={id} />
               </div>
             )}
           </>
