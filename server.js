@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from "url";
+import path from 'path';
 
 dotenv.config();
 
