@@ -45,7 +45,16 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - PUT /api/{collection}/:id - Update item
 - DELETE /api/{collection}/:id - Delete item
 
-## Recent Changes (Feb 4, 2026)
+## Recent Changes (Feb 5, 2026)
+- Added Live Class Scheduler for admin (calendar + list view per course)
+- Added LiveClassesCalendar for students (course-specific live class viewing)
+- Added image URL field for course thumbnails with preview
+- Integrated Tiptap-based rich text editor for course descriptions
+- Enhanced test creation with openDate, closeDate, numberOfQuestions fields
+- Added `/api/courses/:courseId/live-classes` endpoints (CRUD)
+- Added `/api/students/:studentId/live-classes` endpoint for student view
+
+## Previous Changes (Feb 4, 2026)
 - Added complete API client with all MongoDB API functions
 - Updated all admin components to use MongoDB APIs
 - Added CRUD operations for all sidebar menu items
