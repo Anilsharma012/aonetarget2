@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from "url";
 import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -1768,10 +1769,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
-// Root route fix
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
+// Root route - only serve static files if dist exists (production)
+const distPath = path.join(__dirname, "dist", "index.html");
+if (fs.existsSync(distPath)) {
+  app.get('*', (req, res) => {
+    res.sendFile(distPath);
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'API Server is running. Frontend is on port 5000.' });
+  });
+}
 
 
 app.listen(PORT, () => {

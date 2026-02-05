@@ -55,7 +55,19 @@ const CourseDetails: React.FC = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   
-  const studentId = localStorage.getItem('studentId') || 'demo-student';
+  const getStudentId = () => {
+    const studentData = localStorage.getItem('studentData');
+    if (studentData) {
+      try {
+        const parsed = JSON.parse(studentData);
+        return parsed.id || '';
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  };
+  const studentId = getStudentId();
 
   useEffect(() => {
     fetchCourseData();
@@ -96,6 +108,12 @@ const CourseDetails: React.FC = () => {
   };
 
   const handleEnroll = async () => {
+    if (!studentId) {
+      alert('Please login first to enroll in this course');
+      navigate('/student-login');
+      return;
+    }
+    
     setEnrolling(true);
     try {
       const response = await fetch(`/api/students/${studentId}/enroll`, {
@@ -106,12 +124,17 @@ const CourseDetails: React.FC = () => {
       
       if (response.ok) {
         setIsEnrolled(true);
+        alert('Enrollment successful! You now have access to all course content.');
         const progressRes = await fetch(`/api/students/${studentId}/courses/${id}/progress`);
         const progressData = await progressRes.json();
         setProgress(progressData);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to enroll. Please try again.');
       }
     } catch (error) {
       console.error('Error enrolling:', error);
+      alert('Failed to enroll. Please try again.');
     } finally {
       setEnrolling(false);
     }

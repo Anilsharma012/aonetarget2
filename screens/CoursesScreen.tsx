@@ -9,7 +9,6 @@ const CoursesScreen: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const studentId = localStorage.getItem('studentId') || '';
   const studentData = localStorage.getItem('studentData');
   const student = studentData ? JSON.parse(studentData) : null;
 
