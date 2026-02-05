@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI } from '../src/services/apiClient';
+import { coursesAPI, newsAPI } from '../src/services/apiClient';
 
 import { COURSES } from '../constants';
+
+interface NewsItem {
+  id: string;
+  title: string;
+  message: string;
+  imageUrl?: string;
+  showAsModal?: boolean;
+  priority?: string;
+  isActive?: boolean;
+}
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>(COURSES);
+  const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
+  const [showNewsModal, setShowNewsModal] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -15,19 +27,47 @@ const Home: React.FC = () => {
         if (data && data.length > 0) {
           setCourses(data);
         } else {
-          // Use default courses if API returns empty
           setCourses(COURSES);
         }
       } catch (error) {
         console.error('Failed to fetch from MongoDB:', error);
-        console.log('Using default courses from constants');
-        // Fallback to constants if API fails
         setCourses(COURSES);
       }
     };
 
+    const fetchNews = async () => {
+      try {
+        const newsData = await newsAPI.getAll();
+        const modalNews = newsData.find((n: NewsItem) => 
+          n.showAsModal && n.isActive !== false
+        );
+        if (modalNews) {
+          const dismissedNews = localStorage.getItem('dismissedNews');
+          const dismissed = dismissedNews ? JSON.parse(dismissedNews) : [];
+          if (!dismissed.includes(modalNews.id)) {
+            setNewsModal(modalNews);
+            setShowNewsModal(true);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch news:', error);
+      }
+    };
+
     fetchCourses();
+    fetchNews();
   }, []);
+
+  const dismissNewsModal = () => {
+    if (newsModal) {
+      const dismissedNews = localStorage.getItem('dismissedNews');
+      const dismissed = dismissedNews ? JSON.parse(dismissedNews) : [];
+      dismissed.push(newsModal.id);
+      localStorage.setItem('dismissedNews', JSON.stringify(dismissed));
+    }
+    setShowNewsModal(false);
+    setNewsModal(null);
+  };
 
   const handleDownloadAPK = () => {
     const dummyContent = "This is a dummy APK file content for Aone Target Institute.";
@@ -262,6 +302,54 @@ const Home: React.FC = () => {
           </div>
         </button>
       </div>
+
+      {/* Global News Modal Popup */}
+      {showNewsModal && newsModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl transform animate-scale-in">
+            {newsModal.imageUrl && (
+              <div className="relative">
+                <img 
+                  src={newsModal.imageUrl} 
+                  alt={newsModal.title}
+                  className="w-full h-48 object-cover"
+                />
+                {newsModal.priority === 'high' && (
+                  <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                    <span className="material-icons-outlined text-sm">priority_high</span>
+                    Urgent
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="p-6">
+              {!newsModal.imageUrl && newsModal.priority === 'high' && (
+                <div className="inline-block bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full mb-3">
+                  <span className="material-icons-outlined text-sm align-middle mr-1">priority_high</span>
+                  Urgent Notice
+                </div>
+              )}
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-brandBlue to-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                  <span className="material-icons-outlined text-xl">campaign</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-800">{newsModal.title}</h3>
+                  <p className="text-xs text-gray-400 mt-1">Aone Target Institute</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed mb-6">{newsModal.message}</p>
+              <button
+                onClick={dismissNewsModal}
+                className="w-full bg-gradient-to-r from-brandBlue to-indigo-600 text-white py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <span className="material-icons-outlined text-sm">check_circle</span>
+                Got it, Thanks!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
