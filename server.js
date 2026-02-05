@@ -721,10 +721,46 @@ app.get('/api/videos', async (req, res) => {
 // Get videos by course
 app.get('/api/courses/:courseId/videos', async (req, res) => {
   try {
-    const videos = await db.collection('videos').find({ courseId: req.params.courseId }).toArray();
+    const videos = await db.collection('videos').find({ courseId: req.params.courseId }).sort({ order: 1 }).toArray();
     res.json(videos);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch course videos' });
+  }
+});
+
+// Add video to course
+app.post('/api/courses/:courseId/videos', async (req, res) => {
+  try {
+    const videoData = { ...req.body, courseId: req.params.courseId };
+    const result = await db.collection('videos').insertOne(videoData);
+    res.status(201).json({ _id: result.insertedId, ...videoData });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add video to course' });
+  }
+});
+
+// Update video in course
+app.put('/api/courses/:courseId/videos/:videoId', async (req, res) => {
+  try {
+    const result = await db.collection('videos').updateOne(
+      { id: req.params.videoId, courseId: req.params.courseId },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Video not found' });
+    res.json({ success: true, message: 'Video updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update video' });
+  }
+});
+
+// Delete video from course
+app.delete('/api/courses/:courseId/videos/:videoId', async (req, res) => {
+  try {
+    const result = await db.collection('videos').deleteOne({ id: req.params.videoId, courseId: req.params.courseId });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Video not found' });
+    res.json({ success: true, message: 'Video deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete video' });
   }
 });
 
@@ -817,10 +853,92 @@ app.get('/api/pdfs', async (req, res) => {
 // Get notes/PDFs by course
 app.get('/api/courses/:courseId/notes', async (req, res) => {
   try {
-    const notes = await db.collection('pdfs').find({ courseId: req.params.courseId }).toArray();
+    const notes = await db.collection('pdfs').find({ courseId: req.params.courseId }).sort({ order: 1 }).toArray();
     res.json(notes);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch course notes' });
+  }
+});
+
+// Add note to course
+app.post('/api/courses/:courseId/notes', async (req, res) => {
+  try {
+    const noteData = { ...req.body, courseId: req.params.courseId };
+    const result = await db.collection('pdfs').insertOne(noteData);
+    res.status(201).json({ _id: result.insertedId, ...noteData });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add note to course' });
+  }
+});
+
+// Update note in course
+app.put('/api/courses/:courseId/notes/:noteId', async (req, res) => {
+  try {
+    const result = await db.collection('pdfs').updateOne(
+      { id: req.params.noteId, courseId: req.params.courseId },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Note not found' });
+    res.json({ success: true, message: 'Note updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+});
+
+// Delete note from course
+app.delete('/api/courses/:courseId/notes/:noteId', async (req, res) => {
+  try {
+    const result = await db.collection('pdfs').deleteOne({ id: req.params.noteId, courseId: req.params.courseId });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Note not found' });
+    res.json({ success: true, message: 'Note deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// Get tests by course
+app.get('/api/courses/:courseId/tests', async (req, res) => {
+  try {
+    const tests = await db.collection('tests').find({ courseId: req.params.courseId }).toArray();
+    res.json(tests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course tests' });
+  }
+});
+
+// Add test to course
+app.post('/api/courses/:courseId/tests', async (req, res) => {
+  try {
+    const testData = { ...req.body, courseId: req.params.courseId };
+    const result = await db.collection('tests').insertOne(testData);
+    res.status(201).json({ _id: result.insertedId, ...testData });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add test to course' });
+  }
+});
+
+// Update test in course
+app.put('/api/courses/:courseId/tests/:testId', async (req, res) => {
+  try {
+    const result = await db.collection('tests').updateOne(
+      { id: req.params.testId, courseId: req.params.courseId },
+      { $set: req.body }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    res.json({ success: true, message: 'Test updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update test' });
+  }
+});
+
+// Delete test from course
+app.delete('/api/courses/:courseId/tests/:testId', async (req, res) => {
+  try {
+    const result = await db.collection('tests').deleteOne({ id: req.params.testId, courseId: req.params.courseId });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Test not found' });
+    res.json({ success: true, message: 'Test deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete test' });
   }
 });
 
