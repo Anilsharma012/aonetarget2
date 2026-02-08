@@ -46,6 +46,10 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - DELETE /api/{collection}/:id - Delete item
 
 ## Recent Changes (Feb 8, 2026)
+- **FIXED: "Failed to save" errors** - All PUT endpoints now strip `_id` field from request body before MongoDB update to prevent immutable field errors
+- **Registration page dynamic categories** - Target Exam dropdown now fetches all active categories from database instead of hardcoded NEET/IIT-JEE/Both options
+- **Dynamic banner carousel** - Home page hero banner now fetches banners from `/api/banners` instead of hardcoded slides; supports any number of banners with auto-slide
+- **Realtime data sync** - Home page and Dashboard auto-refresh data every 15 seconds (polling) for live database updates
 - **FIXED: Single port architecture** - Backend and frontend both run on port 5000 using Vite middleware mode
 - No more WebSocket errors in Replit preview
 - Express serves API routes, Vite middleware serves frontend with HMR

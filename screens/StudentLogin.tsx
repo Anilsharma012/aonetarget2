@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface StudentLoginProps {
@@ -15,10 +15,45 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ setAuth }) => {
     password: '',
     confirmPassword: '',
     class: '11th',
-    target: 'NEET'
+    target: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  const fallbackCategories = [
+    { id: 'neet', title: 'NEET', isActive: true },
+    { id: 'iit-jee', title: 'IIT-JEE', isActive: true },
+  ];
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          const active = (Array.isArray(data) ? data : []).filter((c: any) => c.isActive);
+          if (active.length > 0) {
+            setCategories(active);
+            if (!formData.target) {
+              setFormData(prev => ({ ...prev, target: active[0].title }));
+            }
+          } else {
+            setCategories(fallbackCategories);
+            setFormData(prev => ({ ...prev, target: 'NEET' }));
+          }
+        } else {
+          setCategories(fallbackCategories);
+          setFormData(prev => ({ ...prev, target: 'NEET' }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories(fallbackCategories);
+        setFormData(prev => ({ ...prev, target: 'NEET' }));
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -223,9 +258,10 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ setAuth }) => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brandBlue"
                   >
-                    <option value="NEET">NEET</option>
-                    <option value="IIT-JEE">IIT-JEE</option>
-                    <option value="Both">Both</option>
+                    {categories.map((cat) => (
+                      <option key={cat._id || cat.id} value={cat.title}>{cat.title}</option>
+                    ))}
+                    {categories.length > 1 && <option value="Multiple">Multiple</option>}
                   </select>
                 </div>
               </div>

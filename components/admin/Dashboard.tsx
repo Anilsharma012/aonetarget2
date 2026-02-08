@@ -31,6 +31,8 @@ const Dashboard: React.FC<Props> = ({ showToast }) => {
 
   useEffect(() => {
     loadStats();
+    const refreshInterval = setInterval(loadStats, 15000);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const loadStats = async () => {

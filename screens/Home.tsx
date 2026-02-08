@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI, newsAPI, categoriesAPI } from '../src/services/apiClient';
+import { coursesAPI, newsAPI, categoriesAPI, bannersAPI } from '../src/services/apiClient';
 
 import { COURSES } from '../constants';
 
@@ -14,20 +14,33 @@ interface NewsItem {
   isActive?: boolean;
 }
 
+interface Banner {
+  _id?: string;
+  id?: string;
+  imageUrl?: string;
+  title?: string;
+  subtitle?: string;
+  linkUrl?: string;
+  isActive?: boolean;
+  order?: number;
+}
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>(COURSES);
   const [categories, setCategories] = useState<any[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
+    if (banners.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev === 0 ? 1 : 0));
+      setCurrentSlide(prev => (prev + 1) % banners.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -54,6 +67,22 @@ const Home: React.FC = () => {
       }
     };
 
+    const fetchBanners = async () => {
+      try {
+        const data = await bannersAPI.getAll();
+        const activeBanners = (Array.isArray(data) ? data : []).filter((b: any) => b.isActive !== false && b.active !== false);
+        if (activeBanners.length > 0) {
+          activeBanners.sort((a: Banner, b: Banner) => (a.order || 0) - (b.order || 0));
+          setBanners(activeBanners);
+        } else {
+          setBanners([{ imageUrl: '/attached_assets/download_1770547691033.png', title: 'Aone Target Institute' }]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch banners:', error);
+        setBanners([{ imageUrl: '/attached_assets/download_1770547691033.png', title: 'Aone Target Institute' }]);
+      }
+    };
+
     const fetchNews = async () => {
       try {
         const newsData = await newsAPI.getAll();
@@ -73,9 +102,17 @@ const Home: React.FC = () => {
       }
     };
 
-    fetchCourses();
-    fetchCategories();
+    const fetchAll = () => {
+      fetchCourses();
+      fetchCategories();
+      fetchBanners();
+    };
+
+    fetchAll();
     fetchNews();
+
+    const refreshInterval = setInterval(fetchAll, 15000);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const dismissNewsModal = () => {
@@ -110,7 +147,7 @@ const Home: React.FC = () => {
     let url = "";
     switch(platform) {
       case 'fb': url = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`; break;
-      case 'ig': url = `https://www.instagram.com/`; break; // Instagram doesn't support direct URL sharing via web links easily
+      case 'ig': url = `https://www.instagram.com/`; break;
       case 'yt': url = `https://www.youtube.com/`; break;
       case 'tg': url = `https://t.me/share/url?url=${shareUrl}&text=${text}`; break;
     }
@@ -169,34 +206,43 @@ const Home: React.FC = () => {
         </div>
 
         {/* Hero Banner Carousel */}
-        <div className="relative w-full overflow-hidden rounded-2xl shadow-lg aspect-[2/1]">
-          <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-            <div className="w-full flex-shrink-0 h-full bg-white flex items-center justify-center p-4">
-              <img src="/attached_assets/download_1770547691033.png" alt="Aone Target Institute" className="max-h-full max-w-full object-contain" />
-            </div>
-            <div className="w-full flex-shrink-0 h-full bg-gradient-to-r from-blue-50 to-blue-100 relative">
-              <div className="absolute inset-0 p-5 z-10 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-brandRed text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">NEET 2025</span>
-                  <span className="text-xs font-semibold text-brandBlue">Admission Open</span>
+        {banners.length > 0 && (
+          <div className="relative w-full overflow-hidden rounded-2xl shadow-lg aspect-[2/1]">
+            <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+              {banners.map((banner, index) => (
+                <div key={banner._id || banner.id || index} className="w-full flex-shrink-0 h-full bg-white flex items-center justify-center">
+                  {banner.imageUrl ? (
+                    <img 
+                      src={banner.imageUrl} 
+                      alt={banner.title || `Banner ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                      onClick={() => banner.linkUrl && navigate(banner.linkUrl)}
+                      style={{ cursor: banner.linkUrl ? 'pointer' : 'default' }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-brandBlue to-indigo-600 flex items-center justify-center p-4">
+                      <div className="text-center text-white">
+                        <h3 className="text-xl font-bold">{banner.title}</h3>
+                        {banner.subtitle && <p className="text-sm opacity-80 mt-1">{banner.subtitle}</p>}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <h2 className="text-2xl font-bold mb-1 leading-tight text-brandBlue">
-                  <span className="text-brandRed">Crack NEET</span> with<br/>Dropper & Crash Course
-                </h2>
-                <button onClick={() => navigate('/batches')} className="bg-brandBlue text-white w-max px-4 py-2 rounded-full font-bold text-xs mt-3 shadow-lg flex items-center gap-2">
-                  Enroll Now <span className="material-icons-outlined text-sm">arrow_forward</span>
-                </button>
-              </div>
-              <div className="absolute right-0 bottom-0 h-full w-1/2 overflow-hidden">
-                <img src="/attached_assets/image_1770547866141.png" className="object-cover h-full w-full opacity-60" alt="NEET Course" />
-              </div>
+              ))}
             </div>
+            {banners.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index}
+                    onClick={() => setCurrentSlide(index)} 
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === index ? 'bg-brandBlue w-6' : 'bg-gray-300'}`}
+                  ></button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            <button onClick={() => setCurrentSlide(0)} className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === 0 ? 'bg-brandBlue w-6' : 'bg-gray-300'}`}></button>
-            <button onClick={() => setCurrentSlide(1)} className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === 1 ? 'bg-brandBlue w-6' : 'bg-gray-300'}`}></button>
-          </div>
-        </div>
+        )}
 
         {/* Categories Section */}
         <section>

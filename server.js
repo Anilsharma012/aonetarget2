@@ -181,9 +181,10 @@ app.put('/api/students/:id', async (req, res) => {
   try {
     console.log('PUT /api/students/:id - Updating student:', req.params.id, req.body);
     const { ObjectId } = await import('mongodb');
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('students').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) {
       console.warn('Student not found:', req.params.id);
@@ -258,9 +259,10 @@ app.post('/api/buyers', async (req, res) => {
 
 app.put('/api/buyers/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('buyers').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Buyer not found' });
@@ -304,9 +306,10 @@ app.post('/api/tokens', async (req, res) => {
 
 app.put('/api/tokens/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('tokens').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Token not found' });
@@ -350,9 +353,10 @@ app.post('/api/coupons', async (req, res) => {
 
 app.put('/api/coupons/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('coupons').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Coupon not found' });
@@ -451,9 +455,10 @@ app.post('/api/store', async (req, res) => {
 
 app.put('/api/store/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('store').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Product not found' });
     res.json({ success: true, message: 'Product updated' });
@@ -484,9 +489,10 @@ app.get('/api/institute', async (req, res) => {
 
 app.put('/api/institute', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('institute').updateOne(
       {},
-      { $set: req.body },
+      { $set: updateData },
       { upsert: true }
     );
     res.json({ success: true, message: 'Institute settings updated' });
@@ -516,9 +522,10 @@ app.post('/api/questions', async (req, res) => {
 
 app.put('/api/questions/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('questions').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Question not found' });
     res.json({ success: true, message: 'Question updated' });
@@ -576,9 +583,10 @@ app.post('/api/tests', async (req, res) => {
 app.put('/api/tests/:id', async (req, res) => {
   try {
     console.log('PUT /api/tests/:id - Updating test:', req.params.id, req.body);
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('tests').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
     console.log('Test updated successfully:', req.params.id);
@@ -629,9 +637,10 @@ app.post('/api/test-series', async (req, res) => {
 app.put('/api/test-series/:id', async (req, res) => {
   try {
     console.log('PUT /api/test-series/:id - Updating series:', req.params.id, req.body);
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('testSeries').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Series not found' });
     console.log('Series updated successfully:', req.params.id);
@@ -682,9 +691,10 @@ app.post('/api/subjective-tests', async (req, res) => {
 app.put('/api/subjective-tests/:id', async (req, res) => {
   try {
     console.log('PUT /api/subjective-tests/:id - Updating test:', req.params.id, req.body);
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('subjectiveTests').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
     console.log('Subjective test updated successfully:', req.params.id);
@@ -744,9 +754,10 @@ app.post('/api/courses/:courseId/videos', async (req, res) => {
 // Update video in course
 app.put('/api/courses/:courseId/videos/:videoId', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('videos').updateOne(
       { id: req.params.videoId, courseId: req.params.courseId },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Video not found' });
     res.json({ success: true, message: 'Video updated' });
@@ -777,9 +788,10 @@ app.post('/api/videos', async (req, res) => {
 
 app.put('/api/videos/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('videos').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Video not found' });
     res.json({ success: true, message: 'Video updated' });
@@ -819,9 +831,10 @@ app.post('/api/live-videos', async (req, res) => {
 
 app.put('/api/live-videos/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('liveVideos').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Live video not found' });
     res.json({ success: true, message: 'Live video updated' });
@@ -876,9 +889,10 @@ app.post('/api/courses/:courseId/notes', async (req, res) => {
 // Update note in course
 app.put('/api/courses/:courseId/notes/:noteId', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('pdfs').updateOne(
       { id: req.params.noteId, courseId: req.params.courseId },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Note not found' });
     res.json({ success: true, message: 'Note updated' });
@@ -922,9 +936,10 @@ app.post('/api/courses/:courseId/tests', async (req, res) => {
 // Update test in course
 app.put('/api/courses/:courseId/tests/:testId', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('tests').updateOne(
       { id: req.params.testId, courseId: req.params.courseId },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Test not found' });
     res.json({ success: true, message: 'Test updated' });
@@ -955,9 +970,10 @@ app.post('/api/pdfs', async (req, res) => {
 
 app.put('/api/pdfs/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('pdfs').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'PDF not found' });
     res.json({ success: true, message: 'PDF updated' });
@@ -997,9 +1013,10 @@ app.post('/api/packages', async (req, res) => {
 
 app.put('/api/packages/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('packages').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Package not found' });
     res.json({ success: true, message: 'Package updated' });
@@ -1043,9 +1060,10 @@ app.post('/api/messages', async (req, res) => {
 
 app.put('/api/messages/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('messages').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Message not found' });
     res.json({ success: true, message: 'Message updated' });
@@ -1089,9 +1107,10 @@ app.post('/api/blog', async (req, res) => {
 
 app.put('/api/blog/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('blog').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Blog post not found' });
     res.json({ success: true, message: 'Blog post updated' });
@@ -1122,9 +1141,10 @@ app.get('/api/settings', async (req, res) => {
 
 app.put('/api/settings', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('settings').updateOne(
       {},
-      { $set: req.body },
+      { $set: updateData },
       { upsert: true }
     );
     res.json({ success: true, message: 'Settings updated' });
@@ -1154,9 +1174,10 @@ app.post('/api/banners', async (req, res) => {
 
 app.put('/api/banners/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('banners').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Banner not found' });
     res.json({ success: true, message: 'Banner updated' });
@@ -1196,7 +1217,8 @@ app.post('/api/subjects', async (req, res) => {
 
 app.put('/api/subjects/:id', async (req, res) => {
   try {
-    const result = await db.collection('subjects').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('subjects').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Subject not found' });
     res.json({ success: true, message: 'Subject updated' });
   } catch (error) {
@@ -1234,7 +1256,8 @@ app.post('/api/topics', async (req, res) => {
 
 app.put('/api/topics/:id', async (req, res) => {
   try {
-    const result = await db.collection('topics').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('topics').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Topic not found' });
     res.json({ success: true, message: 'Topic updated' });
   } catch (error) {
@@ -1272,7 +1295,8 @@ app.post('/api/subcourses', async (req, res) => {
 
 app.put('/api/subcourses/:id', async (req, res) => {
   try {
-    const result = await db.collection('subcourses').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('subcourses').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Subcourse not found' });
     res.json({ success: true, message: 'Subcourse updated' });
   } catch (error) {
@@ -1310,7 +1334,8 @@ app.post('/api/instructions', async (req, res) => {
 
 app.put('/api/instructions/:id', async (req, res) => {
   try {
-    const result = await db.collection('instructions').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('instructions').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Instruction not found' });
     res.json({ success: true, message: 'Instruction updated' });
   } catch (error) {
@@ -1348,7 +1373,8 @@ app.post('/api/exam-documents', async (req, res) => {
 
 app.put('/api/exam-documents/:id', async (req, res) => {
   try {
-    const result = await db.collection('examDocuments').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('examDocuments').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Exam document not found' });
     res.json({ success: true, message: 'Exam document updated' });
   } catch (error) {
@@ -1386,7 +1412,8 @@ app.post('/api/news', async (req, res) => {
 
 app.put('/api/news/:id', async (req, res) => {
   try {
-    const result = await db.collection('news').updateOne({ id: req.params.id }, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('news').updateOne({ id: req.params.id }, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'News not found' });
     res.json({ success: true, message: 'News updated' });
   } catch (error) {
@@ -1815,9 +1842,10 @@ app.post('/api/live-classes', async (req, res) => {
 
 app.put('/api/live-classes/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('liveClasses').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Live class not found' });
     res.json({ success: true, message: 'Live class updated' });
@@ -1861,9 +1889,10 @@ app.post('/api/ebooks', async (req, res) => {
 
 app.put('/api/ebooks/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('ebooks').updateOne(
       { id: req.params.id },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Ebook not found' });
     res.json({ success: true, message: 'Ebook updated' });
@@ -1908,9 +1937,10 @@ app.post('/api/courses/:courseId/live-classes', async (req, res) => {
 
 app.put('/api/courses/:courseId/live-classes/:id', async (req, res) => {
   try {
+    const { _id, ...updateData } = req.body;
     const result = await db.collection('liveClasses').updateOne(
       { id: req.params.id, courseId: req.params.courseId },
-      { $set: req.body }
+      { $set: updateData }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Live class not found' });
     res.json({ success: true, message: 'Live class updated' });
@@ -1968,10 +1998,12 @@ app.put('/api/categories/:id', async (req, res) => {
     const { ObjectId } = await import('mongodb');
     let filter;
     try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
-    const result = await db.collection('categories').updateOne(filter, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('categories').updateOne(filter, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Category not found' });
     res.json({ success: true, message: 'Category updated' });
   } catch (error) {
+    console.error('Category update error:', error);
     res.status(500).json({ error: 'Failed to update category' });
   }
 });
@@ -2016,10 +2048,12 @@ app.put('/api/subcategories/:id', async (req, res) => {
     const { ObjectId } = await import('mongodb');
     let filter;
     try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
-    const result = await db.collection('subcategories').updateOne(filter, { $set: req.body });
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('subcategories').updateOne(filter, { $set: updateData });
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Subcategory not found' });
     res.json({ success: true, message: 'Subcategory updated' });
   } catch (error) {
+    console.error('Subcategory update error:', error);
     res.status(500).json({ error: 'Failed to update subcategory' });
   }
 });
