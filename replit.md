@@ -4,8 +4,8 @@
 A comprehensive NEET learning platform admin panel with full MongoDB integration. All admin functionality saves and retrieves data from MongoDB database.
 
 ## Technical Stack
-- **Backend**: Express.js server on port 3001
-- **Frontend**: React + TypeScript with Vite on port 5000
+- **Backend + Frontend**: Single Express.js server on port 5000 with Vite middleware
+- **Architecture**: Vite runs in middleware mode inside Express (dev), or Express serves built dist (production)
 - **Database**: MongoDB (database: aonetarget)
 - **Styling**: Tailwind CSS
 - **Charts**: Recharts
@@ -45,8 +45,13 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - PUT /api/{collection}/:id - Update item
 - DELETE /api/{collection}/:id - Delete item
 
-## Recent Changes (Feb 5, 2026)
-- **FIXED: Port conflict issue** - Backend now hardcoded to port 3001, prevents frontend/API conflict
+## Recent Changes (Feb 8, 2026)
+- **FIXED: Single port architecture** - Backend and frontend both run on port 5000 using Vite middleware mode
+- No more WebSocket errors in Replit preview
+- Express serves API routes, Vite middleware serves frontend with HMR
+- Course exploration system with hierarchical navigation (NEET, IIT-JEE, Nursing CET, General Studies)
+
+## Previous Changes (Feb 5, 2026)
 - Added Global News modal popup to student Home screen (shows announcements with dismiss feature)
 - Added Live Class Scheduler for admin (calendar + list view per course)
 - Added LiveClassesCalendar for students (course-specific live class viewing)
@@ -64,9 +69,8 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - All data now flows through MongoDB
 
 ## Development
-- Run: `node server.js & npm run dev:frontend`
-- Server: http://localhost:3001
-- Frontend: http://localhost:5000
+- Run: `node server.js`
+- Everything on: http://localhost:5000
 
 ## User Preferences
 - Hindi-speaking user: "mere mongodb me save hona chiaye bhai"

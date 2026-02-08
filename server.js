@@ -5,17 +5,19 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from "url";
 import path from 'path';
 import fs from 'fs';
+import http from 'http';
+import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
 const app = express();
-const PORT = 3001; // Backend API always on 3001, Vite frontend on 5000
+const PORT = 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
 app.use(cors({
   origin: '*',
   credentials: false,
@@ -25,17 +27,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Debug middleware to log all requests
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('  Body:', JSON.stringify(req.body).substring(0, 100));
+  if (req.path.startsWith('/api') || req.path === '/health') {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   }
   next();
 });
 
-
-app.use(express.static(path.join(__dirname, "dist")));
+if (isProduction) {
+  app.use(express.static(path.join(__dirname, "dist")));
+}
 
 
 let db;
@@ -1942,24 +1943,38 @@ app.get('/api/students/:studentId/live-classes', async (req, res) => {
   }
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
-// Root route - only serve static files if dist exists (production)
-const distPath = path.join(__dirname, "dist", "index.html");
-if (fs.existsSync(distPath)) {
-  app.get('*', (req, res) => {
-    res.sendFile(distPath);
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.json({ message: 'API Server is running. Frontend is on port 5000.' });
+async function startServer() {
+  const httpServer = http.createServer(app);
+
+  if (isProduction) {
+    const distPath = path.join(__dirname, "dist", "index.html");
+    if (fs.existsSync(distPath)) {
+      app.get('*', (req, res) => {
+        res.sendFile(distPath);
+      });
+    }
+  } else {
+    const vite = await createViteServer({
+      server: {
+        middlewareMode: {
+          server: httpServer,
+        },
+        hmr: {
+          server: httpServer,
+        },
+      },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  }
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+startServer();

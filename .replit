@@ -26,7 +26,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server.js & npx vite --host --port 5000"
+args = "node server.js"
 waitForPort = 5000
 
 [[ports]]
@@ -42,3 +42,8 @@ externalPort = 80
 [userenv.shared]
 API_PORT = "3001"
 VITE_PORT = "5173"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "server.js"]
+build = ["npm", "run", "build"]
