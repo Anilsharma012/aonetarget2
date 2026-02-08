@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './screens/Home';
 import Batches from './screens/Batches';
@@ -26,10 +26,16 @@ import WatchHistory from './screens/WatchHistory';
 import HelpSupport from './screens/HelpSupport';
 import Settings from './screens/Settings';
 import BottomNav from './components/BottomNav';
+import SplashScreen from './components/SplashScreen';
 
 const App: React.FC = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   useEffect(() => {
     const adminAuthStatus = localStorage.getItem('isAdminAuthenticated');
@@ -45,6 +51,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#121212]">
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       <Router>
         <Routes>
           <Route path="/admin-login" element={<AdminLogin setAuth={setIsAdminLoggedIn} />} />

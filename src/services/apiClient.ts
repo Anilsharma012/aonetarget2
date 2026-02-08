@@ -1170,3 +1170,21 @@ export const dashboardAPI = {
     return response.json();
   }
 };
+
+// Splash Screen API
+export const splashScreenAPI = {
+  get: async () => {
+    const response = await fetch(`${API_BASE_URL}/splash-screen`);
+    if (!response.ok) throw new Error('Failed to fetch splash screen settings');
+    return response.json();
+  },
+  update: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/splash-screen`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update splash screen settings');
+    return response.json();
+  }
+};

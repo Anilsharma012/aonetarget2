@@ -1153,6 +1153,31 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
+// Splash Screen Settings
+app.get('/api/splash-screen', async (req, res) => {
+  try {
+    const splash = await db.collection('settings').findOne({ type: 'splash_screen' });
+    res.json(splash || { type: 'splash_screen', imageUrl: '/attached_assets/ChatGPT_Image_Feb_8,_2026,_05_51_58_PM_1770553325908.png', isActive: true, duration: 3000 });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch splash screen settings' });
+  }
+});
+
+app.put('/api/splash-screen', async (req, res) => {
+  try {
+    const { _id, ...updateData } = req.body;
+    updateData.type = 'splash_screen';
+    const result = await db.collection('settings').updateOne(
+      { type: 'splash_screen' },
+      { $set: updateData },
+      { upsert: true }
+    );
+    res.json({ success: true, message: 'Splash screen settings updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update splash screen settings' });
+  }
+});
+
 // Routes for Banners
 app.get('/api/banners', async (req, res) => {
   try {

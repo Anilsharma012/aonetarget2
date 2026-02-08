@@ -46,14 +46,21 @@ A comprehensive NEET learning platform admin panel with full MongoDB integration
 - DELETE /api/{collection}/:id - Delete item
 
 ## Recent Changes (Feb 8, 2026)
-- **FIXED: "Failed to save" errors** - All PUT endpoints now strip `_id` field from request body before MongoDB update to prevent immutable field errors
-- **Registration page dynamic categories** - Target Exam dropdown now fetches all active categories from database instead of hardcoded NEET/IIT-JEE/Both options
-- **Dynamic banner carousel** - Home page hero banner now fetches banners from `/api/banners` instead of hardcoded slides; supports any number of banners with auto-slide
-- **Realtime data sync** - Home page and Dashboard auto-refresh data every 15 seconds (polling) for live database updates
-- **FIXED: Single port architecture** - Backend and frontend both run on port 5000 using Vite middleware mode
-- No more WebSocket errors in Replit preview
-- Express serves API routes, Vite middleware serves frontend with HMR
-- Course exploration system with hierarchical navigation (NEET, IIT-JEE, Nursing CET, General Studies)
+- **Complete UI Overhaul** - Redesigned entire Home screen with logo color scheme (Navy #1A237E, Blue #303F9F, Red #D32F2F)
+- **Splash Screen** - Added database-driven splash screen (SplashScreen component), admin-manageable from Settings panel, `/api/splash-screen` endpoint, shows on app open with configurable duration and image
+- **Header with Logo** - Updated header with Aone Target logo image, gradient background matching brand colors
+- **Modern Pill Tabs** - Top navigation tabs redesigned with icons, backdrop blur, and pill style
+- **Category Cards** - Redesigned with clean material icons, smooth shadows, rounded corners, softer gradients
+- **Continue Learning** - Enhanced visibility with gradient accent bar, hover effects, larger icons
+- **Glassmorphism Bottom Nav** - Sleek bottom navigation with backdrop blur, gradient active states, scale animations
+- **Social Icons Hover Glow** - Social sharing buttons with hover glow/shadow effects and scale animation
+- **Navigation Buttons** - Larger, bolder with logo color combination
+- **Admin Splash Settings** - Added splash screen management to admin Settings (enable/disable, image URL, duration)
+- **FIXED: "Failed to save" errors** - All PUT endpoints now strip `_id` field from request body
+- **Registration page dynamic categories** - Target Exam dropdown fetches from database
+- **Dynamic banner carousel** - Fetches from `/api/banners`, supports auto-slide
+- **Realtime data sync** - 15-second polling for live updates
+- **Single port architecture** - Backend and frontend both on port 5000 via Vite middleware
 
 ## Previous Changes (Feb 5, 2026)
 - Added Global News modal popup to student Home screen (shows announcements with dismiss feature)
