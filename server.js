@@ -26,6 +26,7 @@ app.use(cors({
   maxAge: 86400
 }));
 app.use(express.json());
+app.use('/attached_assets', express.static(path.join(__dirname, 'attached_assets')));
 
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path === '/health') {

@@ -12,6 +12,7 @@ interface Category {
   tag: string;
   order: number;
   isActive: boolean;
+  imageUrl?: string;
 }
 
 interface SubCategory {
@@ -25,6 +26,7 @@ interface SubCategory {
   description?: string;
   order: number;
   isActive: boolean;
+  imageUrl?: string;
 }
 
 interface Props {
@@ -69,12 +71,12 @@ const Categories: React.FC<Props> = ({ showToast }) => {
 
   const [catForm, setCatForm] = useState<Partial<Category>>({
     id: '', title: '', subtitle: '', icon: 'school', gradient: gradientOptions[0],
-    description: '', tag: '', order: 1, isActive: true,
+    description: '', tag: '', order: 1, isActive: true, imageUrl: '',
   });
 
   const [subForm, setSubForm] = useState<Partial<SubCategory>>({
     id: '', categoryId: '', title: '', parentPath: '', icon: 'video_library',
-    color: colorOptions[0], description: '', order: 1, isActive: true,
+    color: colorOptions[0], description: '', order: 1, isActive: true, imageUrl: '',
   });
 
   useEffect(() => {
@@ -183,7 +185,7 @@ const Categories: React.FC<Props> = ({ showToast }) => {
 
   const openAddCategory = () => {
     setEditingCat(null);
-    setCatForm({ id: '', title: '', subtitle: '', icon: 'school', gradient: gradientOptions[0], description: '', tag: '', order: categories.length + 1, isActive: true });
+    setCatForm({ id: '', title: '', subtitle: '', icon: 'school', gradient: gradientOptions[0], description: '', tag: '', order: categories.length + 1, isActive: true, imageUrl: '' });
     setShowCatModal(true);
   };
 
@@ -195,7 +197,7 @@ const Categories: React.FC<Props> = ({ showToast }) => {
 
   const openAddSubcategory = () => {
     setEditingSub(null);
-    setSubForm({ id: '', categoryId: selectedCategory || categories[0]?.id || '', title: '', parentPath: '', icon: 'video_library', color: colorOptions[0], description: '', order: filteredSubs.length + 1, isActive: true });
+    setSubForm({ id: '', categoryId: selectedCategory || categories[0]?.id || '', title: '', parentPath: '', icon: 'video_library', color: colorOptions[0], description: '', order: filteredSubs.length + 1, isActive: true, imageUrl: '' });
     setShowSubModal(true);
   };
 
@@ -481,6 +483,26 @@ const Categories: React.FC<Props> = ({ showToast }) => {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Image URL</label>
+                <input
+                  value={catForm.imageUrl || ''}
+                  onChange={e => setCatForm({ ...catForm, imageUrl: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="https://example.com/image.jpg"
+                />
+                {catForm.imageUrl && (
+                  <div className="mt-2 relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200">
+                    <img src={catForm.imageUrl} alt="Preview" className="w-full h-32 object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                    <button
+                      onClick={() => setCatForm({ ...catForm, imageUrl: '' })}
+                      className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow"
+                    >
+                      <span className="material-icons-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="p-6 border-t flex gap-3 justify-end">
               <button onClick={() => { setShowCatModal(false); setEditingCat(null); }} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200">Cancel</button>
@@ -587,6 +609,26 @@ const Categories: React.FC<Props> = ({ showToast }) => {
                     ></button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Image URL</label>
+                <input
+                  value={subForm.imageUrl || ''}
+                  onChange={e => setSubForm({ ...subForm, imageUrl: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="https://example.com/image.jpg"
+                />
+                {subForm.imageUrl && (
+                  <div className="mt-2 relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200">
+                    <img src={subForm.imageUrl} alt="Preview" className="w-full h-32 object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                    <button
+                      onClick={() => setSubForm({ ...subForm, imageUrl: '' })}
+                      className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow"
+                    >
+                      <span className="material-icons-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-6 border-t flex gap-3 justify-end">

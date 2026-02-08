@@ -20,6 +20,14 @@ const Home: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev === 0 ? 1 : 0));
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -160,22 +168,33 @@ const Home: React.FC = () => {
           />
         </div>
 
-        {/* Hero Banner */}
-        <div className="relative w-full overflow-hidden rounded-2xl shadow-lg aspect-[2/1] bg-gradient-to-r from-blue-50 to-blue-100">
-          <div className="absolute inset-0 p-5 z-10 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-brandRed text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">NEET 2025</span>
-              <span className="text-xs font-semibold text-brandBlue">Admission Open</span>
+        {/* Hero Banner Carousel */}
+        <div className="relative w-full overflow-hidden rounded-2xl shadow-lg aspect-[2/1]">
+          <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+            <div className="w-full flex-shrink-0 h-full bg-white flex items-center justify-center p-4">
+              <img src="/attached_assets/download_1770547691033.png" alt="Aone Target Institute" className="max-h-full max-w-full object-contain" />
             </div>
-            <h2 className="text-2xl font-bold mb-1 leading-tight text-brandBlue">
-              <span className="text-brandRed">Crack NEET</span> with<br/>Dropper & Crash Course
-            </h2>
-            <button onClick={() => navigate('/batches')} className="bg-brandBlue text-white w-max px-4 py-2 rounded-full font-bold text-xs mt-3 shadow-lg flex items-center gap-2">
-              Enroll Now <span className="material-icons-outlined text-sm">arrow_forward</span>
-            </button>
+            <div className="w-full flex-shrink-0 h-full bg-gradient-to-r from-blue-50 to-blue-100 relative">
+              <div className="absolute inset-0 p-5 z-10 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-brandRed text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">NEET 2025</span>
+                  <span className="text-xs font-semibold text-brandBlue">Admission Open</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-1 leading-tight text-brandBlue">
+                  <span className="text-brandRed">Crack NEET</span> with<br/>Dropper & Crash Course
+                </h2>
+                <button onClick={() => navigate('/batches')} className="bg-brandBlue text-white w-max px-4 py-2 rounded-full font-bold text-xs mt-3 shadow-lg flex items-center gap-2">
+                  Enroll Now <span className="material-icons-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
+              <div className="absolute right-0 bottom-0 h-full w-1/2 overflow-hidden">
+                <img src="/attached_assets/image_1770547866141.png" className="object-cover h-full w-full opacity-60" alt="NEET Course" />
+              </div>
+            </div>
           </div>
-          <div className="absolute right-0 bottom-0 h-full w-1/2 overflow-hidden">
-             <img src="https://picsum.photos/400/400" className="object-cover h-full w-full opacity-60" alt="Doctor" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            <button onClick={() => setCurrentSlide(0)} className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === 0 ? 'bg-brandBlue w-6' : 'bg-gray-300'}`}></button>
+            <button onClick={() => setCurrentSlide(1)} className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === 1 ? 'bg-brandBlue w-6' : 'bg-gray-300'}`}></button>
           </div>
         </div>
 
@@ -192,19 +211,25 @@ const Home: React.FC = () => {
                  onClick={() => navigate(`/explore/${cat.id}`)}
                  className={`relative p-4 rounded-2xl shadow-md h-36 flex flex-col justify-between text-white bg-gradient-to-br ${cat.gradient || 'from-blue-600 to-indigo-700'} overflow-hidden cursor-pointer active:scale-95 transition-transform`}
                >
-                 {cat.tag ? (
-                   <span className="bg-white/25 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase w-fit">{cat.tag}</span>
-                 ) : (
-                   <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">CATEGORY</span>
+                 {cat.imageUrl && (
+                   <img src={cat.imageUrl} alt={cat.title} className="absolute inset-0 w-full h-full object-cover" />
                  )}
-                 <div>
+                 {cat.imageUrl && <div className="absolute inset-0 bg-black/40"></div>}
+                 <div className="relative z-10">
+                   {cat.tag ? (
+                     <span className="bg-white/25 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase">{cat.tag}</span>
+                   ) : (
+                     <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">CATEGORY</span>
+                   )}
+                 </div>
+                 <div className="relative z-10">
                    <h3 className="font-bold text-lg leading-tight">{cat.title}</h3>
                    <span className="text-[10px] opacity-90">{cat.subtitle}</span>
                  </div>
-                 <div className="absolute top-3 right-3 w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+                 <div className="absolute top-3 right-3 w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center z-10">
                    <span className="material-icons-outlined text-white text-xl">{cat.icon}</span>
                  </div>
-                 <div className="absolute bottom-4 right-4 h-9 w-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                 <div className="absolute bottom-4 right-4 h-9 w-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 z-10">
                    <span className="material-icons-outlined text-white text-xl">arrow_forward</span>
                  </div>
                </div>
