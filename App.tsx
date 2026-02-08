@@ -12,6 +12,9 @@ import StudentLogin from './screens/StudentLogin';
 import StudentProfile from './screens/StudentProfile';
 import StudentDashboard from './screens/StudentDashboard';
 import CoursesScreen from './screens/CoursesScreen';
+import ExploreCourses from './screens/ExploreCourses';
+import CategoryPage from './screens/CategoryPage';
+import SubCategoryDetail from './screens/SubCategoryDetail';
 import ChatsScreen from './screens/ChatsScreen';
 import MyCourses from './screens/MyCourses';
 import LiveClasses from './screens/LiveClasses';
@@ -59,6 +62,9 @@ const App: React.FC = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/batches" element={<Batches />} />
                   <Route path="/courses" element={<CoursesScreen />} />
+                  <Route path="/explore" element={<ExploreCourses />} />
+                  <Route path="/explore/:categoryId" element={<CategoryPage />} />
+                  <Route path="/explore/:categoryId/:subId" element={<SubCategoryDetail />} />
                   <Route path="/course/:id" element={<CourseDetails />} />
                   <Route path="/checkout/:id" element={<Checkout />} />
                   <Route path="/study/:id" element={<StudyDashboard />} />

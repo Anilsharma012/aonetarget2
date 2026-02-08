@@ -123,9 +123,14 @@ const Home: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-3 flex space-x-3 overflow-x-auto hide-scrollbar">
-          {['Live', 'Courses', 'Webinars', 'Tests'].map((item, idx) => (
-            <button key={idx} className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition">
-              {item}
+          {[
+            { label: 'Live', path: '/live-classes' },
+            { label: 'Courses', path: '/explore' },
+            { label: 'Webinars', path: '/live-classes' },
+            { label: 'Tests', path: '/mock-tests' }
+          ].map((item, idx) => (
+            <button key={idx} onClick={() => navigate(item.path)} className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition active:scale-95">
+              {item.label}
             </button>
           ))}
         </div>
@@ -166,25 +171,28 @@ const Home: React.FC = () => {
         <section>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-gray-800">हमारे कोर्सेज (Our Courses)</h2>
-            <button onClick={() => navigate('/batches')} className="text-brandBlue text-sm font-semibold">View All</button>
+            <button onClick={() => navigate('/explore')} className="text-brandBlue text-sm font-semibold">View All</button>
           </div>
           <div className="grid grid-cols-2 gap-4">
              {/* Original Categories */}
              {[
-               { name: 'NEET & IIT-JEE', sub: '(प्रवेश परीक्षा)', color: 'bg-[#2962FF]', path: '/batches' },
-               { name: 'Nursing CET', sub: '(नर्सिंग)', color: 'bg-teal-600', path: '#' },
-               { name: 'Class 11th - 12th', sub: '(बोर्ड्स)', color: 'bg-indigo-600', path: '#' },
-               { name: 'NDA Exam', sub: '(रक्षा सेवा)', color: 'bg-slate-700', path: '#' }
+               { name: 'NEET', sub: '(मेडिकल प्रवेश)', color: 'bg-[#2962FF]', path: '/explore/neet', icon: 'biotech' },
+               { name: 'IIT-JEE', sub: '(इंजीनियरिंग)', color: 'bg-gradient-to-br from-orange-500 to-red-600', path: '/explore/iit-jee', icon: 'engineering' },
+               { name: 'Nursing CET', sub: '(नर्सिंग)', color: 'bg-teal-600', path: '/explore/nursing', icon: 'local_hospital' },
+               { name: 'General Studies', sub: '(9th & 10th)', color: 'bg-purple-600', path: '/explore/general', icon: 'menu_book' }
              ].map((cat, i) => (
                <div 
                  key={i} 
-                 onClick={() => cat.path !== '#' && navigate(cat.path)}
+                 onClick={() => navigate(cat.path)}
                  className={`relative p-4 rounded-2xl shadow-md h-36 flex flex-col justify-between text-white ${cat.color} overflow-hidden cursor-pointer active:scale-95 transition-transform`}
                >
                  <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">CATEGORY</span>
                  <div>
                    <h3 className="font-bold text-lg leading-tight">{cat.name}</h3>
                    <span className="text-[10px] opacity-90">{cat.sub}</span>
+                 </div>
+                 <div className="absolute top-3 right-3 w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+                   <span className="material-icons-outlined text-white text-xl">{cat.icon}</span>
                  </div>
                  <div className="absolute bottom-4 right-4 h-9 w-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
                    <span className="material-icons-outlined text-white text-xl">arrow_forward</span>
@@ -195,7 +203,7 @@ const Home: React.FC = () => {
              {/* New Boxes matching user image */}
              {/* Foundation Box */}
              <div 
-               onClick={() => navigate('/batches')}
+               onClick={() => navigate('/explore/general')}
                className="relative p-4 rounded-[2rem] shadow-lg h-44 flex flex-col justify-between text-white bg-gradient-to-br from-[#FF6D00] to-[#E64A19] overflow-hidden cursor-pointer active:scale-95 transition-transform"
              >
                 <div className="bg-white/20 w-fit px-3 py-1 rounded-full">
@@ -215,7 +223,7 @@ const Home: React.FC = () => {
 
              {/* Competitive Box */}
              <div 
-               onClick={() => navigate('/batches')}
+               onClick={() => navigate('/explore/neet')}
                className="relative p-4 rounded-[2rem] shadow-lg h-44 flex flex-col justify-between text-white bg-gradient-to-br from-[#D81B60] to-[#880E4F] overflow-hidden cursor-pointer active:scale-95 transition-transform"
              >
                 {/* Diagonal Stripes pattern overlay */}
