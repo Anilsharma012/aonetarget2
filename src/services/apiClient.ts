@@ -1092,6 +1092,76 @@ export const notificationsAPI = {
   }
 };
 
+// Categories API
+export const categoriesAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/categories`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create category');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update category');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete category');
+    return response.json();
+  },
+  seed: async () => {
+    const response = await fetch(`${API_BASE_URL}/categories/seed`, { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to seed categories');
+    return response.json();
+  }
+};
+
+// SubCategories API
+export const subcategoriesAPI = {
+  getAll: async (categoryId?: string) => {
+    const url = categoryId ? `${API_BASE_URL}/subcategories?categoryId=${categoryId}` : `${API_BASE_URL}/subcategories`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch subcategories');
+    return response.json();
+  },
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subcategories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create subcategory');
+    return response.json();
+  },
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_BASE_URL}/subcategories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update subcategory');
+    return response.json();
+  },
+  delete: async (id: string) => {
+    const response = await fetch(`${API_BASE_URL}/subcategories/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete subcategory');
+    return response.json();
+  }
+};
+
 // Dashboard Stats API
 export const dashboardAPI = {
   getStats: async () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI, newsAPI } from '../src/services/apiClient';
+import { coursesAPI, newsAPI, categoriesAPI } from '../src/services/apiClient';
 
 import { COURSES } from '../constants';
 
@@ -17,6 +17,7 @@ interface NewsItem {
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>(COURSES);
+  const [categories, setCategories] = useState<any[]>([]);
   const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
 
@@ -32,6 +33,16 @@ const Home: React.FC = () => {
       } catch (error) {
         console.error('Failed to fetch from MongoDB:', error);
         setCourses(COURSES);
+      }
+    };
+
+    const fetchCategories = async () => {
+      try {
+        const data = await categoriesAPI.getAll();
+        const active = (Array.isArray(data) ? data : []).filter((c: any) => c.isActive);
+        setCategories(active);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
       }
     };
 
@@ -55,6 +66,7 @@ const Home: React.FC = () => {
     };
 
     fetchCourses();
+    fetchCategories();
     fetchNews();
   }, []);
 
@@ -174,22 +186,20 @@ const Home: React.FC = () => {
             <button onClick={() => navigate('/explore')} className="text-brandBlue text-sm font-semibold">View All</button>
           </div>
           <div className="grid grid-cols-2 gap-4">
-             {/* Original Categories */}
-             {[
-               { name: 'NEET', sub: '(मेडिकल प्रवेश)', color: 'bg-[#2962FF]', path: '/explore/neet', icon: 'biotech' },
-               { name: 'IIT-JEE', sub: '(इंजीनियरिंग)', color: 'bg-gradient-to-br from-orange-500 to-red-600', path: '/explore/iit-jee', icon: 'engineering' },
-               { name: 'Nursing CET', sub: '(नर्सिंग)', color: 'bg-teal-600', path: '/explore/nursing', icon: 'local_hospital' },
-               { name: 'General Studies', sub: '(9th & 10th)', color: 'bg-purple-600', path: '/explore/general', icon: 'menu_book' }
-             ].map((cat, i) => (
+             {categories.map((cat, i) => (
                <div 
-                 key={i} 
-                 onClick={() => navigate(cat.path)}
-                 className={`relative p-4 rounded-2xl shadow-md h-36 flex flex-col justify-between text-white ${cat.color} overflow-hidden cursor-pointer active:scale-95 transition-transform`}
+                 key={cat._id || cat.id || i} 
+                 onClick={() => navigate(`/explore/${cat.id}`)}
+                 className={`relative p-4 rounded-2xl shadow-md h-36 flex flex-col justify-between text-white bg-gradient-to-br ${cat.gradient || 'from-blue-600 to-indigo-700'} overflow-hidden cursor-pointer active:scale-95 transition-transform`}
                >
-                 <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">CATEGORY</span>
+                 {cat.tag ? (
+                   <span className="bg-white/25 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase w-fit">{cat.tag}</span>
+                 ) : (
+                   <span className="text-[10px] uppercase font-bold tracking-wider opacity-80">CATEGORY</span>
+                 )}
                  <div>
-                   <h3 className="font-bold text-lg leading-tight">{cat.name}</h3>
-                   <span className="text-[10px] opacity-90">{cat.sub}</span>
+                   <h3 className="font-bold text-lg leading-tight">{cat.title}</h3>
+                   <span className="text-[10px] opacity-90">{cat.subtitle}</span>
                  </div>
                  <div className="absolute top-3 right-3 w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
                    <span className="material-icons-outlined text-white text-xl">{cat.icon}</span>
@@ -199,50 +209,6 @@ const Home: React.FC = () => {
                  </div>
                </div>
              ))}
-
-             {/* New Boxes matching user image */}
-             {/* Foundation Box */}
-             <div 
-               onClick={() => navigate('/explore/general')}
-               className="relative p-4 rounded-[2rem] shadow-lg h-44 flex flex-col justify-between text-white bg-gradient-to-br from-[#FF6D00] to-[#E64A19] overflow-hidden cursor-pointer active:scale-95 transition-transform"
-             >
-                <div className="bg-white/20 w-fit px-3 py-1 rounded-full">
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest">FOUNDATION</span>
-                </div>
-                <div className="relative z-10">
-                   <h3 className="font-extrabold text-xl leading-tight">Class 9th - 10th</h3>
-                   <span className="text-sm font-medium opacity-90">(फाउंडेशन)</span>
-                </div>
-                {/* Visual Decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                
-                <div className="absolute bottom-4 right-4 h-11 w-11 bg-white/25 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-inner">
-                   <span className="material-symbols-rounded text-white text-2xl fill-1">school</span>
-                </div>
-             </div>
-
-             {/* Competitive Box */}
-             <div 
-               onClick={() => navigate('/explore/neet')}
-               className="relative p-4 rounded-[2rem] shadow-lg h-44 flex flex-col justify-between text-white bg-gradient-to-br from-[#D81B60] to-[#880E4F] overflow-hidden cursor-pointer active:scale-95 transition-transform"
-             >
-                {/* Diagonal Stripes pattern overlay */}
-                <div className="absolute inset-0 opacity-20" style={{
-                  backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, white 10px, white 20px)`
-                }}></div>
-
-                <div className="bg-white/20 w-fit px-3 py-1 rounded-full relative z-10">
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest">COMPETITIVE</span>
-                </div>
-                <div className="relative z-10">
-                   <h3 className="font-extrabold text-xl leading-tight">General<br/>Studies</h3>
-                   <span className="text-sm font-medium opacity-90">(सामान्य ज्ञान)</span>
-                </div>
-                
-                <div className="absolute bottom-4 right-4 h-11 w-11 bg-white/25 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-inner relative z-10">
-                   <span className="material-symbols-rounded text-white text-2xl fill-1">public</span>
-                </div>
-             </div>
           </div>
         </section>
 

@@ -33,8 +33,9 @@ import Instructions from '../components/admin/misc/Instructions';
 import ExamDocuments from '../components/admin/misc/ExamDocuments';
 import GlobalNews from '../components/admin/misc/GlobalNews';
 import PushNotifications from '../components/admin/misc/PushNotifications';
+import Categories from '../components/admin/Categories';
 
-export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications' | 'categories' | 'misc';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -62,6 +63,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', color: 'text-blue-400' },
+    { id: 'categories', label: 'Categories', icon: 'account_tree', color: 'text-emerald-400' },
     {
       id: 'misc',
       label: 'Misc Manager',
@@ -146,6 +148,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
     const props = { showToast };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...props} />;
+      case 'categories': return <Categories {...props} />;
       case 'misc': return <MiscSection {...props} />;
       case 'students': return <Students {...props} />;
       case 'buyers': return <Buyers {...props} />;

@@ -1,47 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { categoriesAPI } from '../src/services/apiClient';
 
-const mainCategories = [
-  {
-    id: 'neet',
-    title: 'NEET',
-    subtitle: 'Medical Entrance',
-    icon: 'biotech',
-    gradient: 'from-blue-600 to-indigo-700',
-    description: 'Class 11th & 12th - Biology, Chemistry, Physics',
-    tag: 'Most Popular'
-  },
-  {
-    id: 'iit-jee',
-    title: 'IIT-JEE',
-    subtitle: 'Engineering Entrance',
-    icon: 'engineering',
-    gradient: 'from-orange-500 to-red-600',
-    description: 'Physics, Chemistry, Mathematics',
-    tag: 'Trending'
-  },
-  {
-    id: 'nursing',
-    title: 'Nursing CET',
-    subtitle: 'Nursing & Paramedical',
-    icon: 'local_hospital',
-    gradient: 'from-teal-500 to-emerald-600',
-    description: 'BSC, GNM, ANM-MPHW & More',
-    tag: null
-  },
-  {
-    id: 'general',
-    title: 'General Studies',
-    subtitle: 'Class 9th & 10th',
-    icon: 'menu_book',
-    gradient: 'from-purple-500 to-violet-600',
-    description: 'CBSE & HBSE Board',
-    tag: null
-  }
-];
+interface Category {
+  _id?: string;
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  gradient: string;
+  description: string;
+  tag: string;
+  order: number;
+  isActive: boolean;
+}
 
 const ExploreCourses: React.FC = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await categoriesAPI.getAll();
+        const active = (Array.isArray(data) ? data : []).filter((c: Category) => c.isActive);
+        setCategories(active);
+        if (active.length === 0) {
+          await categoriesAPI.seed();
+          const seeded = await categoriesAPI.getAll();
+          setCategories((Array.isArray(seeded) ? seeded : []).filter((c: Category) => c.isActive));
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -57,13 +62,13 @@ const ExploreCourses: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-4 gap-3 text-center">
-          {mainCategories.map(cat => (
+          {categories.slice(0, 4).map(cat => (
             <button
               key={cat.id}
               onClick={() => navigate(`/explore/${cat.id}`)}
               className="flex flex-col items-center gap-2"
             >
-              <div className={`w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center hover:bg-white/25 transition-all active:scale-90`}>
+              <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center hover:bg-white/25 transition-all active:scale-90">
                 <span className="material-icons-outlined text-2xl">{cat.icon}</span>
               </div>
               <span className="text-[10px] font-bold">{cat.title}</span>
@@ -75,7 +80,7 @@ const ExploreCourses: React.FC = () => {
       <main className="px-4 mt-6 space-y-4">
         <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Select Your Stream</h2>
 
-        {mainCategories.map(cat => (
+        {categories.map(cat => (
           <button
             key={cat.id}
             onClick={() => navigate(`/explore/${cat.id}`)}

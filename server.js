@@ -1943,6 +1943,168 @@ app.get('/api/students/:studentId/live-classes', async (req, res) => {
   }
 });
 
+// Routes for Categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await db.collection('categories').find({}).sort({ order: 1 }).toArray();
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+app.post('/api/categories', async (req, res) => {
+  try {
+    const result = await db.collection('categories').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    let filter;
+    try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
+    const result = await db.collection('categories').updateOne(filter, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Category not found' });
+    res.json({ success: true, message: 'Category updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    let filter;
+    try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
+    const result = await db.collection('categories').deleteOne(filter);
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Category not found' });
+    await db.collection('subcategories').deleteMany({ categoryId: req.params.id });
+    res.json({ success: true, message: 'Category deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete category' });
+  }
+});
+
+// Routes for SubCategories
+app.get('/api/subcategories', async (req, res) => {
+  try {
+    const { categoryId } = req.query;
+    const query = categoryId ? { categoryId } : {};
+    const subcategories = await db.collection('subcategories').find(query).sort({ order: 1 }).toArray();
+    res.json(subcategories);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subcategories' });
+  }
+});
+
+app.post('/api/subcategories', async (req, res) => {
+  try {
+    const result = await db.collection('subcategories').insertOne(req.body);
+    res.status(201).json({ _id: result.insertedId, ...req.body });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create subcategory' });
+  }
+});
+
+app.put('/api/subcategories/:id', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    let filter;
+    try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
+    const result = await db.collection('subcategories').updateOne(filter, { $set: req.body });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Subcategory not found' });
+    res.json({ success: true, message: 'Subcategory updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update subcategory' });
+  }
+});
+
+app.delete('/api/subcategories/:id', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    let filter;
+    try { filter = { _id: new ObjectId(req.params.id) }; } catch { filter = { id: req.params.id }; }
+    const result = await db.collection('subcategories').deleteOne(filter);
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Subcategory not found' });
+    res.json({ success: true, message: 'Subcategory deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete subcategory' });
+  }
+});
+
+// Seed default categories if collection is empty
+app.post('/api/categories/seed', async (req, res) => {
+  try {
+    const count = await db.collection('categories').countDocuments();
+    if (count > 0) return res.json({ message: 'Categories already seeded', count });
+
+    const defaultCategories = [
+      { id: 'neet', title: 'NEET', subtitle: 'Medical Entrance', icon: 'biotech', gradient: 'from-blue-600 to-indigo-700', description: 'Class 11th & 12th - Biology, Chemistry, Physics', tag: 'Most Popular', order: 1, isActive: true },
+      { id: 'iit-jee', title: 'IIT-JEE', subtitle: 'Engineering Entrance', icon: 'engineering', gradient: 'from-orange-500 to-red-600', description: 'Physics, Chemistry, Mathematics', tag: 'Trending', order: 2, isActive: true },
+      { id: 'nursing', title: 'Nursing CET', subtitle: 'Nursing & Paramedical', icon: 'local_hospital', gradient: 'from-teal-500 to-emerald-600', description: 'BSC, GNM, ANM-MPHW & More', tag: '', order: 3, isActive: true },
+      { id: 'general', title: 'General Studies', subtitle: 'Class 9th & 10th', icon: 'menu_book', gradient: 'from-purple-500 to-violet-600', description: 'CBSE & HBSE Board', tag: '', order: 4, isActive: true }
+    ];
+
+    await db.collection('categories').insertMany(defaultCategories);
+
+    const defaultSubcategories = [
+      { categoryId: 'neet', id: 'neet_class-11_recorded-batch', title: 'Class 11th - Recorded Batch', parentPath: 'Class 11th', icon: 'video_library', color: 'bg-blue-500', order: 1, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-11_live-classroom', title: 'Class 11th - Live Classroom', parentPath: 'Class 11th', icon: 'cast_for_education', color: 'bg-red-500', order: 2, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-11_crash-course', title: 'Class 11th - Crash Course', parentPath: 'Class 11th', icon: 'speed', color: 'bg-orange-500', order: 3, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-11_mock-test', title: 'Class 11th - Mock Test', parentPath: 'Class 11th', icon: 'quiz', color: 'bg-green-500', order: 4, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-12_recorded-batch', title: 'Class 12th - Recorded Batch', parentPath: 'Class 12th', icon: 'video_library', color: 'bg-blue-500', order: 5, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-12_live-classroom', title: 'Class 12th - Live Classroom', parentPath: 'Class 12th', icon: 'cast_for_education', color: 'bg-red-500', order: 6, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-12_crash-course', title: 'Class 12th - Crash Course', parentPath: 'Class 12th', icon: 'speed', color: 'bg-orange-500', order: 7, isActive: true },
+      { categoryId: 'neet', id: 'neet_class-12_mock-test', title: 'Class 12th - Mock Test', parentPath: 'Class 12th', icon: 'quiz', color: 'bg-green-500', order: 8, isActive: true },
+      { categoryId: 'neet', id: 'neet_neet-exam_recorded-batch', title: 'NEET Exams - Recorded Batch', parentPath: 'NEET Exams', icon: 'video_library', color: 'bg-blue-500', order: 9, isActive: true },
+      { categoryId: 'neet', id: 'neet_neet-exam_live-classroom', title: 'NEET Exams - Live Classroom', parentPath: 'NEET Exams', icon: 'cast_for_education', color: 'bg-red-500', order: 10, isActive: true },
+      { categoryId: 'neet', id: 'neet_neet-exam_crash-course', title: 'NEET Exams - Crash Course', parentPath: 'NEET Exams', icon: 'speed', color: 'bg-orange-500', order: 11, isActive: true },
+      { categoryId: 'neet', id: 'neet_neet-exam_mock-test', title: 'NEET Exams - Mock Test', parentPath: 'NEET Exams', icon: 'quiz', color: 'bg-green-500', order: 12, isActive: true },
+      { categoryId: 'iit-jee', id: 'iit-jee_recorded-batch', title: 'Recorded Batch', parentPath: '', icon: 'video_library', color: 'bg-blue-500', order: 1, isActive: true },
+      { categoryId: 'iit-jee', id: 'iit-jee_live-classroom', title: 'Live Classroom', parentPath: '', icon: 'cast_for_education', color: 'bg-red-500', order: 2, isActive: true },
+      { categoryId: 'iit-jee', id: 'iit-jee_crash-course', title: 'Crash Course', parentPath: '', icon: 'speed', color: 'bg-orange-500', order: 3, isActive: true },
+      { categoryId: 'iit-jee', id: 'iit-jee_mock-test', title: 'Mock Test', parentPath: '', icon: 'quiz', color: 'bg-green-500', order: 4, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_bsc-cet-entrance', title: 'BSC CET Entrance', parentPath: '', icon: 'school', color: 'bg-blue-500', description: 'Nursing & Paramedical entrance', order: 1, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_nursing-officer', title: 'Nursing Officer', parentPath: '', icon: 'medical_services', color: 'bg-red-500', description: 'Govt Job Coaching', order: 2, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_anm-mphw', title: 'ANM-MPHW', parentPath: '', icon: 'health_and_safety', color: 'bg-amber-500', description: 'Govt Job Coaching', order: 3, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_gnm', title: 'GNM', parentPath: '', icon: 'medication', color: 'bg-green-500', description: '1st, 2nd, 3rd Year Syllabus', order: 4, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_bsc-nursing', title: 'BSC Nursing Degree', parentPath: '', icon: 'local_pharmacy', color: 'bg-purple-500', description: 'Semester Wise Syllabus', order: 5, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_e-book', title: 'E-Book', parentPath: '', icon: 'auto_stories', color: 'bg-indigo-500', description: 'Study material & notes', order: 6, isActive: true },
+      { categoryId: 'nursing', id: 'nursing_mock-test', title: 'Mock Test', parentPath: '', icon: 'quiz', color: 'bg-teal-500', description: 'Practice tests', order: 7, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-9_english', title: 'CBSE Class 9th - English', parentPath: 'CBSE Board > Class 9th', icon: 'translate', color: 'bg-blue-500', order: 1, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-9_hindi', title: 'CBSE Class 9th - Hindi', parentPath: 'CBSE Board > Class 9th', icon: 'language', color: 'bg-orange-500', order: 2, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-9_social-studies', title: 'CBSE Class 9th - Social Studies', parentPath: 'CBSE Board > Class 9th', icon: 'public', color: 'bg-green-500', order: 3, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-9_science', title: 'CBSE Class 9th - Science & Tech', parentPath: 'CBSE Board > Class 9th', icon: 'science', color: 'bg-purple-500', order: 4, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-9_maths', title: 'CBSE Class 9th - Mathematics', parentPath: 'CBSE Board > Class 9th', icon: 'calculate', color: 'bg-red-500', order: 5, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-10_english', title: 'CBSE Class 10th - English', parentPath: 'CBSE Board > Class 10th', icon: 'translate', color: 'bg-blue-500', order: 6, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-10_hindi', title: 'CBSE Class 10th - Hindi', parentPath: 'CBSE Board > Class 10th', icon: 'language', color: 'bg-orange-500', order: 7, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-10_social-studies', title: 'CBSE Class 10th - Social Studies', parentPath: 'CBSE Board > Class 10th', icon: 'public', color: 'bg-green-500', order: 8, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-10_science', title: 'CBSE Class 10th - Science & Tech', parentPath: 'CBSE Board > Class 10th', icon: 'science', color: 'bg-purple-500', order: 9, isActive: true },
+      { categoryId: 'general', id: 'general_cbse_class-10_maths', title: 'CBSE Class 10th - Mathematics', parentPath: 'CBSE Board > Class 10th', icon: 'calculate', color: 'bg-red-500', order: 10, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-9_english', title: 'HBSE Class 9th - English', parentPath: 'HBSE Board > Class 9th', icon: 'translate', color: 'bg-blue-500', order: 11, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-9_hindi', title: 'HBSE Class 9th - Hindi', parentPath: 'HBSE Board > Class 9th', icon: 'language', color: 'bg-orange-500', order: 12, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-9_social-studies', title: 'HBSE Class 9th - Social Studies', parentPath: 'HBSE Board > Class 9th', icon: 'public', color: 'bg-green-500', order: 13, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-9_science', title: 'HBSE Class 9th - Science & Tech', parentPath: 'HBSE Board > Class 9th', icon: 'science', color: 'bg-purple-500', order: 14, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-9_maths', title: 'HBSE Class 9th - Mathematics', parentPath: 'HBSE Board > Class 9th', icon: 'calculate', color: 'bg-red-500', order: 15, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-10_english', title: 'HBSE Class 10th - English', parentPath: 'HBSE Board > Class 10th', icon: 'translate', color: 'bg-blue-500', order: 16, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-10_hindi', title: 'HBSE Class 10th - Hindi', parentPath: 'HBSE Board > Class 10th', icon: 'language', color: 'bg-orange-500', order: 17, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-10_social-studies', title: 'HBSE Class 10th - Social Studies', parentPath: 'HBSE Board > Class 10th', icon: 'public', color: 'bg-green-500', order: 18, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-10_science', title: 'HBSE Class 10th - Science & Tech', parentPath: 'HBSE Board > Class 10th', icon: 'science', color: 'bg-purple-500', order: 19, isActive: true },
+      { categoryId: 'general', id: 'general_hbse_class-10_maths', title: 'HBSE Class 10th - Mathematics', parentPath: 'HBSE Board > Class 10th', icon: 'calculate', color: 'bg-red-500', order: 20, isActive: true }
+    ];
+
+    await db.collection('subcategories').insertMany(defaultSubcategories);
+    res.json({ message: 'Categories seeded successfully', categories: defaultCategories.length, subcategories: defaultSubcategories.length });
+  } catch (error) {
+    console.error('Error seeding categories:', error);
+    res.status(500).json({ error: 'Failed to seed categories' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
