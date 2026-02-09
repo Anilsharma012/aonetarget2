@@ -109,6 +109,7 @@ app.get('/api/courses', async (req, res) => {
     if (req.query.examType) filter.examType = req.query.examType;
     if (req.query.contentType) filter.contentType = req.query.contentType;
     if (req.query.subject) filter.subject = req.query.subject;
+    if (req.query.boardType) filter.boardType = req.query.boardType;
     if (req.query.categoryId) filter.categoryId = req.query.categoryId;
     if (req.query.subcategoryId) filter.subcategoryId = req.query.subcategoryId;
     const courses = await db.collection('courses').find(filter).toArray();

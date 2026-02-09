@@ -64,6 +64,11 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - GET /api/tests/:id - Get test with questions
 
 ## Recent Changes (Feb 9, 2026)
+- **11th-12th Category Page** - Custom layout for 11th-12th category (categoryId: iit-jee) with CBSE/HBSE board tabs, 2x2 content type grid (Recorded Batch, Live Classroom, Crash Course, Mock Test), and subject filters (Hindi, English, Math, Science, Social Science, Sanskrit). Uses boardType field for filtering.
+- **Board Type Support** - New boardType field (cbse/hbse) added to courses for board classification. Admin panel has Board Type dropdown. Server API supports boardType query filter.
+- **NEET-IITJEE Category Page** - Custom layout with NEET/IIT-JEE tabs, 2x2 content grid, subject filters (Biology/Chemistry/Physics for NEET, Chemistry/Physics/Math for IIT-JEE). Uses examType field.
+- **Category-Specific Layouts** - CategoryPage conditionally renders: NEET category → NeetIitJeePage, 11th-12th category → Class11_12Page, all others → original subcategory-based layout
+- **Expanded Subject Options** - Admin course form now includes hindi, english, science, social_science, sanskrit in addition to biology, chemistry, physics, math
 - **Chat System** - Full 1-on-1 chat between students and admin. Students message from Chats tab, admin sees all conversations in Chat Support panel with reply functionality. Auto-polling for real-time updates. MongoDB collections: chats, chatMessages.
 - **Student Progress Tracking** - Test results recorded with testName, courseName, studentName in testResults collection. Student Dashboard shows real test results, course-wise progress bars, score trends. Admin AllReports shows all student test results with search/filter/pagination and detail modal.
 - **Course Purchase Flow** - Full end-to-end purchase: SubCategoryDetail shows courses with free/locked content indicators, price, Buy Now button. Checkout fetches course from MongoDB, processes purchase via API with auto-enrollment. PurchaseSuccess screen. Free courses enroll directly. Enrolled courses show in StudentDashboard "My Courses" section with Continue button.

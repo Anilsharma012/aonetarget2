@@ -19,6 +19,7 @@ interface Course {
   examType?: 'neet' | 'iit-jee';
   contentType?: 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test';
   subject?: 'biology' | 'chemistry' | 'physics' | 'math';
+  boardType?: 'cbse' | 'hbse';
 }
 
 interface Props {
@@ -48,7 +49,8 @@ const Courses: React.FC<Props> = ({ showToast }) => {
     type: '' as '' | 'recorded' | 'live',
     examType: '' as '' | 'neet' | 'iit-jee',
     contentType: '' as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test',
-    subject: '' as '' | 'biology' | 'chemistry' | 'physics' | 'math'
+    subject: '' as '' | 'biology' | 'chemistry' | 'physics' | 'math',
+    boardType: '' as '' | 'cbse' | 'hbse'
   });
 
   useEffect(() => { loadCourses(); loadCategoriesAndSubs(); }, []);
@@ -103,7 +105,8 @@ const Courses: React.FC<Props> = ({ showToast }) => {
         type: formData.type || undefined,
         examType: formData.examType || undefined,
         contentType: formData.contentType || undefined,
-        subject: formData.subject || undefined
+        subject: formData.subject || undefined,
+        boardType: formData.boardType || undefined
       };
       if (editingItem) {
         await coursesAPI.update(editingItem.id, courseData);
@@ -114,7 +117,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
       }
       setShowModal(false);
       setEditingItem(null);
-      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '' });
+      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '', boardType: '' });
       loadCourses();
     } catch (error) {
       showToast('Failed to save course', 'error');
@@ -144,7 +147,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {courses.length} Courses</p>
         </div>
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '' }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '', boardType: '' }); setShowModal(true); }}
           className="bg-navy text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-sm hover:shadow-md hover:scale-105 transition-all flex items-center gap-2"
         >
           <span className="material-icons-outlined text-base">add</span>
@@ -216,7 +219,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status, categoryId: item.categoryId || '', subcategoryId: item.subcategoryId || '', price: item.price?.toString() || '', type: (item.type || '') as '' | 'recorded' | 'live', examType: (item.examType || '') as '' | 'neet' | 'iit-jee', contentType: (item.contentType || '') as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test', subject: (item.subject || '') as '' | 'biology' | 'chemistry' | 'physics' | 'math' }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status, categoryId: item.categoryId || '', subcategoryId: item.subcategoryId || '', price: item.price?.toString() || '', type: (item.type || '') as '' | 'recorded' | 'live', examType: (item.examType || '') as '' | 'neet' | 'iit-jee', contentType: (item.contentType || '') as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test', subject: (item.subject || '') as '' | 'biology' | 'chemistry' | 'physics' | 'math', boardType: (item.boardType || '') as '' | 'cbse' | 'hbse' }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
                             <span className="material-icons-outlined text-base">edit</span>
                           </button>
                           <button onClick={() => handleDelete(item.id)} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
@@ -339,7 +342,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                   <span className="material-icons-outlined text-sm">category</span>
                   Exam & Content Classification
                 </h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-600 uppercase mb-1.5">Exam Type</label>
                     <select value={formData.examType} onChange={(e) => setFormData({ ...formData, examType: e.target.value as any })} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg font-bold text-sm outline-none focus:ring-2 focus:ring-navy/10">
@@ -348,6 +351,16 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       <option value="iit-jee">IIT-JEE</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-600 uppercase mb-1.5">Board Type</label>
+                    <select value={formData.boardType} onChange={(e) => setFormData({ ...formData, boardType: e.target.value as any })} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg font-bold text-sm outline-none focus:ring-2 focus:ring-navy/10">
+                      <option value="">Select Board</option>
+                      <option value="cbse">CBSE Board</option>
+                      <option value="hbse">HBSE (Haryana Board)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-600 uppercase mb-1.5">Content Type</label>
                     <select value={formData.contentType} onChange={(e) => setFormData({ ...formData, contentType: e.target.value as any })} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg font-bold text-sm outline-none focus:ring-2 focus:ring-navy/10">
@@ -366,6 +379,11 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       <option value="chemistry">Chemistry</option>
                       <option value="physics">Physics</option>
                       <option value="math">Mathematics</option>
+                      <option value="hindi">Hindi</option>
+                      <option value="english">English</option>
+                      <option value="science">Science</option>
+                      <option value="social_science">Social Science</option>
+                      <option value="sanskrit">Sanskrit</option>
                     </select>
                   </div>
                 </div>
