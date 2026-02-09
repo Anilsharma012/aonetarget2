@@ -28,6 +28,7 @@ import HelpSupport from './screens/HelpSupport';
 import Settings from './screens/Settings';
 import ReferEarn from './screens/ReferEarn';
 import PurchaseSuccess from './screens/PurchaseSuccess';
+import ContentTypeDetail from './screens/ContentTypeDetail';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 
@@ -75,6 +76,7 @@ const App: React.FC = () => {
                   <Route path="/explore" element={<ExploreCourses />} />
                   <Route path="/explore/:categoryId" element={<CategoryPage />} />
                   <Route path="/explore/:categoryId/:subId" element={<SubCategoryDetail />} />
+                  <Route path="/content/:contentType" element={<ContentTypeDetail />} />
                   <Route path="/course/:id" element={<CourseDetails />} />
                   <Route path="/checkout/:id" element={<Checkout />} />
                   <Route path="/study/:id" element={<StudyDashboard />} />
