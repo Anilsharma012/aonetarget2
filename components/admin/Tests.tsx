@@ -5,6 +5,8 @@ interface Test {
   id: string;
   name: string;
   course: string;
+  courseId: string;
+  courseName: string;
   questions: number;
   status: 'active' | 'inactive' | 'scheduled' | 'draft';
   date: string;
@@ -18,7 +20,9 @@ interface Test {
 
 interface Course {
   id: string;
-  title: string;
+  name: string;
+  title?: string;
+  categoryId?: string;
 }
 
 interface Props {
@@ -33,7 +37,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingTest, setEditingTest] = useState<Test | null>(null);
 
-  // Filter & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -43,7 +46,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
 
   const [formData, setFormData] = useState({
     name: '',
-    course: '',
+    courseId: '',
     questions: '',
     duration: '180',
     status: 'draft' as 'active' | 'inactive' | 'scheduled' | 'draft',
@@ -65,7 +68,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       setTests(Array.isArray(testData) ? testData : []);
       setCourses(Array.isArray(courseData) ? courseData : []);
     } catch (error) {
-      console.log('Starting with empty state - MongoDB may not have data yet');
+      console.log('Starting with empty state');
       setTests([]);
       setCourses([]);
     } finally {
@@ -73,10 +76,18 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     }
   };
 
-  // Filter logic
+  const getCourseName = (test: any) => {
+    if (test.courseName) return test.courseName;
+    if (test.courseId) {
+      const course = courses.find(c => c.id === test.courseId);
+      return course ? (course.name || course.title) : test.courseId;
+    }
+    return test.course || 'Unlinked';
+  };
+
   const filteredTests = tests.filter(test => {
     const matchesSearch = !searchQuery || (test.name && test.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCourse = !filterCourse || (test.course === filterCourse);
+    const matchesCourse = !filterCourse || (test.courseId === filterCourse) || (!test.courseId && test.course === filterCourse);
     const matchesStatus = !filterStatus || (test.status === filterStatus);
     return matchesSearch && matchesCourse && matchesStatus;
   });
@@ -92,8 +103,8 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       setEditingTest(test);
       setFormData({
         name: test.name,
-        course: test.course,
-        questions: test.questions.toString(),
+        courseId: test.courseId || '',
+        questions: (Array.isArray(test.questions) ? test.questions.length : (test.questions || 0)).toString(),
         duration: test.duration?.toString() || '180',
         status: test.status,
         openDate: test.openDate || '',
@@ -104,7 +115,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       setEditingTest(null);
       setFormData({
         name: '',
-        course: '',
+        courseId: '',
         questions: '',
         duration: '180',
         status: 'draft',
@@ -121,7 +132,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
     setEditingTest(null);
     setFormData({
       name: '',
-      course: '',
+      courseId: '',
       questions: '',
       duration: '180',
       status: 'draft',
@@ -132,16 +143,20 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.course || !formData.questions) {
-      showToast('Please fill all required fields', 'error');
+    if (!formData.name || !formData.courseId) {
+      showToast('Please fill Test Title and select Course', 'error');
       return;
     }
 
+    const selectedCourse = courses.find(c => c.id === formData.courseId);
+
     try {
-      const testData = {
+      const testData: any = {
         id: editingTest?.id || `test_${Date.now()}`,
         name: formData.name,
-        course: formData.course,
+        courseId: formData.courseId,
+        courseName: selectedCourse ? (selectedCourse.name || selectedCourse.title) : '',
+        course: selectedCourse ? (selectedCourse.name || selectedCourse.title) : '',
         questions: parseInt(formData.questions) || 0,
         duration: parseInt(formData.duration),
         status: formData.status,
@@ -151,29 +166,23 @@ const Tests: React.FC<Props> = ({ showToast }) => {
         date: editingTest?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
       };
 
-      console.log('Sending test data:', testData);
-
       if (editingTest) {
-        // Update existing test in API and state
         try {
           await testsAPI.update(editingTest.id, testData);
           setTests(tests.map(t => t.id === editingTest.id ? testData : t));
           showToast('Test updated successfully!');
         } catch (apiError) {
           console.error('API update error:', apiError);
-          // Fallback: just update state if API fails
           setTests(tests.map(t => t.id === editingTest.id ? testData : t));
           showToast('Test updated (local only)');
         }
       } else {
-        // Add new test to API and state
         try {
           await testsAPI.create(testData);
           setTests([...tests, testData]);
           showToast('Test created successfully!');
         } catch (apiError) {
           console.error('API create error:', apiError);
-          // Fallback: just update state if API fails
           setTests([...tests, testData]);
           showToast('Test created (local only)');
         }
@@ -240,7 +249,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
   const toggleStatus = async (test: Test) => {
     const newStatus = test.status === 'active' ? 'inactive' : 'active';
     try {
-      const updatedTest = { ...test, status: newStatus };
+      const updatedTest = { ...test, status: newStatus as any };
       await testsAPI.update(test.id, updatedTest);
       setTests(tests.map(t => t.id === test.id ? updatedTest : t));
       showToast(`Test ${newStatus}!`);
@@ -248,19 +257,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
       showToast('Failed to update status', 'error');
     }
   };
-
-  const actions = [
-    { label: 'Edit Configuration', icon: 'edit', color: 'text-blue-500', action: (t: Test) => handleOpenModal(t) },
-    { label: 'Add Questions Manual', icon: 'add_circle', color: 'text-emerald-500' },
-    { label: 'Import from DOCX', icon: 'description', color: 'text-blue-600' },
-    { label: 'Import from Excel', icon: 'table_view', color: 'text-green-600' },
-    { label: 'Question Re-arrange', icon: 'sort', color: 'text-orange-500' },
-    { label: 'Student Analytics', icon: 'analytics', color: 'text-purple-500' },
-    { label: 'Duplicate Exam', icon: 'content_copy', color: 'text-cyan-500' },
-    { label: 'Take Preview', icon: 'play_arrow', color: 'text-navy' },
-    { label: 'Archive Test', icon: 'archive', color: 'text-gray-400' },
-    { label: 'Permanently Delete', icon: 'delete', color: 'text-red-500', action: (t: Test) => handleDelete(t.id) }
-  ];
 
   if (loading) {
     return (
@@ -272,11 +268,10 @@ const Tests: React.FC<Props> = ({ showToast }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black text-navy">Mock Tests</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage and publish exams</p>
+          <p className="text-sm text-gray-500 mt-1">Manage and publish exams (linked to courses)</p>
         </div>
         <div className="flex gap-3">
           {selectedTests.length > 0 && (
@@ -298,9 +293,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
         </div>
       </div>
 
-      {/* Main Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Filters Row */}
         <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">Show</span>
@@ -319,11 +312,11 @@ const Tests: React.FC<Props> = ({ showToast }) => {
           <select
             value={filterCourse}
             onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}
-            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[150px]"
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[180px]"
           >
             <option value="">All Courses</option>
-            {[...new Set(tests.map(t => t.course))].map(course => (
-              <option key={course} value={course}>{course}</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.id}>{course.name || course.title}</option>
             ))}
           </select>
 
@@ -353,7 +346,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
@@ -403,11 +395,14 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                       <span className="text-sm font-semibold text-navy uppercase">{test.name}</span>
                       <p className="text-xs text-gray-400 mt-0.5">Added: {test.date}</p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{test.course}</td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-600">{getCourseName(test)}</span>
+                      {!test.courseId && <span className="block text-[10px] text-orange-500 font-bold">Not linked</span>}
+                    </td>
                     <td className="px-4 py-4 text-sm text-gray-600">{test.openDate || 'N/A'}</td>
                     <td className="px-4 py-4 text-sm text-gray-600">{test.closeDate || 'N/A'}</td>
                     <td className="px-4 py-4 text-center">
-                      <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{test.questions}</span>
+                      <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{Array.isArray(test.questions) ? test.questions.length : (test.questions || 0)}</span>
                     </td>
                     <td className="px-4 py-4">
                       <button
@@ -455,7 +450,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
           </table>
         </div>
 
-        {/* Pagination */}
         {filteredTests.length > 0 && (
           <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm text-gray-500">
@@ -513,7 +507,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
@@ -543,31 +536,24 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course * (Link to Course)</label>
+                <select
+                  value={formData.courseId}
+                  onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
+                >
+                  <option value="">Select Course</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>{course.name || course.title}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Test will appear under this course in the hierarchy</p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course *</label>
-                  <select
-                    value={formData.course}
-                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
-                  >
-                    <option value="">Select Course</option>
-                    <option value="NEET">NEET</option>
-                    <option value="IIT-JEE">IIT-JEE</option>
-                    <option value="BOARDS">BOARDS</option>
-                    <option value="AIIMS">AIIMS</option>
-                    <option value="JIPMER">JIPMER</option>
-                    <option value="KVPY">KVPY</option>
-                    <option value="OLYMPIAD">OLYMPIAD</option>
-                    {[...new Set(tests.map(t => t.course))].map(course => (
-                      !['NEET', 'IIT-JEE', 'BOARDS', 'AIIMS', 'JIPMER', 'KVPY', 'OLYMPIAD'].includes(course) && (
-                        <option key={course} value={course}>{course}</option>
-                      )
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Questions *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Questions</label>
                   <input
                     type="number"
                     placeholder="Number of questions"
@@ -576,9 +562,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Duration (mins)</label>
                   <input
@@ -589,6 +572,9 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
                   <select
@@ -602,6 +588,17 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Featured</span>
+                  </label>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -613,7 +610,6 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Close Date & Time</label>
@@ -623,20 +619,7 @@ const Tests: React.FC<Props> = ({ showToast }) => {
                     onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Click to select date & time</p>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 text-navy focus:ring-navy"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Mark as Featured</span>
-                </label>
               </div>
             </div>
 

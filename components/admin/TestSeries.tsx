@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { testSeriesAPI } from '../../src/services/apiClient';
+import { testSeriesAPI, coursesAPI } from '../../src/services/apiClient';
 
 interface TestSeriesItem {
   id: string;
   seriesName: string;
   totalTests: number;
   course: string;
+  courseId: string;
+  courseName: string;
   description: string;
   studentsEnrolled: number;
   status: 'active' | 'inactive' | 'draft';
   createdDate: string;
   completionRate: number;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  title?: string;
 }
 
 interface Props {
@@ -19,44 +27,60 @@ interface Props {
 
 const TestSeries: React.FC<Props> = ({ showToast }) => {
   const [series, setSeries] = useState<TestSeriesItem[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSeries, setEditingSeries] = useState<TestSeriesItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterCourse, setFilterCourse] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     seriesName: '',
-    course: '',
+    courseId: '',
     totalTests: '',
     description: '',
     status: 'draft' as 'active' | 'inactive' | 'draft'
   });
 
   useEffect(() => {
-    loadSeries();
+    loadData();
   }, []);
 
-  const loadSeries = async () => {
+  const loadData = async () => {
     try {
-      // Try to load from API (database)
-      const data = await testSeriesAPI.getAll().catch(() => []);
-      setSeries(Array.isArray(data) ? data : []);
+      const [seriesData, courseData] = await Promise.all([
+        testSeriesAPI.getAll().catch(() => []),
+        coursesAPI.getAll().catch(() => [])
+      ]);
+      setSeries(Array.isArray(seriesData) ? seriesData : []);
+      setCourses(Array.isArray(courseData) ? courseData : []);
     } catch (error) {
-      console.log('Starting with empty state - MongoDB may not have data yet');
+      console.log('Starting with empty state');
       setSeries([]);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const getCourseName = (item: any) => {
+    if (item.courseName) return item.courseName;
+    if (item.courseId) {
+      const course = courses.find(c => c.id === item.courseId);
+      return course ? (course.name || course.title) : item.courseId;
+    }
+    return item.course || 'Unlinked';
+  };
+
   const filteredSeries = series.filter(item => {
     const matchesSearch = !searchQuery || (item.seriesName && item.seriesName.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = !filterStatus || item.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesCourse = !filterCourse || item.courseId === filterCourse;
+    return matchesSearch && matchesStatus && matchesCourse;
   });
 
   const totalPages = Math.ceil(filteredSeries.length / itemsPerPage);
@@ -70,14 +94,14 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
       setEditingSeries(item);
       setFormData({
         seriesName: item.seriesName,
-        course: item.course,
+        courseId: item.courseId || '',
         totalTests: item.totalTests.toString(),
         description: item.description,
         status: item.status
       });
     } else {
       setEditingSeries(null);
-      setFormData({ seriesName: '', course: '', totalTests: '', description: '', status: 'draft' });
+      setFormData({ seriesName: '', courseId: '', totalTests: '', description: '', status: 'draft' });
     }
     setShowModal(true);
   };
@@ -85,21 +109,25 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingSeries(null);
-    setFormData({ seriesName: '', course: '', totalTests: '', description: '', status: 'draft' });
+    setFormData({ seriesName: '', courseId: '', totalTests: '', description: '', status: 'draft' });
   };
 
   const handleSubmit = async () => {
-    if (!formData.seriesName || !formData.course || !formData.totalTests) {
+    if (!formData.seriesName || !formData.courseId || !formData.totalTests) {
       showToast('Please fill all required fields', 'error');
       return;
     }
 
+    const selectedCourse = courses.find(c => c.id === formData.courseId);
+
     try {
-      const seriesData = {
+      const seriesData: any = {
         id: editingSeries?.id || `series_${Date.now()}`,
         seriesName: formData.seriesName,
         totalTests: parseInt(formData.totalTests),
-        course: formData.course,
+        courseId: formData.courseId,
+        courseName: selectedCourse ? (selectedCourse.name || selectedCourse.title) : '',
+        course: selectedCourse ? (selectedCourse.name || selectedCourse.title) : '',
         description: formData.description,
         studentsEnrolled: editingSeries?.studentsEnrolled || 0,
         status: formData.status,
@@ -107,29 +135,23 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
         completionRate: editingSeries?.completionRate || 0
       };
 
-      console.log('Sending series data:', seriesData);
-
       if (editingSeries) {
-        // Update existing series
         try {
           await testSeriesAPI.update(editingSeries.id, seriesData);
           setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
           showToast('Series updated successfully!');
         } catch (apiError) {
           console.error('API update error:', apiError);
-          // Fallback: just update state if API fails
           setSeries(series.map(s => s.id === editingSeries.id ? seriesData : s));
           showToast('Series updated (local only)');
         }
       } else {
-        // Add new series to API and state
         try {
           await testSeriesAPI.create(seriesData);
           setSeries([...series, seriesData]);
           showToast('Series created successfully!');
         } catch (apiError) {
           console.error('API create error:', apiError);
-          // Fallback: just update state if API fails
           setSeries([...series, seriesData]);
           showToast('Series created (local only)');
         }
@@ -192,11 +214,10 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black text-navy">Test Series</h2>
-          <p className="text-sm text-gray-500 mt-1">Create and manage test bundles</p>
+          <p className="text-sm text-gray-500 mt-1">Create and manage test bundles (linked to courses)</p>
         </div>
         <div className="flex gap-3">
           {selectedSeries.length > 0 && (
@@ -218,9 +239,7 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
         </div>
       </div>
 
-      {/* Main Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Filters Row */}
         <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">Show</span>
@@ -234,6 +253,17 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
               <option value={50}>50</option>
             </select>
           </div>
+
+          <select
+            value={filterCourse}
+            onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}
+            className="border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-navy/20 min-w-[180px]"
+          >
+            <option value="">All Courses</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.id}>{course.name || course.title}</option>
+            ))}
+          </select>
 
           <select
             value={filterStatus}
@@ -260,7 +290,6 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
@@ -309,7 +338,10 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
                       <span className="text-sm font-semibold text-navy">{item.seriesName}</span>
                       <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{item.course}</td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-gray-600">{getCourseName(item)}</span>
+                      {!item.courseId && <span className="block text-[10px] text-orange-500 font-bold">Not linked</span>}
+                    </td>
                     <td className="px-4 py-4 text-center">
                       <span className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">{item.totalTests}</span>
                     </td>
@@ -361,7 +393,6 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
           </table>
         </div>
 
-        {/* Pagination */}
         {filteredSeries.length > 0 && (
           <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm text-gray-500">
@@ -371,7 +402,6 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
@@ -403,19 +433,16 @@ const TestSeries: React.FC<Props> = ({ showToast }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course *</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Course * (Link)</label>
                   <select
-                    value={formData.course}
-                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    value={formData.courseId}
+                    onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-medium outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 transition-all"
                   >
                     <option value="">Select Course</option>
-                    <option value="NEET">NEET</option>
-                    <option value="IIT-JEE">IIT-JEE</option>
-                    <option value="BOARDS">BOARDS</option>
-                    <option value="CBSE">CBSE</option>
-                    <option value="AIIMS">AIIMS</option>
-                    <option value="JIPMER">JIPMER</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.id}>{course.name || course.title}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

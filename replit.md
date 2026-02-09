@@ -69,6 +69,7 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - **NEET Sample Courses** - 6 NEET courses seeded with proper category/subcategory mapping across Class 11, Class 12, and NEET Exam subcategories
 - **Hierarchical Flow** - Category → Subcategory → Courses → Course Details flow now works with proper data mapping
 - **Questions Admin Redesign** - Course → Test → Questions hierarchical flow with breadcrumb navigation
+- **Mock Tests Linked to Courses** - Tests.tsx and TestSeries.tsx now use actual courses from DB with courseId instead of hardcoded strings. Student MockTests screen groups tests by course with filter tabs.
 - **File Upload System** - Multer-based upload endpoint (POST /api/upload), supports images and PDFs up to 50MB, FileUploadButton reusable component
 - **Image Upload in Admin** - Categories, Subcategories, Courses, and Questions all support image upload alongside URL input
 - **PDF Upload** - Course content notes support PDF file upload alongside URL
