@@ -1,16 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { questionsAPI } from '../../src/services/apiClient';
+import FileUploadButton from '../shared/FileUploadButton';
 
-interface Question {
+interface TestQuestion {
   id: string;
-  questionText: string;
-  subject: string;
-  topic: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  questionType: 'mcq' | 'short-answer' | 'long-answer' | 'true-false';
-  answer: string;
-  options?: string[];
-  createdDate: string;
+  question: string;
+  questionImage?: string;
+  optionA: string;
+  optionAImage?: string;
+  optionB: string;
+  optionBImage?: string;
+  optionC: string;
+  optionCImage?: string;
+  optionD: string;
+  optionDImage?: string;
+  correctAnswer: 'A' | 'B' | 'C' | 'D';
+  explanation: string;
+  marks: number;
+  negativeMarks: number;
+}
+
+interface Test {
+  id: string;
+  courseId: string;
+  name: string;
+  description?: string;
+  duration: number;
+  totalMarks: number;
+  passingMarks: number;
+  numberOfQuestions: number;
+  marksPerQuestion: number;
+  negativeMarking: number;
+  questions: TestQuestion[];
+  status: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  category?: string;
 }
 
 interface Props {
@@ -18,552 +45,565 @@ interface Props {
   view?: 'list' | 'bank';
 }
 
-const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+const Questions: React.FC<Props> = ({ showToast }) => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingTests, setLoadingTests] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [subjectFilter, setSubjectFilter] = useState('all');
-  const [topicFilter, setTopicFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-  
-  const [formData, setFormData] = useState({
-    questionText: '',
-    subject: '',
-    topic: '',
-    difficulty: 'easy' as 'easy' | 'medium' | 'hard',
-    questionType: 'mcq' as 'mcq' | 'short-answer' | 'long-answer' | 'true-false',
-    answer: '',
-    options: ['', '', '', '']
+
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<TestQuestion | null>(null);
+  const [questionForm, setQuestionForm] = useState({
+    question: '',
+    questionImage: '',
+    optionA: '',
+    optionAImage: '',
+    optionB: '',
+    optionBImage: '',
+    optionC: '',
+    optionCImage: '',
+    optionD: '',
+    optionDImage: '',
+    correctAnswer: 'A' as 'A' | 'B' | 'C' | 'D',
+    explanation: '',
+    marks: 4,
+    negativeMarks: 0
   });
 
-  const subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'English'];
-  const topics = ['Kinematics', 'Thermodynamics', 'Optics', 'Atomic Structure', 'Organic Chemistry', 'Cell Division', 'Algebra', 'Geometry'];
-
   useEffect(() => {
-    loadQuestions();
+    loadCourses();
   }, []);
 
-  useEffect(() => {
-    let filtered = questions;
-
-    if (searchQuery) {
-      filtered = filtered.filter(q =>
-        q.questionText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.id.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    if (subjectFilter !== 'all') {
-      filtered = filtered.filter(q => q.subject === subjectFilter);
-    }
-
-    if (topicFilter !== 'all') {
-      filtered = filtered.filter(q => q.topic === topicFilter);
-    }
-
-    setFilteredQuestions(filtered);
-    setCurrentPage(1);
-  }, [questions, searchQuery, subjectFilter, topicFilter]);
-
-  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedQuestions = filteredQuestions.slice(startIndex, endIndex);
-
-  const loadQuestions = async () => {
+  const loadCourses = async () => {
     try {
       setLoading(true);
-      const data = await questionsAPI.getAll();
-      setQuestions(Array.isArray(data) ? data : []);
+      const res = await fetch('/api/courses');
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(Array.isArray(data) ? data : []);
+      }
     } catch (error) {
-      console.log('Starting with empty state - MongoDB may not have data yet');
-      setQuestions([]);
+      console.error('Error loading courses:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const loadTestsForCourse = async (course: Course) => {
+    try {
+      setLoadingTests(true);
+      setSelectedCourse(course);
+      setSelectedTest(null);
+      const res = await fetch(`/api/courses/${course.id}/tests`);
+      if (res.ok) {
+        const data = await res.json();
+        setTests(Array.isArray(data) ? data : []);
+      } else {
+        const allRes = await fetch('/api/tests');
+        if (allRes.ok) {
+          const allTests = await allRes.json();
+          const courseTests = (Array.isArray(allTests) ? allTests : []).filter((t: any) => t.courseId === course.id);
+          setTests(courseTests);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tests:', error);
+      setTests([]);
+    } finally {
+      setLoadingTests(false);
+    }
+  };
 
-    if (!formData.questionText || !formData.subject || !formData.answer) {
-      showToast('Please fill all required fields', 'error');
+  const selectTest = async (test: Test) => {
+    try {
+      const res = await fetch(`/api/tests/${test.id}`);
+      if (res.ok) {
+        const fullTest = await res.json();
+        setSelectedTest({ ...fullTest, questions: fullTest.questions || [] });
+      } else {
+        setSelectedTest({ ...test, questions: test.questions || [] });
+      }
+    } catch {
+      setSelectedTest({ ...test, questions: test.questions || [] });
+    }
+  };
+
+  const resetQuestionForm = () => {
+    setQuestionForm({
+      question: '', questionImage: '', optionA: '', optionAImage: '', optionB: '', optionBImage: '',
+      optionC: '', optionCImage: '', optionD: '', optionDImage: '', correctAnswer: 'A', explanation: '', marks: 4, negativeMarks: 0
+    });
+    setEditingQuestion(null);
+  };
+
+  const handleQuestionSubmit = async () => {
+    if (!questionForm.question || !questionForm.optionA || !questionForm.optionB || !questionForm.correctAnswer) {
+      showToast('Please fill question and at least 2 options', 'error');
       return;
     }
+    if (!selectedTest) return;
 
     try {
-      const questionData: Question = {
-        id: editingQuestion?.id || `Q-${String(Date.now()).slice(-6)}`,
-        questionText: formData.questionText,
-        subject: formData.subject,
-        topic: formData.topic,
-        difficulty: formData.difficulty,
-        questionType: formData.questionType,
-        answer: formData.answer,
-        options: formData.questionType === 'mcq' ? formData.options.filter(o => o.trim()) : [],
-        createdDate: editingQuestion?.createdDate || new Date().toISOString().split('T')[0]
+      const questions = [...(selectedTest.questions || [])];
+      const qData: TestQuestion = {
+        id: editingQuestion?.id || `q_${Date.now()}`,
+        question: questionForm.question,
+        questionImage: questionForm.questionImage,
+        optionA: questionForm.optionA,
+        optionAImage: questionForm.optionAImage,
+        optionB: questionForm.optionB,
+        optionBImage: questionForm.optionBImage,
+        optionC: questionForm.optionC,
+        optionCImage: questionForm.optionCImage,
+        optionD: questionForm.optionD,
+        optionDImage: questionForm.optionDImage,
+        correctAnswer: questionForm.correctAnswer,
+        explanation: questionForm.explanation,
+        marks: questionForm.marks,
+        negativeMarks: questionForm.negativeMarks
       };
 
-      console.log('Adding question:', questionData);
-
       if (editingQuestion) {
-        await questionsAPI.update(editingQuestion.id, questionData);
-        setQuestions(questions.map(q => q.id === editingQuestion.id ? questionData : q));
-        showToast('Question updated successfully!', 'success');
+        const idx = questions.findIndex(q => q.id === editingQuestion.id);
+        if (idx >= 0) questions[idx] = qData;
       } else {
-        await questionsAPI.create(questionData);
-        setQuestions([...questions, questionData]);
-        showToast('Question created successfully!', 'success');
+        questions.push(qData);
       }
 
-      resetForm();
-      setShowAddModal(false);
+      const res = await fetch(`/api/tests/${selectedTest.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...selectedTest, questions })
+      });
+
+      if (res.ok) {
+        setSelectedTest({ ...selectedTest, questions });
+        showToast(editingQuestion ? 'Question updated!' : 'Question added!', 'success');
+        setShowQuestionModal(false);
+        resetQuestionForm();
+      } else {
+        throw new Error('Failed to save');
+      }
     } catch (error) {
       console.error('Error saving question:', error);
       showToast('Failed to save question', 'error');
     }
   };
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this question?')) {
-      return;
-    }
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!selectedTest) return;
+    if (!confirm('Are you sure you want to delete this question?')) return;
 
     try {
-      console.log('Deleting question:', id);
-      await questionsAPI.delete(id);
-      setQuestions(questions.filter(q => q.id !== id));
-      showToast('Question deleted successfully!', 'success');
+      const questions = (selectedTest.questions || []).filter(q => q.id !== questionId);
+      const res = await fetch(`/api/tests/${selectedTest.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...selectedTest, questions })
+      });
+
+      if (res.ok) {
+        setSelectedTest({ ...selectedTest, questions });
+        showToast('Question deleted!', 'success');
+      }
     } catch (error) {
-      console.error('Error deleting question:', error);
       showToast('Failed to delete question', 'error');
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (selectedQuestions.length === 0) return;
-    if (!confirm(`Delete ${selectedQuestions.length} selected question(s)?`)) return;
-
-    try {
-      await Promise.all(selectedQuestions.map(id => questionsAPI.delete(id)));
-      setQuestions(questions.filter(q => !selectedQuestions.includes(q.id)));
-      setSelectedQuestions([]);
-      showToast(`${selectedQuestions.length} question(s) deleted successfully!`, 'success');
-    } catch (error) {
-      console.error('Error deleting questions:', error);
-      showToast('Failed to delete questions', 'error');
-    }
-  };
-
-  const handleEditClick = (question: Question) => {
-    setEditingQuestion(question);
-    setFormData({
-      questionText: question.questionText,
-      subject: question.subject,
-      topic: question.topic,
-      difficulty: question.difficulty,
-      questionType: question.questionType,
-      answer: question.answer,
-      options: question.options || ['', '', '', '']
+  const editQuestion = (q: TestQuestion) => {
+    setEditingQuestion(q);
+    setQuestionForm({
+      question: q.question,
+      questionImage: q.questionImage || '',
+      optionA: q.optionA,
+      optionAImage: q.optionAImage || '',
+      optionB: q.optionB,
+      optionBImage: q.optionBImage || '',
+      optionC: q.optionC,
+      optionCImage: q.optionCImage || '',
+      optionD: q.optionD,
+      optionDImage: q.optionDImage || '',
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation,
+      marks: q.marks || 4,
+      negativeMarks: q.negativeMarks || 0
     });
-    setShowAddModal(true);
+    setShowQuestionModal(true);
   };
 
-  const toggleSelectAll = () => {
-    if (selectedQuestions.length === paginatedQuestions.length) {
-      setSelectedQuestions([]);
-    } else {
-      setSelectedQuestions(paginatedQuestions.map(q => q.id));
-    }
-  };
+  const filteredQuestions = (selectedTest?.questions || []).filter(q =>
+    !searchQuery || q.question.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const toggleSelectQuestion = (id: string) => {
-    setSelectedQuestions(prev =>
-      prev.includes(id) ? prev.filter(q => q !== id) : [...prev, id]
+  if (loading) {
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-3"></div>
+        <p className="text-gray-400 text-sm">Loading courses...</p>
+      </div>
     );
-  };
-
-  const resetForm = () => {
-    setFormData({
-      questionText: '',
-      subject: '',
-      topic: '',
-      difficulty: 'easy',
-      questionType: 'mcq',
-      answer: '',
-      options: ['', '', '', '']
-    });
-    setEditingQuestion(null);
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-600';
-      case 'medium': return 'bg-yellow-100 text-yellow-600';
-      case 'hard': return 'bg-red-100 text-red-600';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'mcq': return 'bg-blue-100 text-blue-600';
-      case 'short-answer': return 'bg-purple-100 text-purple-600';
-      case 'long-answer': return 'bg-indigo-100 text-indigo-600';
-      case 'true-false': return 'bg-orange-100 text-orange-600';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-navy">
-            {view === 'bank' ? 'Question Bank' : 'Question List'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {view === 'bank' ? 'Complete repository of exam questions' : 'Manage all questions in the system'}
-          </p>
-        </div>
-        <div className="flex gap-3 flex-wrap">
-          {selectedQuestions.length > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
-            >
-              <span className="material-icons-outlined text-lg">delete</span>
-              Delete ({selectedQuestions.length})
+      <div className="flex items-center gap-3 text-sm text-gray-500">
+        <button onClick={() => { setSelectedCourse(null); setSelectedTest(null); }} className={`font-bold ${!selectedCourse ? 'text-navy' : 'hover:text-navy cursor-pointer'}`}>
+          <span className="material-icons-outlined text-[16px] align-middle mr-1">school</span>
+          All Courses
+        </button>
+        {selectedCourse && (
+          <>
+            <span className="material-icons-outlined text-gray-300 text-[14px]">chevron_right</span>
+            <button onClick={() => setSelectedTest(null)} className={`font-bold ${!selectedTest ? 'text-navy' : 'hover:text-navy cursor-pointer'}`}>
+              {selectedCourse.name.length > 30 ? selectedCourse.name.substring(0, 30) + '...' : selectedCourse.name}
             </button>
-          )}
-          <button
-            onClick={() => { resetForm(); setShowAddModal(true); }}
-            className="px-6 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy/90 transition-colors flex items-center gap-2"
-          >
-            <span className="material-icons-outlined text-lg">add</span>
-            Add Question
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-4 items-center">
-        <div className="flex-1 relative min-w-[250px]">
-          <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20 transition-all"
-            placeholder="Search by question or ID..."
-          />
-        </div>
-        <select
-          value={subjectFilter}
-          onChange={(e) => setSubjectFilter(e.target.value)}
-          className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-navy/20"
-        >
-          <option value="all">All Subjects</option>
-          {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select
-          value={topicFilter}
-          onChange={(e) => setTopicFilter(e.target.value)}
-          className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-navy/20"
-        >
-          <option value="all">All Topics</option>
-          {topics.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-8 text-center text-gray-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-2"></div>
-              Loading questions...
-            </div>
-          ) : filteredQuestions.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              <span className="material-icons-outlined text-6xl text-gray-200 mb-2 block">help_outline</span>
-              No questions found
-            </div>
-          ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-4 py-4 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuestions.length === paginatedQuestions.length && paginatedQuestions.length > 0}
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 text-navy"
-                    />
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Question</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Topic</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Difficulty</th>
-                  <th className="px-4 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginatedQuestions.map((question, index) => (
-                  <tr key={question.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-4 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedQuestions.includes(question.id)}
-                        onChange={() => toggleSelectQuestion(question.id)}
-                        className="w-4 h-4 rounded border-gray-300 text-navy"
-                      />
-                    </td>
-                    <td className="px-4 py-4 text-sm font-medium text-gray-600">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm font-semibold text-navy line-clamp-2">{question.questionText}</span>
-                      <span className="text-xs text-gray-400 mt-1 block">ID: {question.id}</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm text-gray-600">{question.subject}</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm text-gray-600">{question.topic}</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getTypeColor(question.questionType)}`}>
-                        {(question.questionType || 'mcq').replace('-', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getDifficultyColor(question.difficulty)}`}>
-                        {question.difficulty}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEditClick(question)}
-                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <span className="material-icons-outlined text-lg">edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteQuestion(question.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <span className="material-icons-outlined text-lg">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {filteredQuestions.length > 0 && (
-          <div className="p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Show</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(parseInt(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-              </select>
-            </div>
-            <p className="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredQuestions.length)} of {filteredQuestions.length} entries
-            </p>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="px-3 py-2 bg-gray-100 text-navy text-sm font-bold rounded-lg disabled:opacity-50"
-              >
-                First
-              </button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum = i + 1;
-                if (totalPages > 5 && currentPage > 3) {
-                  pageNum = currentPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-10 h-10 text-sm font-bold rounded-lg ${
-                      currentPage === pageNum
-                        ? 'bg-navy text-white'
-                        : 'bg-gray-100 text-navy hover:bg-gray-200'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 bg-gray-100 text-navy text-sm font-bold rounded-lg disabled:opacity-50"
-              >
-                Last
-              </button>
-            </div>
-          </div>
+          </>
+        )}
+        {selectedTest && (
+          <>
+            <span className="material-icons-outlined text-gray-300 text-[14px]">chevron_right</span>
+            <span className="font-bold text-navy">{selectedTest.name}</span>
+          </>
         )}
       </div>
 
-      {/* Add/Edit Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
-              <h3 className="text-xl font-black text-navy uppercase">
-                {editingQuestion ? 'Edit Question' : 'Add New Question'}
-              </h3>
+      {!selectedCourse && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-black text-navy">Select Course</h2>
+              <p className="text-sm text-gray-500 mt-1">Choose a course to manage its test questions</p>
+            </div>
+          </div>
+
+          {courses.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+              <span className="material-icons-outlined text-6xl text-gray-200 mb-3 block">menu_book</span>
+              <p className="text-gray-400 font-bold">No courses found</p>
+              <p className="text-gray-300 text-sm mt-1">Create courses first from the Misc section</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courses.map(course => (
+                <button
+                  key={course.id}
+                  onClick={() => loadTestsForCourse(course)}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-left hover:shadow-md hover:border-blue-200 transition-all group"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1A237E] to-[#303F9F] flex items-center justify-center shrink-0">
+                      <span className="material-icons-outlined text-white text-xl">school</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-navy text-sm group-hover:text-[#303F9F] transition-colors line-clamp-2">{course.name}</h3>
+                      {course.category && <p className="text-xs text-gray-400 mt-1">{course.category}</p>}
+                      <p className="text-xs text-gray-300 mt-1">ID: {course.id}</p>
+                    </div>
+                    <span className="material-icons-outlined text-gray-300 group-hover:text-[#303F9F] transition-colors">arrow_forward</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedCourse && !selectedTest && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-black text-navy">Select Test</h2>
+              <p className="text-sm text-gray-500 mt-1">Choose a test from "{selectedCourse.name}" to manage questions</p>
+            </div>
+            <button
+              onClick={() => { setSelectedCourse(null); setSelectedTest(null); }}
+              className="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-200 flex items-center gap-1"
+            >
+              <span className="material-icons-outlined text-[16px]">arrow_back</span>
+              Back
+            </button>
+          </div>
+
+          {loadingTests ? (
+            <div className="bg-white rounded-2xl shadow-sm border p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-3"></div>
+              <p className="text-gray-400 text-sm">Loading tests...</p>
+            </div>
+          ) : tests.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+              <span className="material-icons-outlined text-6xl text-gray-200 mb-3 block">quiz</span>
+              <p className="text-gray-400 font-bold">No tests found for this course</p>
+              <p className="text-gray-300 text-sm mt-1">Create tests first from Course Content Manager (Misc → Courses → Manage)</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {tests.map(test => (
+                <button
+                  key={test.id}
+                  onClick={() => selectTest(test)}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-left hover:shadow-md hover:border-blue-200 transition-all group"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shrink-0">
+                      <span className="material-icons-outlined text-white text-xl">quiz</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-navy text-sm group-hover:text-purple-600 transition-colors">{test.name}</h3>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">
+                          {test.questions?.length || 0} Questions
+                        </span>
+                        <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold">
+                          {test.duration} mins
+                        </span>
+                        <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold">
+                          {test.totalMarks} marks
+                        </span>
+                        {(test.negativeMarking || 0) > 0 && (
+                          <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold">
+                            -{test.negativeMarking} neg
+                          </span>
+                        )}
+                      </div>
+                      <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-bold ${test.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                        {test.status || 'active'}
+                      </span>
+                    </div>
+                    <span className="material-icons-outlined text-gray-300 group-hover:text-purple-600 transition-colors">arrow_forward</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedTest && (
+        <div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h2 className="text-2xl font-black text-navy">Questions</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {selectedTest.name} — {selectedTest.questions?.length || 0} question(s) | {selectedTest.totalMarks} marks | Negative: {selectedTest.negativeMarking || 0}
+              </p>
+            </div>
+            <div className="flex gap-3">
               <button
-                onClick={() => { resetForm(); setShowAddModal(false); }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setSelectedTest(null)}
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-200 flex items-center gap-1"
               >
+                <span className="material-icons-outlined text-[16px]">arrow_back</span>
+                Back
+              </button>
+              <button
+                onClick={() => { resetQuestionForm(); setShowQuestionModal(true); }}
+                className="px-5 py-2.5 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy/90 flex items-center gap-2"
+              >
+                <span className="material-icons-outlined text-lg">add</span>
+                Add Question
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+            <div className="relative">
+              <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
+                placeholder="Search questions..."
+              />
+            </div>
+          </div>
+
+          {filteredQuestions.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+              <span className="material-icons-outlined text-6xl text-gray-200 mb-3 block">help_outline</span>
+              <p className="text-gray-400 font-bold">No questions yet</p>
+              <p className="text-gray-300 text-sm mt-1">Click "Add Question" to add questions to this test</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredQuestions.map((q, idx) => (
+                <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-black text-[#303F9F]">{idx + 1}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{q.question}</p>
+                      {q.questionImage && (
+                        <img src={q.questionImage} alt="Q" className="mt-2 h-20 rounded-lg border object-contain" />
+                      )}
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        {(['A', 'B', 'C', 'D'] as const).map(opt => {
+                          const optText = (q as any)[`option${opt}`];
+                          const optImg = (q as any)[`option${opt}Image`];
+                          if (!optText && !optImg) return null;
+                          const isCorrect = q.correctAnswer === opt;
+                          return (
+                            <div key={opt} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-100'}`}>
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isCorrect ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                {opt}
+                              </span>
+                              <span className={`${isCorrect ? 'text-green-700 font-bold' : 'text-gray-600'}`}>{optText}</span>
+                              {isCorrect && <span className="material-icons-outlined text-green-500 text-[14px] ml-auto">check_circle</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {q.explanation && (
+                        <div className="mt-2 bg-amber-50 border border-amber-100 rounded-lg p-2">
+                          <p className="text-[10px] text-amber-700"><strong>Explanation:</strong> {q.explanation}</p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">+{q.marks} marks</span>
+                        {(q.negativeMarks || 0) > 0 && (
+                          <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold">-{q.negativeMarks} negative</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <button onClick={() => editQuestion(q)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="Edit">
+                        <span className="material-icons-outlined text-lg">edit</span>
+                      </button>
+                      <button onClick={() => handleDeleteQuestion(q.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
+                        <span className="material-icons-outlined text-lg">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showQuestionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white z-10">
+              <h3 className="font-black text-navy">{editingQuestion ? 'Edit Question' : 'Add Question'}</h3>
+              <button onClick={() => { setShowQuestionModal(false); resetQuestionForm(); }} className="p-2 hover:bg-gray-100 rounded-lg">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <form onSubmit={handleAddQuestion} className="p-6 space-y-4">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Question Text *</label>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Question *</label>
                 <textarea
-                  value={formData.questionText}
-                  onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20 resize-none"
-                  placeholder="Enter the question"
-                  rows={4}
-                  required
+                  value={questionForm.question}
+                  onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
+                  className="w-full px-4 py-3 border rounded-lg"
+                  rows={3}
+                  placeholder="Enter your question..."
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Subject *</label>
-                  <select
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                    required
-                  >
-                    <option value="">Select Subject</option>
-                    {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Topic</label>
-                  <select
-                    value={formData.topic}
-                    onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                  >
-                    <option value="">Select Topic</option>
-                    {topics.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                <div className="mt-2 flex items-center gap-2">
+                  <FileUploadButton
+                    accept="image/*"
+                    label="Question Image"
+                    icon="add_photo_alternate"
+                    onUpload={(url) => setQuestionForm({ ...questionForm, questionImage: url })}
+                  />
+                  {questionForm.questionImage && (
+                    <div className="relative">
+                      <img src={questionForm.questionImage} alt="Q" className="h-16 rounded-lg border" />
+                      <button type="button" onClick={() => setQuestionForm({ ...questionForm, questionImage: '' })} className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
+                        <span className="material-icons-outlined text-xs">close</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Question Type *</label>
-                  <select
-                    value={formData.questionType}
-                    onChange={(e) => setFormData({ ...formData, questionType: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                    required
-                  >
-                    <option value="mcq">Multiple Choice</option>
-                    <option value="short-answer">Short Answer</option>
-                    <option value="long-answer">Long Answer</option>
-                    <option value="true-false">True/False</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Difficulty Level</label>
-                  <select
-                    value={formData.difficulty}
-                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                  >
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                  </select>
-                </div>
-              </div>
-              {formData.questionType === 'mcq' && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Options</label>
-                  <div className="space-y-2">
-                    {formData.options.map((opt, idx) => (
-                      <input
-                        key={idx}
-                        type="text"
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...formData.options];
-                          newOpts[idx] = e.target.value;
-                          setFormData({ ...formData, options: newOpts });
-                        }}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                        placeholder={`Option ${idx + 1}`}
+                {(['A', 'B', 'C', 'D'] as const).map((opt) => (
+                  <div key={opt}>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Option {opt} {opt === 'A' || opt === 'B' ? '*' : ''}</label>
+                    <input
+                      type="text"
+                      value={(questionForm as any)[`option${opt}`]}
+                      onChange={(e) => setQuestionForm({ ...questionForm, [`option${opt}`]: e.target.value })}
+                      className="w-full px-4 py-3 border rounded-lg"
+                      placeholder={`Option ${opt}...`}
+                    />
+                    <div className="mt-1 flex items-center gap-2">
+                      <FileUploadButton
+                        accept="image/*"
+                        label="Image"
+                        icon="image"
+                        onUpload={(url) => setQuestionForm({ ...questionForm, [`option${opt}Image`]: url })}
                       />
-                    ))}
+                      {(questionForm as any)[`option${opt}Image`] && (
+                        <div className="relative">
+                          <img src={(questionForm as any)[`option${opt}Image`]} alt={`Opt ${opt}`} className="h-10 rounded border" />
+                          <button type="button" onClick={() => setQuestionForm({ ...questionForm, [`option${opt}Image`]: '' })} className="absolute -top-1 -right-1 bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px]">
+                            <span className="material-icons-outlined text-[10px]">close</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Correct Answer *</label>
+                  <select
+                    value={questionForm.correctAnswer}
+                    onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value as 'A' | 'B' | 'C' | 'D' })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  >
+                    <option value="A">Option A</option>
+                    <option value="B">Option B</option>
+                    <option value="C">Option C</option>
+                    <option value="D">Option D</option>
+                  </select>
                 </div>
-              )}
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Marks</label>
+                  <input
+                    type="number"
+                    value={questionForm.marks}
+                    onChange={(e) => setQuestionForm({ ...questionForm, marks: parseInt(e.target.value) || 4 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Negative Marks</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    value={questionForm.negativeMarks}
+                    onChange={(e) => setQuestionForm({ ...questionForm, negativeMarks: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                </div>
+              </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Answer *</label>
-                <input
-                  type="text"
-                  value={formData.answer}
-                  onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-navy/20"
-                  placeholder="Enter the correct answer"
-                  required
+                <label className="block text-xs font-bold text-gray-600 mb-1">Explanation</label>
+                <textarea
+                  value={questionForm.explanation}
+                  onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                  className="w-full px-4 py-3 border rounded-lg"
+                  rows={3}
+                  placeholder="Explain the correct answer..."
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => { resetForm(); setShowAddModal(false); }}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-navy text-white text-sm font-bold rounded-lg hover:bg-navy/90 transition-colors"
-                >
-                  {editingQuestion ? 'Update Question' : 'Add Question'}
-                </button>
-              </div>
-            </form>
+            </div>
+            <div className="flex gap-4 px-6 py-4 border-t bg-gray-50">
+              <button onClick={() => { setShowQuestionModal(false); resetQuestionForm(); }} className="flex-1 py-3 bg-gray-200 rounded-lg font-bold">
+                Cancel
+              </button>
+              <button onClick={handleQuestionSubmit} className="flex-1 py-3 bg-navy text-white rounded-lg font-bold">
+                {editingQuestion ? 'Update' : 'Add'} Question
+              </button>
+            </div>
           </div>
         </div>
       )}
