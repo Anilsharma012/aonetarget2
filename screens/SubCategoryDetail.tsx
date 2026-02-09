@@ -8,6 +8,7 @@ interface Course {
   title?: string;
   description?: string;
   thumbnail?: string;
+  imageUrl?: string;
   instructor?: string;
   price?: number;
   mrp?: number;
@@ -56,33 +57,14 @@ const SubCategoryDetail: React.FC = () => {
   };
 
   const filteredCourses = courses.filter(c => {
-    const subLabel = label.toLowerCase();
-    const matchesSub =
-      c.subcategory?.toLowerCase() === subLabel ||
-      c.subcategoryId === subId ||
-      c.name?.toLowerCase().includes(subLabel) ||
-      c.title?.toLowerCase().includes(subLabel) ||
-      c.category?.toLowerCase().includes(subLabel) ||
-      c.category?.toLowerCase().includes(categoryId === 'iit-jee' ? 'jee' : categoryId || '');
-
+    const matchesSub = c.subcategoryId === subId;
     if (!matchesSub) return false;
-
     if (activeTab === 'recorded') return c.type === 'recorded' || (!c.type && !c.isLive);
     if (activeTab === 'live') return c.type === 'live' || c.isLive;
     return true;
   });
 
-  const allMatchingCourses = courses.filter(c => {
-    const subLabel = label.toLowerCase();
-    return (
-      c.subcategory?.toLowerCase() === subLabel ||
-      c.subcategoryId === subId ||
-      c.name?.toLowerCase().includes(subLabel) ||
-      c.title?.toLowerCase().includes(subLabel) ||
-      c.category?.toLowerCase().includes(subLabel) ||
-      c.category?.toLowerCase().includes(categoryId === 'iit-jee' ? 'jee' : categoryId || '')
-    );
-  });
+  const allMatchingCourses = courses.filter(c => c.subcategoryId === subId);
 
   const recordedCount = allMatchingCourses.filter(c => c.type === 'recorded' || (!c.type && !c.isLive)).length;
   const liveCount = allMatchingCourses.filter(c => c.type === 'live' || c.isLive).length;
@@ -179,10 +161,10 @@ const SubCategoryDetail: React.FC = () => {
                   >
                     <div className="relative">
                       <div className={`w-full h-40 bg-gradient-to-br ${getGradient()} flex items-center justify-center`}>
-                        {course.thumbnail ? (
-                          <img src={course.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        {(course.imageUrl || course.thumbnail) ? (
+                          <img src={course.imageUrl || course.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         ) : null}
-                        {!course.thumbnail && (
+                        {!(course.imageUrl || course.thumbnail) && (
                           <div className="flex flex-col items-center gap-2">
                             <span className="text-white text-4xl font-bold opacity-40">{(course.name || course.title || '?').charAt(0).toUpperCase()}</span>
                             <span className="text-white/40 text-xs font-medium">Course Preview</span>

@@ -64,6 +64,11 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - GET /api/tests/:id - Get test with questions
 
 ## Recent Changes (Feb 9, 2026)
+- **Course-Category Mapping** - Courses now have categoryId, subcategoryId, price, and type fields. Admin panel has dropdowns for category/subcategory selection (required). CategoryPage and SubCategoryDetail filter by these IDs.
+- **Course CRUD Endpoints** - Added PUT /api/courses/:id and DELETE /api/courses/:id endpoints (were missing)
+- **NEET Sample Courses** - 6 NEET courses seeded with proper category/subcategory mapping across Class 11, Class 12, and NEET Exam subcategories
+- **Hierarchical Flow** - Category → Subcategory → Courses → Course Details flow now works with proper data mapping
+- **Questions Admin Redesign** - Course → Test → Questions hierarchical flow with breadcrumb navigation
 - **File Upload System** - Multer-based upload endpoint (POST /api/upload), supports images and PDFs up to 50MB, FileUploadButton reusable component
 - **Image Upload in Admin** - Categories, Subcategories, Courses, and Questions all support image upload alongside URL input
 - **PDF Upload** - Course content notes support PDF file upload alongside URL

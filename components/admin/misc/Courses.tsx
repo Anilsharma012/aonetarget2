@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { coursesAPI } from '../../../src/services/apiClient';
+import { coursesAPI, categoriesAPI, subcategoriesAPI } from '../../../src/services/apiClient';
 import RichTextEditor from '../../shared/RichTextEditor';
 import FileUploadButton from '../../shared/FileUploadButton';
 
@@ -12,6 +12,10 @@ interface Course {
   studentsEnrolled: number;
   status: 'active' | 'inactive';
   createdDate: string;
+  categoryId?: string;
+  subcategoryId?: string;
+  price?: number;
+  type?: 'recorded' | 'live';
 }
 
 interface Props {
@@ -26,16 +30,39 @@ const Courses: React.FC<Props> = ({ showToast }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     imageUrl: '',
     subjects: '',
-    status: 'active' as 'active' | 'inactive'
+    status: 'active' as 'active' | 'inactive',
+    categoryId: '',
+    subcategoryId: '',
+    price: '',
+    type: '' as '' | 'recorded' | 'live'
   });
 
-  useEffect(() => { loadCourses(); }, []);
+  useEffect(() => { loadCourses(); loadCategoriesAndSubs(); }, []);
+
+  const loadCategoriesAndSubs = async () => {
+    try {
+      const [cats, subs] = await Promise.all([
+        categoriesAPI.getAll().catch(() => []),
+        subcategoriesAPI.getAll().catch(() => [])
+      ]);
+      setCategories(Array.isArray(cats) ? cats : []);
+      setAllSubcategories(Array.isArray(subs) ? subs : []);
+    } catch (error) {
+      console.error('Failed to load categories/subcategories', error);
+    }
+  };
+
+  const filteredSubcategories = formData.categoryId
+    ? allSubcategories.filter((s: any) => s.categoryId === formData.categoryId)
+    : allSubcategories;
 
   const loadCourses = async () => {
     try {
@@ -53,9 +80,9 @@ const Courses: React.FC<Props> = ({ showToast }) => {
   const paginatedItems = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleSubmit = async () => {
-    if (!formData.name) { showToast('Please fill required fields', 'error'); return; }
+    if (!formData.name || !formData.categoryId) { showToast('Please fill Course Name and Category', 'error'); return; }
     try {
-      const courseData = {
+      const courseData: any = {
         id: editingItem?.id || `course_${Date.now()}`,
         name: formData.name,
         description: formData.description,
@@ -63,7 +90,11 @@ const Courses: React.FC<Props> = ({ showToast }) => {
         subjects: parseInt(formData.subjects) || 0,
         studentsEnrolled: editingItem?.studentsEnrolled || 0,
         status: formData.status,
-        createdDate: editingItem?.createdDate || new Date().toISOString()
+        createdDate: editingItem?.createdDate || new Date().toISOString(),
+        categoryId: formData.categoryId || undefined,
+        subcategoryId: formData.subcategoryId || undefined,
+        price: formData.price ? parseFloat(formData.price) : undefined,
+        type: formData.type || undefined
       };
       if (editingItem) {
         await coursesAPI.update(editingItem.id, courseData);
@@ -74,7 +105,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
       }
       setShowModal(false);
       setEditingItem(null);
-      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active' });
+      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '' });
       loadCourses();
     } catch (error) {
       showToast('Failed to save course', 'error');
@@ -104,7 +135,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {courses.length} Courses</p>
         </div>
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active' }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '' }); setShowModal(true); }}
           className="bg-navy text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-sm hover:shadow-md hover:scale-105 transition-all flex items-center gap-2"
         >
           <span className="material-icons-outlined text-base">add</span>
@@ -152,6 +183,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">#</th>
                     <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Description</th>
                     <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Subjects</th>
                     <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Students</th>
@@ -164,6 +196,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                     <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50 group">
                       <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                       <td className="px-6 py-4 font-bold text-navy">{item.name}</td>
+                      <td className="px-6 py-4 text-gray-600">{categories.find((c: any) => c.id === item.categoryId)?.title || item.categoryId || '-'}</td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{item.description}</td>
                       <td className="px-6 py-4 text-center font-bold text-gray-700">{item.subjects || 0}</td>
                       <td className="px-6 py-4 text-center font-bold text-gray-700">{item.studentsEnrolled || 0}</td>
@@ -174,7 +207,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status, categoryId: item.categoryId || '', subcategoryId: item.subcategoryId || '', price: item.price?.toString() || '', type: (item.type || '') as '' | 'recorded' | 'live' }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
                             <span className="material-icons-outlined text-base">edit</span>
                           </button>
                           <button onClick={() => handleDelete(item.id)} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
@@ -257,6 +290,40 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                   placeholder="Enter course description..."
                 />
                 <p className="text-[10px] text-gray-400 mt-1">Use the toolbar to add bold, italic, lists, etc.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Category</label>
+                  <select value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subcategoryId: '' })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10">
+                    <option value="">Select Category</option>
+                    {categories.map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>{cat.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Subcategory</label>
+                  <select value={formData.subcategoryId} onChange={(e) => setFormData({ ...formData, subcategoryId: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10">
+                    <option value="">Select Subcategory</option>
+                    {filteredSubcategories.map((sub: any) => (
+                      <option key={sub.id} value={sub.id}>{sub.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Price (₹)</label>
+                  <input type="number" placeholder="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Type</label>
+                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as '' | 'recorded' | 'live' })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10">
+                    <option value="">Select Type</option>
+                    <option value="recorded">Recorded</option>
+                    <option value="live">Live</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

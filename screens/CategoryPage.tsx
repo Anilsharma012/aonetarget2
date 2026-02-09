@@ -81,20 +81,11 @@ const CategoryPage: React.FC = () => {
   };
 
   const getCoursesForCategory = () => {
-    return courses.filter(c =>
-      c.category?.toLowerCase().includes(categoryId === 'iit-jee' ? 'jee' : categoryId || '') ||
-      c.name?.toLowerCase().includes(categoryId === 'iit-jee' ? 'jee' : categoryId || '')
-    );
+    return courses.filter(c => c.categoryId === categoryId);
   };
 
   const getCourseCountForSub = (sub: SubCategory) => {
-    const subTitle = sub.title.toLowerCase();
-    return courses.filter(c =>
-      c.subcategory?.toLowerCase() === subTitle ||
-      c.subcategoryId === sub.id ||
-      c.name?.toLowerCase().includes(subTitle) ||
-      c.category?.toLowerCase().includes(subTitle)
-    ).length;
+    return courses.filter(c => c.subcategoryId === sub.id).length;
   };
 
   const parentGroups = [...new Set(subcategories.map(s => s.parentPath).filter(Boolean))];
@@ -107,17 +98,7 @@ const CategoryPage: React.FC = () => {
 
   const categoryCourses = getCoursesForCategory();
   const filteredCourses = selectedSubFilter
-    ? categoryCourses.filter(c => {
-        const sub = subcategories.find(s => s.id === selectedSubFilter);
-        if (!sub) return false;
-        const subTitle = sub.title.toLowerCase();
-        return (
-          c.subcategory?.toLowerCase() === subTitle ||
-          c.subcategoryId === sub.id ||
-          c.name?.toLowerCase().includes(subTitle) ||
-          c.category?.toLowerCase().includes(subTitle)
-        );
-      })
+    ? categoryCourses.filter(c => c.subcategoryId === selectedSubFilter)
     : categoryCourses;
 
   const gradientColors: Record<string, string> = {
@@ -304,8 +285,8 @@ const CategoryPage: React.FC = () => {
                   className="w-full bg-white rounded-xl p-4 shadow-sm flex gap-4 text-left active:scale-[0.98] transition-transform border border-gray-100 hover:shadow-md"
                 >
                   <div className={`w-16 h-16 bg-gradient-to-br ${category.gradient} rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden`}>
-                    {course.thumbnail ? (
-                      <img src={course.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; const parent = e.currentTarget.parentElement; if (parent) { const span = document.createElement('span'); span.className = 'text-white text-xl font-bold opacity-60'; span.textContent = (course.name || course.title || '?').charAt(0).toUpperCase(); parent.appendChild(span); }}} />
+                    {(course.imageUrl || course.thumbnail) ? (
+                      <img src={course.imageUrl || course.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; const parent = e.currentTarget.parentElement; if (parent) { const span = document.createElement('span'); span.className = 'text-white text-xl font-bold opacity-60'; span.textContent = (course.name || course.title || '?').charAt(0).toUpperCase(); parent.appendChild(span); }}} />
                     ) : (
                       <span className="text-white text-xl font-bold opacity-60">{(course.name || course.title || '?').charAt(0).toUpperCase()}</span>
                     )}
