@@ -573,7 +573,7 @@ const CourseDetails: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'notes' && isEnrolled && (
+        {activeTab === 'notes' && (isEnrolled ? (
           <div className="space-y-3">
             {notes.length === 0 ? (
               <div className="bg-white rounded-xl p-8 text-center">
@@ -605,9 +605,19 @@ const CourseDetails: React.FC = () => {
               ))
             )}
           </div>
-        )}
+        ) : (
+          <div className="bg-white rounded-xl p-8 text-center">
+            <span className="material-symbols-rounded text-4xl text-gray-300">lock</span>
+            <p className="text-gray-500 mt-2 font-medium">Enroll to access notes</p>
+            {isPaidCourse ? (
+              <button onClick={handleBuyNow} className="mt-4 bg-[#D32F2F] text-white px-6 py-2 rounded-xl font-bold text-sm mx-auto">Buy Now - ₹{course.price}</button>
+            ) : (
+              <button onClick={handleEnroll} disabled={enrolling} className="mt-4 bg-[#303F9F] text-white px-6 py-2 rounded-xl font-bold text-sm disabled:opacity-50">{enrolling ? 'Enrolling...' : 'Enroll Free'}</button>
+            )}
+          </div>
+        ))}
 
-        {activeTab === 'tests' && isEnrolled && (
+        {activeTab === 'tests' && (
           <div className="space-y-3">
             {tests.length === 0 ? (
               <div className="bg-white rounded-xl p-8 text-center">
@@ -615,37 +625,63 @@ const CourseDetails: React.FC = () => {
                 <p className="text-gray-400 mt-2">No tests available yet</p>
               </div>
             ) : (
-              tests.map((test) => {
+              tests.map((test: any) => {
                 const isAttempted = progress.completedTests.includes(test.id);
+                const canAccess = isEnrolled || test.isFree;
+                const isLocked = !canAccess;
                 return (
                   <div 
                     key={test.id}
-                    className="bg-white rounded-xl p-4 shadow-sm"
+                    className={`bg-white rounded-xl p-4 shadow-sm ${isLocked ? 'opacity-75' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                          <span className="material-symbols-rounded text-purple-500">quiz</span>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isLocked ? 'bg-gray-100' : 'bg-purple-100'}`}>
+                          <span className={`material-symbols-rounded ${isLocked ? 'text-gray-400' : 'text-purple-500'}`}>
+                            {isLocked ? 'lock' : 'quiz'}
+                          </span>
                         </div>
                         <div>
                           <h4 className="font-bold text-sm">{test.name}</h4>
                           <p className="text-xs text-gray-400">
-                            {test.questions} Questions • {test.duration || 180} mins
+                            {test.numberOfQuestions || test.questions || 0} Questions • {test.duration || 60} mins
                           </p>
                         </div>
                       </div>
-                      {isAttempted && (
-                        <span className="bg-green-100 text-green-600 text-xs font-bold px-2 py-1 rounded">
-                          Attempted
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {test.isFree && !isEnrolled && (
+                          <span className="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded">
+                            FREE
+                          </span>
+                        )}
+                        {isAttempted && (
+                          <span className="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded">
+                            Attempted
+                          </span>
+                        )}
+                        {isLocked && (
+                          <span className="bg-orange-100 text-orange-600 text-[10px] font-bold px-2 py-1 rounded">
+                            LOCKED
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <button 
-                      onClick={() => navigate(`/test/${test.id}`)}
-                      className="w-full bg-brandBlue text-white py-2 rounded-lg font-bold text-sm"
-                    >
-                      {isAttempted ? 'View Result' : 'Start Test'}
-                    </button>
+                    {canAccess ? (
+                      <button 
+                        onClick={() => navigate(`/test/${test.id}`)}
+                        className="w-full bg-[#303F9F] text-white py-2.5 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform"
+                      >
+                        {isAttempted ? 'View Result / Retake' : 'Start Test'}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleBuyNow}
+                        className="w-full bg-gray-200 text-gray-500 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-rounded text-sm">lock</span>
+                        Buy Course to Unlock
+                      </button>
+                    )}
                   </div>
                 );
               })
@@ -659,32 +695,14 @@ const CourseDetails: React.FC = () => {
           </div>
         )}
 
-        {isEnrolled && activeTab !== 'videos' && activeTab !== 'live' && (notes.length === 0 && tests.length === 0) && (
-          <div className="bg-white rounded-xl p-8 text-center">
-            <span className="material-symbols-rounded text-4xl text-gray-300">content_paste</span>
-            <p className="text-gray-400 mt-2">Content coming soon</p>
-          </div>
-        )}
-
-        {!isEnrolled && activeTab !== 'videos' && (
-          <div className="bg-white rounded-xl p-8 text-center">
+        {activeTab === 'live' && !isEnrolled && (
+          <div className="bg-white rounded-xl p-8 text-center mt-4">
             <span className="material-symbols-rounded text-4xl text-gray-300">lock</span>
-            <p className="text-gray-500 mt-2 font-medium">Enroll to access {activeTab === 'live' ? 'live classes' : activeTab}</p>
+            <p className="text-gray-500 mt-2 font-medium">Enroll to access live classes</p>
             {isPaidCourse ? (
-              <button
-                onClick={handleBuyNow}
-                className="mt-4 bg-[#D32F2F] text-white px-6 py-2 rounded-xl font-bold text-sm flex items-center gap-2 mx-auto"
-              >
-                Buy Now - ₹{course.price}
-              </button>
+              <button onClick={handleBuyNow} className="mt-4 bg-[#D32F2F] text-white px-6 py-2 rounded-xl font-bold text-sm mx-auto">Buy Now - ₹{course.price}</button>
             ) : (
-              <button
-                onClick={handleEnroll}
-                disabled={enrolling}
-                className="mt-4 bg-brandBlue text-white px-6 py-2 rounded-xl font-bold text-sm disabled:opacity-50"
-              >
-                {enrolling ? 'Enrolling...' : 'Enroll Free'}
-              </button>
+              <button onClick={handleEnroll} disabled={enrolling} className="mt-4 bg-[#303F9F] text-white px-6 py-2 rounded-xl font-bold text-sm disabled:opacity-50">{enrolling ? 'Enrolling...' : 'Enroll Free'}</button>
             )}
           </div>
         )}
