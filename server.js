@@ -105,7 +105,13 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 // Routes for Courses
 app.get('/api/courses', async (req, res) => {
   try {
-    const courses = await db.collection('courses').find({}).toArray();
+    const filter = {};
+    if (req.query.examType) filter.examType = req.query.examType;
+    if (req.query.contentType) filter.contentType = req.query.contentType;
+    if (req.query.subject) filter.subject = req.query.subject;
+    if (req.query.categoryId) filter.categoryId = req.query.categoryId;
+    if (req.query.subcategoryId) filter.subcategoryId = req.query.subcategoryId;
+    const courses = await db.collection('courses').find(filter).toArray();
     res.json(courses);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch courses' });
