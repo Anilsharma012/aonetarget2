@@ -49,24 +49,26 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   if (!splashData) return null;
 
   return (
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-b from-[#0a1628] to-[#1A237E] transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
-      {splashData.imageUrl ? (
-        <img 
-          src={splashData.imageUrl} 
-          alt="Aone Target Institute" 
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="text-center text-white">
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+      <div className="w-full max-w-md mx-auto h-full max-h-screen bg-gradient-to-b from-[#0a1628] to-[#1A237E] flex items-center justify-center overflow-hidden shadow-2xl">
+        {splashData.imageUrl ? (
           <img 
-            src="/attached_assets/download_1770552281686.png" 
-            alt="Aone Target Logo" 
-            className="w-48 mx-auto mb-6"
+            src={splashData.imageUrl} 
+            alt="Aone Target Institute" 
+            className="w-full h-full object-cover"
           />
-          <h1 className="text-3xl font-bold">Aone Target</h1>
-          <p className="text-blue-200 mt-2">Institute Pvt. Ltd.</p>
-        </div>
-      )}
+        ) : (
+          <div className="text-center text-white">
+            <img 
+              src="/attached_assets/download_1770552281686.png" 
+              alt="Aone Target Logo" 
+              className="w-48 mx-auto mb-6"
+            />
+            <h1 className="text-3xl font-bold">Aone Target</h1>
+            <p className="text-blue-200 mt-2">Institute Pvt. Ltd.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

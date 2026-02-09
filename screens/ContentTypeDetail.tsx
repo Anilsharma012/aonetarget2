@@ -382,41 +382,38 @@ const ContentTypeDetail: React.FC = () => {
       </main>
 
       {!enrolled && courses.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-xs text-gray-500">Course Price</p>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-black text-[#1A237E]">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-shrink-0">
+              <p className="text-[10px] text-gray-400">Course Price</p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg font-black text-[#1A237E]">
                   {coursePrice > 0 ? `₹${coursePrice}` : 'Free'}
                 </span>
                 {courses[0]?.mrp && courses[0].mrp > coursePrice && (
-                  <span className="text-sm text-gray-400 line-through">₹{courses[0].mrp}</span>
+                  <span className="text-xs text-gray-400 line-through">₹{courses[0].mrp}</span>
+                )}
+                {coursePrice > 0 && (
+                  <span className="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                    {courses[0]?.mrp && courses[0].mrp > coursePrice
+                      ? `${Math.round(((courses[0].mrp - coursePrice) / courses[0].mrp) * 100)}% OFF`
+                      : 'BEST PRICE'
+                    }
+                  </span>
                 )}
               </div>
             </div>
-            {coursePrice > 0 ? (
-              <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                {courses[0]?.mrp && courses[0].mrp > coursePrice
-                  ? `${Math.round(((courses[0].mrp - coursePrice) / courses[0].mrp) * 100)}% OFF`
-                  : 'BEST PRICE'
-                }
-              </span>
-            ) : null}
+            <button
+              onClick={coursePrice > 0 ? handleBuyNow : handleEnrollFree}
+              className={`flex-1 py-2.5 rounded-xl font-bold text-white text-xs shadow-lg active:scale-[0.98] transition-all ${
+                coursePrice > 0
+                  ? 'bg-gradient-to-r from-[#D32F2F] to-[#B71C1C]'
+                  : 'bg-gradient-to-r from-[#2E7D32] to-[#1B5E20]'
+              }`}
+            >
+              {coursePrice > 0 ? `Buy Now - ₹${coursePrice}` : 'Enroll Free'}
+            </button>
           </div>
-          <button
-            onClick={coursePrice > 0 ? handleBuyNow : handleEnrollFree}
-            className={`w-full py-3.5 rounded-xl font-bold text-white text-sm shadow-lg active:scale-[0.98] transition-all ${
-              coursePrice > 0
-                ? 'bg-gradient-to-r from-[#D32F2F] to-[#B71C1C]'
-                : 'bg-gradient-to-r from-[#2E7D32] to-[#1B5E20]'
-            }`}
-          >
-            {coursePrice > 0 ? `Buy Now - ₹${coursePrice}` : 'Enroll Free'}
-          </button>
-          <p className="text-[10px] text-gray-400 text-center mt-2">
-            Purchase unlocks all {config.label} content
-          </p>
         </div>
       )}
     </div>
