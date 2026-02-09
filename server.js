@@ -32,6 +32,9 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path === '/health') {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   }
+  if (req.path.startsWith('/api') && !db) {
+    return res.status(503).json({ error: 'Database connecting, please retry' });
+  }
   next();
 });
 
@@ -555,6 +558,77 @@ app.get('/api/tests', async (req, res) => {
   } catch (error) {
     console.error('Error fetching tests:', error);
     res.status(500).json({ error: 'Failed to fetch tests' });
+  }
+});
+
+// Get single test by ID
+app.get('/api/tests/:id', async (req, res) => {
+  try {
+    const test = await db.collection('tests').findOne({ id: req.params.id });
+    if (!test) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+    res.json(test);
+  } catch (error) {
+    console.error('Error fetching test:', error);
+    res.status(500).json({ error: 'Failed to fetch test' });
+  }
+});
+
+// Submit test answers
+app.post('/api/tests/:testId/submit', async (req, res) => {
+  try {
+    const { studentId, answers, timeTaken } = req.body;
+    const test = await db.collection('tests').findOne({ id: req.params.testId });
+    if (!test) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+
+    const questions = test.questions || [];
+    let correctCount = 0;
+    let totalMarks = 0;
+    let obtainedMarks = 0;
+    const questionResults = questions.map((q) => {
+      const studentAnswer = answers[q.id] || null;
+      const isCorrect = studentAnswer === q.correctAnswer;
+      const marks = q.marks || 1;
+      totalMarks += marks;
+      if (isCorrect) {
+        correctCount++;
+        obtainedMarks += marks;
+      }
+      return {
+        questionId: q.id,
+        studentAnswer,
+        correctAnswer: q.correctAnswer,
+        isCorrect,
+        marks
+      };
+    });
+
+    const answeredCount = Object.keys(answers).filter(k => answers[k]).length;
+    const resultData = {
+      id: `result_${Date.now()}`,
+      testId: req.params.testId,
+      studentId,
+      answers,
+      questionResults,
+      totalQuestions: questions.length,
+      correctAnswers: correctCount,
+      wrongAnswers: answeredCount - correctCount,
+      unanswered: questions.length - answeredCount,
+      totalMarks,
+      obtainedMarks,
+      percentage: totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0,
+      timeTaken,
+      submittedAt: new Date()
+    };
+
+    await db.collection('testResults').insertOne(resultData);
+    res.status(201).json(resultData);
+  } catch (error) {
+    console.error('Error submitting test:', error);
+    res.status(500).json({ error: 'Failed to submit test' });
   }
 });
 
@@ -2162,6 +2236,303 @@ app.post('/api/categories/seed', async (req, res) => {
   } catch (error) {
     console.error('Error seeding categories:', error);
     res.status(500).json({ error: 'Failed to seed categories' });
+  }
+});
+
+// Routes for Referral System
+app.post('/api/referrals/generate', async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
+    }
+
+    const student = await db.collection('students').findOne({ id: studentId });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    const existing = await db.collection('referrals').findOne({ studentId });
+    if (existing) {
+      return res.json({ referralCode: existing.referralCode });
+    }
+
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'AONE-';
+    for (let i = 0; i < 5; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    let codeExists = await db.collection('referrals').findOne({ referralCode: code });
+    while (codeExists) {
+      code = 'AONE-';
+      for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      codeExists = await db.collection('referrals').findOne({ referralCode: code });
+    }
+
+    const referralDoc = {
+      studentId,
+      referralCode: code,
+      referredStudents: [],
+      totalEarnings: 0,
+      pendingEarnings: 0,
+      createdAt: new Date()
+    };
+
+    await db.collection('referrals').insertOne(referralDoc);
+    await db.collection('students').updateOne({ id: studentId }, { $set: { referralCode: code } });
+
+    res.status(201).json({ referralCode: code });
+  } catch (error) {
+    console.error('Error generating referral code:', error);
+    res.status(500).json({ error: 'Failed to generate referral code' });
+  }
+});
+
+app.get('/api/referrals/:studentId', async (req, res) => {
+  try {
+    const referral = await db.collection('referrals').findOne({ studentId: req.params.studentId });
+    if (!referral) {
+      return res.json({ referralCode: null, totalReferrals: 0, totalEarnings: 0, pendingEarnings: 0 });
+    }
+    res.json({
+      referralCode: referral.referralCode,
+      totalReferrals: referral.referredStudents ? referral.referredStudents.length : 0,
+      totalEarnings: referral.totalEarnings || 0,
+      pendingEarnings: referral.pendingEarnings || 0
+    });
+  } catch (error) {
+    console.error('Error fetching referral stats:', error);
+    res.status(500).json({ error: 'Failed to fetch referral stats' });
+  }
+});
+
+app.get('/api/referrals/:studentId/history', async (req, res) => {
+  try {
+    const referral = await db.collection('referrals').findOne({ studentId: req.params.studentId });
+    if (!referral || !referral.referredStudents || referral.referredStudents.length === 0) {
+      return res.json([]);
+    }
+    res.json(referral.referredStudents);
+  } catch (error) {
+    console.error('Error fetching referral history:', error);
+    res.status(500).json({ error: 'Failed to fetch referral history' });
+  }
+});
+
+app.post('/api/referrals/apply', async (req, res) => {
+  try {
+    const { referralCode, newStudentId } = req.body;
+    if (!referralCode || !newStudentId) {
+      return res.status(400).json({ error: 'Referral code and new student ID are required' });
+    }
+
+    const referral = await db.collection('referrals').findOne({ referralCode });
+    if (!referral) {
+      return res.status(404).json({ error: 'Invalid referral code' });
+    }
+
+    if (referral.studentId === newStudentId) {
+      return res.status(400).json({ error: 'You cannot use your own referral code' });
+    }
+
+    const alreadyReferred = referral.referredStudents && referral.referredStudents.some(r => r.studentId === newStudentId);
+    if (alreadyReferred) {
+      return res.status(400).json({ error: 'This student has already been referred' });
+    }
+
+    const settings = await db.collection('referralSettings').findOne({}) || { commissionType: 'fixed', commissionValue: 50 };
+    const earning = settings.commissionType === 'percentage' ? settings.commissionValue : (settings.commissionValue || 50);
+
+    const newStudent = await db.collection('students').findOne({ id: newStudentId });
+    const referredEntry = {
+      studentId: newStudentId,
+      studentName: newStudent ? newStudent.name : 'Unknown',
+      date: new Date(),
+      earning: earning,
+      status: 'pending'
+    };
+
+    await db.collection('referrals').updateOne(
+      { referralCode },
+      {
+        $push: { referredStudents: referredEntry },
+        $inc: { pendingEarnings: earning }
+      }
+    );
+
+    await db.collection('students').updateOne(
+      { id: newStudentId },
+      { $set: { referredBy: referralCode } }
+    );
+
+    res.json({ success: true, message: 'Referral applied successfully' });
+  } catch (error) {
+    console.error('Error applying referral:', error);
+    res.status(500).json({ error: 'Failed to apply referral code' });
+  }
+});
+
+app.get('/api/admin/referral-settings', async (req, res) => {
+  try {
+    const settings = await db.collection('referralSettings').findOne({});
+    res.json(settings || { commissionType: 'fixed', commissionValue: 50, isActive: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch referral settings' });
+  }
+});
+
+app.put('/api/admin/referral-settings', async (req, res) => {
+  try {
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('referralSettings').updateOne(
+      {},
+      { $set: { ...updateData, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ success: true, message: 'Referral settings updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update referral settings' });
+  }
+});
+
+app.get('/api/admin/referrals', async (req, res) => {
+  try {
+    const referrals = await db.collection('referrals').find({}).toArray();
+    res.json(referrals);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch all referrals' });
+  }
+});
+
+// Admin referral status update
+app.put('/api/admin/referrals/update-status', async (req, res) => {
+  try {
+    const { referralCode, referredStudentId, status } = req.body;
+    if (!referralCode || !referredStudentId || !status) {
+      return res.status(400).json({ error: 'referralCode, referredStudentId, and status are required' });
+    }
+
+    const referral = await db.collection('referrals').findOne({ referralCode });
+    if (!referral) {
+      return res.status(404).json({ error: 'Referral not found' });
+    }
+
+    const updatedStudents = (referral.referredStudents || []).map(rs => {
+      if (rs.studentId === referredStudentId) {
+        return { ...rs, status };
+      }
+      return rs;
+    });
+
+    const entry = referral.referredStudents?.find(rs => rs.studentId === referredStudentId);
+    const earning = entry ? entry.earning || 0 : 0;
+
+    let updateOps = { $set: { referredStudents: updatedStudents } };
+    if (status === 'confirmed' && entry && entry.status !== 'confirmed') {
+      updateOps.$inc = { totalEarnings: earning, pendingEarnings: -earning };
+    } else if (status === 'rejected' && entry && entry.status === 'pending') {
+      updateOps.$inc = { pendingEarnings: -earning };
+    }
+
+    await db.collection('referrals').updateOne({ referralCode }, updateOps);
+    res.json({ success: true, message: `Referral ${status}` });
+  } catch (error) {
+    console.error('Error updating referral status:', error);
+    res.status(500).json({ error: 'Failed to update referral status' });
+  }
+});
+
+// Routes for Purchases
+app.post('/api/purchases', async (req, res) => {
+  try {
+    const { studentId, courseId, amount, paymentMethod, referralCode } = req.body;
+    if (!studentId || !courseId) {
+      return res.status(400).json({ error: 'studentId and courseId are required' });
+    }
+
+    const student = await db.collection('students').findOne({ id: studentId });
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    const course = await db.collection('courses').findOne({ id: courseId });
+
+    const purchase = {
+      id: `purchase_${Date.now()}`,
+      studentId,
+      courseId,
+      courseName: course ? course.title : courseId,
+      amount: amount || (course ? course.price : 0),
+      paymentMethod: paymentMethod || 'online',
+      referralCode: referralCode || null,
+      status: 'completed',
+      createdAt: new Date()
+    };
+
+    await db.collection('purchases').insertOne(purchase);
+
+    const enrolledCourses = student.enrolledCourses || [];
+    if (!enrolledCourses.includes(courseId)) {
+      await db.collection('students').updateOne(
+        { id: studentId },
+        { $addToSet: { enrolledCourses: courseId } }
+      );
+    }
+
+    if (referralCode) {
+      const referral = await db.collection('referrals').findOne({ referralCode });
+      if (referral) {
+        const settings = await db.collection('referralSettings').findOne({}) || { commissionType: 'fixed', commissionValue: 50 };
+        let earning = settings.commissionValue || 50;
+        if (settings.commissionType === 'percentage') {
+          earning = Math.round((purchase.amount * settings.commissionValue) / 100);
+        }
+
+        const alreadyReferred = referral.referredStudents && referral.referredStudents.some(r => r.studentId === studentId);
+        if (!alreadyReferred) {
+          const referredEntry = {
+            studentId,
+            studentName: student.name || 'Unknown',
+            date: new Date(),
+            earning,
+            status: 'pending'
+          };
+          await db.collection('referrals').updateOne(
+            { referralCode },
+            {
+              $push: { referredStudents: referredEntry },
+              $inc: { pendingEarnings: earning }
+            }
+          );
+        }
+      }
+    }
+
+    res.status(201).json({ success: true, purchase });
+  } catch (error) {
+    console.error('Error recording purchase:', error);
+    res.status(500).json({ error: 'Failed to record purchase' });
+  }
+});
+
+app.get('/api/purchases/:studentId', async (req, res) => {
+  try {
+    const purchases = await db.collection('purchases').find({ studentId: req.params.studentId }).sort({ createdAt: -1 }).toArray();
+    res.json(purchases);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch purchases' });
+  }
+});
+
+app.get('/api/admin/purchases', async (req, res) => {
+  try {
+    const purchases = await db.collection('purchases').find({}).sort({ createdAt: -1 }).toArray();
+    res.json(purchases);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch all purchases' });
   }
 });
 

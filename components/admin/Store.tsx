@@ -8,6 +8,7 @@ interface Product {
   price: number;
   validDays: number;
   description?: string;
+  imageUrl?: string;
 }
 
 interface Props {
@@ -19,7 +20,7 @@ const Store: React.FC<Props> = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({ name: '', course: '', price: '', validDays: '365', description: '' });
+  const [formData, setFormData] = useState({ name: '', course: '', price: '', validDays: '365', description: '', imageUrl: '' });
 
   useEffect(() => {
     loadProducts();
@@ -44,7 +45,8 @@ const Store: React.FC<Props> = ({ showToast }) => {
         course: formData.course,
         price: parseFloat(formData.price),
         validDays: parseInt(formData.validDays),
-        description: formData.description
+        description: formData.description,
+        imageUrl: formData.imageUrl
       };
 
       if (editingProduct) {
@@ -57,7 +59,7 @@ const Store: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingProduct(null);
-      setFormData({ name: '', course: '', price: '', validDays: '365', description: '' });
+      setFormData({ name: '', course: '', price: '', validDays: '365', description: '', imageUrl: '' });
       loadProducts();
     } catch (error) {
       showToast('Failed to save product', 'error');
@@ -83,7 +85,8 @@ const Store: React.FC<Props> = ({ showToast }) => {
       course: product.course,
       price: product.price.toString(),
       validDays: product.validDays.toString(),
-      description: product.description || ''
+      description: product.description || '',
+      imageUrl: product.imageUrl || ''
     });
     setShowModal(true);
   };
@@ -101,7 +104,7 @@ const Store: React.FC<Props> = ({ showToast }) => {
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-black text-navy uppercase tracking-widest">Store Inventory</h3>
         <button 
-          onClick={() => { setEditingProduct(null); setFormData({ name: '', course: '', price: '', validDays: '365', description: '' }); setShowModal(true); }}
+          onClick={() => { setEditingProduct(null); setFormData({ name: '', course: '', price: '', validDays: '365', description: '', imageUrl: '' }); setShowModal(true); }}
           className="bg-navy text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase shadow-xl tracking-widest"
         >
           + Add New Package
@@ -192,6 +195,16 @@ const Store: React.FC<Props> = ({ showToast }) => {
                 className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none resize-none"
                 rows={3}
               />
+              <input
+                type="url"
+                placeholder="Image URL (Cloudflare/CDN)"
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
+              />
+              {formData.imageUrl && (
+                <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover rounded-xl" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              )}
             </div>
             <div className="flex gap-4 mt-6">
               <button

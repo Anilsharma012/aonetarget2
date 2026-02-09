@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { coursesAPI, newsAPI, categoriesAPI, bannersAPI } from '../src/services/apiClient';
+import { coursesAPI, newsAPI, categoriesAPI, bannersAPI, testsAPI, testSeriesAPI, liveVideosAPI } from '../src/services/apiClient';
 
 import { COURSES } from '../constants';
 
@@ -52,6 +52,8 @@ const Home: React.FC = () => {
   const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [testSeries, setTestSeries] = useState<any[]>([]);
 
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -121,10 +123,30 @@ const Home: React.FC = () => {
       }
     };
 
+    const fetchLiveClasses = async () => {
+      try {
+        const data = await liveVideosAPI.getAll();
+        setLiveClasses(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to fetch live classes:', error);
+      }
+    };
+
+    const fetchTestSeries = async () => {
+      try {
+        const data = await testSeriesAPI.getAll();
+        setTestSeries(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to fetch test series:', error);
+      }
+    };
+
     const fetchAll = () => {
       fetchCourses();
       fetchCategories();
       fetchBanners();
+      fetchLiveClasses();
+      fetchTestSeries();
     };
 
     fetchAll();
@@ -343,6 +365,156 @@ const Home: React.FC = () => {
             </div>
           </div>
         </section>
+        {liveClasses.length > 0 && (
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-6 bg-gradient-to-b from-[#D32F2F] to-[#1A237E] rounded-full"></div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-800">Live Classes</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Join upcoming sessions</p>
+                </div>
+              </div>
+              <button onClick={() => navigate('/live-classes')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+                View All
+                <span className="material-icons-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {liveClasses.slice(0, 4).map((lc: any, i: number) => (
+                <div key={lc._id || lc.id || i} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 flex gap-4 items-center hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-[#D32F2F] to-[#C62828] rounded-2xl flex items-center justify-center shrink-0 relative">
+                    <span className="material-symbols-outlined text-white text-2xl">sensors</span>
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-gray-800 truncate">{lc.title || lc.name || 'Live Class'}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">person</span>
+                        {lc.teacherName || lc.instructor || 'Instructor'}
+                      </span>
+                      <span className="text-gray-300">•</span>
+                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                        {lc.scheduledTime ? new Date(lc.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : lc.time || 'Upcoming'}
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); navigate('/live-classes'); }}
+                    className="bg-[#D32F2F] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1 hover:bg-[#C62828] active:scale-95 transition-all shrink-0"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">videocam</span>
+                    Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {testSeries.length > 0 && (
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-6 bg-gradient-to-b from-[#303F9F] to-[#1A237E] rounded-full"></div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-800">Popular Test Series</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Practice & improve your score</p>
+                </div>
+              </div>
+              <button onClick={() => navigate('/mock-tests')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+                View All
+                <span className="material-icons-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {testSeries.slice(0, 4).map((ts: any, i: number) => (
+                <div 
+                  key={ts._id || ts.id || i}
+                  onClick={() => navigate('/mock-tests')}
+                  className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 cursor-pointer hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group"
+                >
+                  <div className="w-11 h-11 bg-gradient-to-br from-[#1A237E]/10 to-[#303F9F]/20 rounded-xl flex items-center justify-center mb-3 group-hover:from-[#1A237E]/20 group-hover:to-[#303F9F]/30 transition-all">
+                    <span className="material-symbols-outlined text-[#1A237E] text-xl">quiz</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-gray-800 leading-tight line-clamp-2">{ts.title || ts.name || 'Test Series'}</h4>
+                  <div className="flex items-center gap-1 mt-2">
+                    <span className="material-symbols-outlined text-[12px] text-gray-400">subject</span>
+                    <span className="text-[11px] text-gray-400">{ts.subject || ts.category || 'General'}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">description</span>
+                      {ts.totalTests || ts.tests?.length || 0} Tests
+                    </span>
+                    {(ts.price !== undefined && ts.price !== null) && (
+                      <span className="text-xs font-bold text-[#1A237E] bg-[#1A237E]/5 px-2 py-0.5 rounded-full">
+                        {ts.price === 0 ? 'Free' : `₹${ts.price}`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {courses.length > 0 && (
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-6 bg-gradient-to-b from-[#1A237E] to-[#303F9F] rounded-full"></div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-800">Featured Batches</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Enroll in top batches</p>
+                </div>
+              </div>
+              <button onClick={() => navigate('/explore')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+                View All
+                <span className="material-icons-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {courses.slice(0, 4).map((course: any, i: number) => (
+                <div 
+                  key={course._id || course.id || i}
+                  onClick={() => navigate(`/course/${course._id || course.id}`)}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group flex"
+                >
+                  <div className={`w-24 h-24 bg-gradient-to-br ${categoryGradients[i % categoryGradients.length]} flex items-center justify-center shrink-0`}>
+                    {course.imageUrl || course.thumbnail ? (
+                      <img src={course.imageUrl || course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-white text-3xl">school</span>
+                    )}
+                  </div>
+                  <div className="flex-1 p-3 min-w-0">
+                    <h4 className="font-bold text-sm text-gray-800 truncate">{course.title || course.name}</h4>
+                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">{course.description || course.subtitle || ''}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">group</span>
+                        {course.enrollmentCount || course.students || 0} enrolled
+                      </span>
+                      {(course.price !== undefined && course.price !== null) && (
+                        <span className="text-xs font-bold text-[#D32F2F]">
+                          {course.price === 0 ? 'Free' : `₹${course.price}`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center pr-3">
+                    <div className="w-8 h-8 bg-[#1A237E]/5 rounded-full flex items-center justify-center group-hover:bg-[#1A237E] group-hover:text-white transition-all">
+                      <span className="material-icons-outlined text-[#1A237E] text-sm group-hover:text-white">arrow_forward</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <div className="px-4 space-y-4 mb-6">

@@ -34,8 +34,9 @@ import ExamDocuments from '../components/admin/misc/ExamDocuments';
 import GlobalNews from '../components/admin/misc/GlobalNews';
 import PushNotifications from '../components/admin/misc/PushNotifications';
 import Categories from '../components/admin/Categories';
+import Referrals from '../components/admin/Referrals';
 
-export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications' | 'categories' | 'misc';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications' | 'categories' | 'misc' | 'referrals';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -136,6 +137,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
     { id: 'blog', label: 'Blog Posts', icon: 'article', color: 'text-lime-400' },
     { id: 'settings', label: 'System Settings', icon: 'settings', color: 'text-gray-400' },
     { id: 'banners', label: 'App Banners', icon: 'view_carousel', color: 'text-violet-400' },
+    { id: 'referrals', label: 'Referrals', icon: 'loyalty', color: 'text-amber-400' },
   ];
 
   const handleLogout = () => {
@@ -172,6 +174,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'blog': return <Blog {...props} />;
       case 'settings': return <Settings {...props} />;
       case 'banners': return <Banners {...props} />;
+      case 'referrals': return <Referrals {...props} />;
       case 'courses': return <Courses {...props} />;
       case 'course-content': return <CourseContentManager {...props} />;
       case 'live-class-scheduler': return <LiveClassScheduler {...props} />;

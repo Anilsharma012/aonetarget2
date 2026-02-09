@@ -19,12 +19,14 @@ import ChatsScreen from './screens/ChatsScreen';
 import MyCourses from './screens/MyCourses';
 import LiveClasses from './screens/LiveClasses';
 import MockTests from './screens/MockTests';
+import TestTaking from './screens/TestTaking';
 import EbookNotes from './screens/EbookNotes';
 import Downloads from './screens/Downloads';
 import Notifications from './screens/Notifications';
 import WatchHistory from './screens/WatchHistory';
 import HelpSupport from './screens/HelpSupport';
 import Settings from './screens/Settings';
+import ReferEarn from './screens/ReferEarn';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 
@@ -89,6 +91,9 @@ const App: React.FC = () => {
                   <Route path="/mock-tests" element={
                     isStudentLoggedIn ? <MockTests /> : <Navigate to="/student-login" />
                   } />
+                  <Route path="/test/:testId" element={
+                    isStudentLoggedIn ? <TestTaking /> : <Navigate to="/student-login" />
+                  } />
                   <Route path="/ebook-notes" element={
                     isStudentLoggedIn ? <EbookNotes /> : <Navigate to="/student-login" />
                   } />
@@ -106,6 +111,9 @@ const App: React.FC = () => {
                   } />
                   <Route path="/settings" element={
                     isStudentLoggedIn ? <Settings setAuth={setIsStudentLoggedIn} /> : <Navigate to="/student-login" />
+                  } />
+                  <Route path="/refer-earn" element={
+                    isStudentLoggedIn ? <ReferEarn /> : <Navigate to="/student-login" />
                   } />
                   
                   <Route path="/chats" element={

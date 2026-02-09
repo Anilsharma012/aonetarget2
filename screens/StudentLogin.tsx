@@ -15,7 +15,8 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ setAuth }) => {
     password: '',
     confirmPassword: '',
     class: '11th',
-    target: ''
+    target: '',
+    referralCode: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -106,6 +107,21 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ setAuth }) => {
         
         if (!response.ok) {
           throw new Error(data.error || 'Registration failed');
+        }
+
+        if (formData.referralCode.trim()) {
+          try {
+            await fetch('/api/referrals/apply', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                referralCode: formData.referralCode.trim().toUpperCase(),
+                newStudentId: data.student.id
+              })
+            });
+          } catch (refErr) {
+            console.error('Referral apply failed:', refErr);
+          }
         }
         
         localStorage.setItem('studentData', JSON.stringify(data.student));
@@ -264,6 +280,19 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ setAuth }) => {
                     {categories.length > 1 && <option value="Multiple">Multiple</option>}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">
+                  Referral Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="referralCode"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  placeholder="Enter referral code (e.g. AONE-XXXXX)"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brandBlue"
+                />
               </div>
             </>
           )}

@@ -1162,6 +1162,61 @@ export const subcategoriesAPI = {
   }
 };
 
+// Referrals Admin API
+export const referralsAdminAPI = {
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/referrals`);
+    if (!response.ok) throw new Error('Failed to fetch referrals');
+    return response.json();
+  },
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/referral-settings`);
+    if (!response.ok) throw new Error('Failed to fetch referral settings');
+    return response.json();
+  },
+  updateSettings: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/admin/referral-settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update referral settings');
+    return response.json();
+  },
+  updateStatus: async (referralCode: string, referredStudentId: string, status: string) => {
+    const response = await fetch(`${API_BASE_URL}/admin/referrals/update-status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referralCode, referredStudentId, status }),
+    });
+    if (!response.ok) throw new Error('Failed to update referral status');
+    return response.json();
+  }
+};
+
+// Purchases API
+export const purchasesAPI = {
+  create: async (data: any) => {
+    const response = await fetch(`${API_BASE_URL}/purchases`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create purchase');
+    return response.json();
+  },
+  getByStudent: async (studentId: string) => {
+    const response = await fetch(`${API_BASE_URL}/purchases/${studentId}`);
+    if (!response.ok) throw new Error('Failed to fetch purchases');
+    return response.json();
+  },
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/purchases`);
+    if (!response.ok) throw new Error('Failed to fetch all purchases');
+    return response.json();
+  }
+};
+
 // Dashboard Stats API
 export const dashboardAPI = {
   getStats: async () => {

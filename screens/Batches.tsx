@@ -1,10 +1,28 @@
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { COURSES } from '../constants';
 
+const getGradientPlaceholder = (name: string) => {
+  const initial = (name || '?').charAt(0).toUpperCase();
+  const gradients = [
+    'from-[#1A237E] to-[#303F9F]',
+    'from-[#C62828] to-[#D32F2F]',
+    'from-[#00695C] to-[#00897B]',
+    'from-[#4A148C] to-[#7B1FA2]',
+    'from-[#E65100] to-[#F57C00]',
+  ];
+  const idx = name ? name.charCodeAt(0) % gradients.length : 0;
+  return { initial, gradient: gradients[idx] };
+};
+
 const Batches: React.FC = () => {
   const navigate = useNavigate();
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const handleImageError = useCallback((id: string) => {
+    setFailedImages(prev => new Set(prev).add(id));
+  }, []);
 
   return (
     <div className="animate-fade-in">
@@ -49,7 +67,13 @@ const Batches: React.FC = () => {
             )}
             <div className="flex p-3 gap-3">
               <div className="w-28 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                {!failedImages.has(course.id) ? (
+                  <img src={course.image} alt={course.title} className="w-full h-full object-cover" loading="lazy" onError={() => handleImageError(course.id)} />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${getGradientPlaceholder(course.title).gradient} flex items-center justify-center`}>
+                    <span className="text-white text-2xl font-bold opacity-60">{getGradientPlaceholder(course.title).initial}</span>
+                  </div>
+                )}
               </div>
               <div className="flex-1 flex flex-col justify-between">
                 <div>

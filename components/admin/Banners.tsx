@@ -19,7 +19,7 @@ const Banners: React.FC<Props> = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
-  const [formData, setFormData] = useState({ title: '', imageUrl: '', linkUrl: '', active: true });
+  const [formData, setFormData] = useState({ title: '', imageUrl: '', linkUrl: '', active: true, order: 1 });
 
   useEffect(() => {
     loadBanners();
@@ -43,7 +43,7 @@ const Banners: React.FC<Props> = ({ showToast }) => {
         title: formData.title,
         imageUrl: formData.imageUrl,
         linkUrl: formData.linkUrl,
-        order: editingBanner?.order || banners.length + 1,
+        order: formData.order,
         active: formData.active
       };
 
@@ -57,7 +57,7 @@ const Banners: React.FC<Props> = ({ showToast }) => {
 
       setShowModal(false);
       setEditingBanner(null);
-      setFormData({ title: '', imageUrl: '', linkUrl: '', active: true });
+      setFormData({ title: '', imageUrl: '', linkUrl: '', active: true, order: banners.length + 1 });
       loadBanners();
     } catch (error) {
       showToast('Failed to save banner', 'error');
@@ -82,7 +82,8 @@ const Banners: React.FC<Props> = ({ showToast }) => {
       title: banner.title,
       imageUrl: banner.imageUrl,
       linkUrl: banner.linkUrl || '',
-      active: banner.active
+      active: banner.active,
+      order: banner.order || 1
     });
     setShowModal(true);
   };
@@ -113,7 +114,7 @@ const Banners: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] text-gray-400 font-bold mt-1">Total: {banners.length} Banners</p>
         </div>
         <button 
-          onClick={() => { setEditingBanner(null); setFormData({ title: '', imageUrl: '', linkUrl: '', active: true }); setShowModal(true); }}
+          onClick={() => { setEditingBanner(null); setFormData({ title: '', imageUrl: '', linkUrl: '', active: true, order: banners.length + 1 }); setShowModal(true); }}
           className="bg-navy text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase shadow-xl tracking-widest"
         >
           + Add Slider
@@ -168,7 +169,7 @@ const Banners: React.FC<Props> = ({ showToast }) => {
 
         {banners.length < 4 && (
           <div 
-            onClick={() => { setEditingBanner(null); setFormData({ title: '', imageUrl: '', linkUrl: '', active: true }); setShowModal(true); }}
+            onClick={() => { setEditingBanner(null); setFormData({ title: '', imageUrl: '', linkUrl: '', active: true, order: banners.length + 1 }); setShowModal(true); }}
             className="aspect-[2/1] bg-navy/5 rounded-[2rem] border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 cursor-pointer hover:border-navy/30 hover:text-navy/50 transition-all"
           >
             <span className="material-icons-outlined text-4xl mb-2">add_photo_alternate</span>
@@ -205,14 +206,32 @@ const Banners: React.FC<Props> = ({ showToast }) => {
                 onChange={(e) => setFormData({ ...formData, linkUrl: e.target.value })}
                 className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl text-xs font-bold outline-none"
               />
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <span className="text-xs font-bold text-gray-600">Active</span>
+              {formData.imageUrl && (
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pt-2">Preview</p>
+                  <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover mt-1" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              )}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Order / Priority</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
+                    className="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl text-xs font-bold outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <input
+                    type="checkbox"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-xs font-bold text-gray-600">Active</span>
+                </div>
               </div>
             </div>
             <div className="flex gap-4 mt-6">
