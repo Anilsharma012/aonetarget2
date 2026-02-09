@@ -342,7 +342,7 @@ const Questions: React.FC<Props> = ({ showToast, view = 'list' }) => {
                     </td>
                     <td className="px-4 py-4">
                       <span className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${getTypeColor(question.questionType)}`}>
-                        {question.questionType.replace('-', ' ')}
+                        {(question.questionType || 'mcq').replace('-', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-4">

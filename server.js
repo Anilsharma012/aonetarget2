@@ -1,5 +1,5 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from "url";
@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import http from 'http';
 import { createServer as createViteServer } from 'vite';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -27,6 +28,29 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/attached_assets', express.static(path.join(__dirname, 'attached_assets')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'];
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Invalid file type'));
+  }
+});
 
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path === '/health') {
@@ -60,6 +84,23 @@ const connectDB = async () => {
 
 // Initialize DB on startup
 connectDB();
+
+// File Upload endpoint
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({
+      url: fileUrl,
+      filename: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
 
 // Routes for Courses
 app.get('/api/courses', async (req, res) => {
@@ -585,24 +626,35 @@ app.post('/api/tests/:testId/submit', async (req, res) => {
     }
 
     const questions = test.questions || [];
+    const testNegativeMarking = test.negativeMarking || 0;
     let correctCount = 0;
+    let wrongCount = 0;
     let totalMarks = 0;
     let obtainedMarks = 0;
+    let negativeMarksTotal = 0;
     const questionResults = questions.map((q) => {
       const studentAnswer = answers[q.id] || null;
       const isCorrect = studentAnswer === q.correctAnswer;
-      const marks = q.marks || 1;
+      const marks = q.marks || test.marksPerQuestion || 4;
+      const negMarks = q.negativeMarks || testNegativeMarking || 0;
       totalMarks += marks;
-      if (isCorrect) {
-        correctCount++;
-        obtainedMarks += marks;
+      if (studentAnswer) {
+        if (isCorrect) {
+          correctCount++;
+          obtainedMarks += marks;
+        } else {
+          wrongCount++;
+          negativeMarksTotal += negMarks;
+          obtainedMarks -= negMarks;
+        }
       }
       return {
         questionId: q.id,
         studentAnswer,
         correctAnswer: q.correctAnswer,
         isCorrect,
-        marks
+        marks,
+        negativeMarks: (!isCorrect && studentAnswer) ? negMarks : 0
       };
     });
 
@@ -615,11 +667,12 @@ app.post('/api/tests/:testId/submit', async (req, res) => {
       questionResults,
       totalQuestions: questions.length,
       correctAnswers: correctCount,
-      wrongAnswers: answeredCount - correctCount,
+      wrongAnswers: wrongCount,
       unanswered: questions.length - answeredCount,
       totalMarks,
-      obtainedMarks,
-      percentage: totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0,
+      obtainedMarks: Math.max(0, obtainedMarks),
+      negativeMarksTotal,
+      percentage: totalMarks > 0 ? Math.round((Math.max(0, obtainedMarks) / totalMarks) * 100) : 0,
       timeTaken,
       submittedAt: new Date()
     };

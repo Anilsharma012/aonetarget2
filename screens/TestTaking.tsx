@@ -144,24 +144,35 @@ const TestTaking: React.FC = () => {
       const totalQuestions = questions.length;
       const answeredCount = Object.keys(answers).length;
       let correctCount = 0;
+      let wrongCount = 0;
       let totalMarks = 0;
       let obtainedMarks = 0;
+      let negativeMarksTotal = 0;
+      const testNegMarking = test?.negativeMarking || 0;
       questions.forEach(q => {
-        const marks = q.marks || 1;
+        const marks = q.marks || test?.marksPerQuestion || 4;
+        const negMarks = q.negativeMarks || testNegMarking || 0;
         totalMarks += marks;
-        if (answers[q.id] === q.correctAnswer) {
-          correctCount++;
-          obtainedMarks += marks;
+        if (answers[q.id]) {
+          if (answers[q.id] === q.correctAnswer) {
+            correctCount++;
+            obtainedMarks += marks;
+          } else {
+            wrongCount++;
+            negativeMarksTotal += negMarks;
+            obtainedMarks -= negMarks;
+          }
         }
       });
       setResult({
         totalQuestions,
         correctAnswers: correctCount,
-        wrongAnswers: answeredCount - correctCount,
+        wrongAnswers: wrongCount,
         unanswered: totalQuestions - answeredCount,
         totalMarks,
-        obtainedMarks,
-        percentage: totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0,
+        obtainedMarks: Math.max(0, obtainedMarks),
+        negativeMarksTotal,
+        percentage: totalMarks > 0 ? Math.round((Math.max(0, obtainedMarks) / totalMarks) * 100) : 0,
         timeTaken
       });
       setSubmitted(true);
@@ -251,6 +262,12 @@ const TestTaking: React.FC = () => {
               <span className="text-gray-500">Total Questions</span>
               <span className="font-bold text-gray-800">{result.totalQuestions}</span>
             </div>
+            {result.negativeMarksTotal > 0 && (
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-gray-500">Negative Marks</span>
+                <span className="font-bold text-[#D32F2F]">-{result.negativeMarksTotal}</span>
+              </div>
+            )}
           </div>
 
           {questions.length > 0 && (
@@ -397,35 +414,51 @@ const TestTaking: React.FC = () => {
 
             <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
               <p className="text-sm font-medium text-gray-800 leading-relaxed">{currentQuestion.question}</p>
+              {currentQuestion.questionImage && (
+                <img src={currentQuestion.questionImage} alt="Question" className="mt-3 max-w-full rounded-lg border max-h-60 object-contain" />
+              )}
+              {(test?.negativeMarking > 0 || currentQuestion.negativeMarks > 0) && (
+                <p className="text-[10px] text-[#D32F2F] mt-2 flex items-center gap-1">
+                  <span className="material-symbols-rounded text-[12px]">remove_circle</span>
+                  Negative marking: -{currentQuestion.negativeMarks || test?.negativeMarking || 0} marks for wrong answer
+                </p>
+              )}
             </div>
 
             <div className="space-y-3">
               {[
-                { key: 'A', value: currentQuestion.optionA },
-                { key: 'B', value: currentQuestion.optionB },
-                { key: 'C', value: currentQuestion.optionC },
-                { key: 'D', value: currentQuestion.optionD },
+                { key: 'A', value: currentQuestion.optionA, image: currentQuestion.optionAImage },
+                { key: 'B', value: currentQuestion.optionB, image: currentQuestion.optionBImage },
+                { key: 'C', value: currentQuestion.optionC, image: currentQuestion.optionCImage },
+                { key: 'D', value: currentQuestion.optionD, image: currentQuestion.optionDImage },
               ].map(opt => {
-                if (!opt.value) return null;
+                if (!opt.value && !opt.image) return null;
                 const isSelected = answers[currentQuestion.id] === opt.key;
                 return (
                   <button
                     key={opt.key}
                     onClick={() => selectAnswer(currentQuestion.id, opt.key)}
-                    className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                    className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left ${
                       isSelected
                         ? 'border-[#1A237E] bg-blue-50'
                         : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
                   >
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 ${
                       isSelected ? 'bg-[#1A237E] text-white' : 'bg-gray-100 text-gray-600'
                     }`}>
                       {opt.key}
                     </span>
-                    <span className={`text-sm ${isSelected ? 'text-[#1A237E] font-semibold' : 'text-gray-700'}`}>
-                      {opt.value}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      {opt.value && (
+                        <span className={`text-sm ${isSelected ? 'text-[#1A237E] font-semibold' : 'text-gray-700'}`}>
+                          {opt.value}
+                        </span>
+                      )}
+                      {opt.image && (
+                        <img src={opt.image} alt={`Option ${opt.key}`} className="mt-1 max-h-32 rounded border object-contain" />
+                      )}
+                    </div>
                   </button>
                 );
               })}

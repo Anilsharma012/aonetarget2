@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { categoriesAPI, subcategoriesAPI } from '../../src/services/apiClient';
+import FileUploadButton from '../shared/FileUploadButton';
 
 interface Category {
   _id?: string;
@@ -484,13 +485,21 @@ const Categories: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Image URL</label>
-                <input
-                  value={catForm.imageUrl || ''}
-                  onChange={e => setCatForm({ ...catForm, imageUrl: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <label className="text-xs font-bold text-gray-500 block mb-1">Category Image</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={catForm.imageUrl || ''}
+                    onChange={e => setCatForm({ ...catForm, imageUrl: e.target.value })}
+                    className="flex-1 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Paste URL or upload image"
+                  />
+                  <FileUploadButton
+                    accept="image/*"
+                    label="Upload"
+                    icon="cloud_upload"
+                    onUpload={(url) => setCatForm({ ...catForm, imageUrl: url })}
+                  />
+                </div>
                 {catForm.imageUrl && (
                   <div className="mt-2 relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200">
                     <img src={catForm.imageUrl} alt="Preview" className="w-full h-32 object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
@@ -611,13 +620,21 @@ const Categories: React.FC<Props> = ({ showToast }) => {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Image URL</label>
-                <input
-                  value={subForm.imageUrl || ''}
-                  onChange={e => setSubForm({ ...subForm, imageUrl: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <label className="text-xs font-bold text-gray-500 block mb-1">Subcategory Image</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={subForm.imageUrl || ''}
+                    onChange={e => setSubForm({ ...subForm, imageUrl: e.target.value })}
+                    className="flex-1 border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Paste URL or upload image"
+                  />
+                  <FileUploadButton
+                    accept="image/*"
+                    label="Upload"
+                    icon="cloud_upload"
+                    onUpload={(url) => setSubForm({ ...subForm, imageUrl: url })}
+                  />
+                </div>
                 {subForm.imageUrl && (
                   <div className="mt-2 relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200">
                     <img src={subForm.imageUrl} alt="Preview" className="w-full h-32 object-cover" onError={e => (e.currentTarget.style.display = 'none')} />

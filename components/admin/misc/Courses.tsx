@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../../src/services/apiClient';
 import RichTextEditor from '../../shared/RichTextEditor';
+import FileUploadButton from '../../shared/FileUploadButton';
 
 interface Course {
   id: string;
@@ -224,16 +225,29 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                 <input type="text" placeholder="Enter course name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
               </div>
               <div>
-                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Course Image URL</label>
-                <div className="flex gap-3">
-                  <input type="url" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
-                  {formData.imageUrl && (
-                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                      <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                    </div>
-                  )}
+                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Course Image</label>
+                <div className="flex gap-3 items-center">
+                  <input type="url" placeholder="Paste URL or upload image" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                  <FileUploadButton
+                    accept="image/*"
+                    label="Upload"
+                    icon="cloud_upload"
+                    onUpload={(url) => setFormData({ ...formData, imageUrl: url })}
+                  />
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">Enter a URL for the course thumbnail image</p>
+                {formData.imageUrl && (
+                  <div className="mt-2 relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200">
+                    <img src={formData.imageUrl} alt="Preview" className="w-full h-32 object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                      className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow"
+                    >
+                      <span className="material-icons-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                )}
+                <p className="text-[10px] text-gray-400 mt-1">Enter a URL or upload an image for the course thumbnail</p>
               </div>
               <div>
                 <label className="block text-xs font-black text-gray-700 uppercase mb-2">Description (Rich Text)</label>

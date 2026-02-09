@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI } from '../../src/services/apiClient';
+import FileUploadButton from '../shared/FileUploadButton';
 
 interface Course {
   id: string;
@@ -50,13 +51,19 @@ interface Test {
 interface Question {
   id: string;
   question: string;
+  questionImage?: string;
   optionA: string;
+  optionAImage?: string;
   optionB: string;
+  optionBImage?: string;
   optionC: string;
+  optionCImage?: string;
   optionD: string;
+  optionDImage?: string;
   correctAnswer: 'A' | 'B' | 'C' | 'D';
   explanation: string;
   marks: number;
+  negativeMarks?: number;
 }
 
 interface Props {
@@ -113,6 +120,8 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
     totalMarks: 100,
     passingMarks: 40,
     numberOfQuestions: 0,
+    marksPerQuestion: 4,
+    negativeMarking: 0,
     openDate: '',
     closeDate: '',
     isFree: false,
@@ -121,13 +130,19 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
 
   const [questionForm, setQuestionForm] = useState({
     question: '',
+    questionImage: '',
     optionA: '',
+    optionAImage: '',
     optionB: '',
+    optionBImage: '',
     optionC: '',
+    optionCImage: '',
     optionD: '',
+    optionDImage: '',
     correctAnswer: 'A' as 'A' | 'B' | 'C' | 'D',
     explanation: '',
-    marks: 4
+    marks: 4,
+    negativeMarks: 0
   });
 
   useEffect(() => {
@@ -389,12 +404,12 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
   };
 
   const resetTestForm = () => {
-    setTestForm({ name: '', description: '', duration: 60, totalMarks: 100, passingMarks: 40, numberOfQuestions: 0, openDate: '', closeDate: '', isFree: false, status: 'active' });
+    setTestForm({ name: '', description: '', duration: 60, totalMarks: 100, passingMarks: 40, numberOfQuestions: 0, marksPerQuestion: 4, negativeMarking: 0, openDate: '', closeDate: '', isFree: false, status: 'active' });
     setEditingTest(null);
   };
 
   const resetQuestionForm = () => {
-    setQuestionForm({ question: '', optionA: '', optionB: '', optionC: '', optionD: '', correctAnswer: 'A', explanation: '', marks: 4 });
+    setQuestionForm({ question: '', questionImage: '', optionA: '', optionAImage: '', optionB: '', optionBImage: '', optionC: '', optionCImage: '', optionD: '', optionDImage: '', correctAnswer: 'A', explanation: '', marks: 4, negativeMarks: 0 });
     setEditingQuestion(null);
   };
 
@@ -624,6 +639,8 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                                     totalMarks: test.totalMarks,
                                     passingMarks: test.passingMarks,
                                     numberOfQuestions: test.numberOfQuestions || 0,
+                                    marksPerQuestion: (test as any).marksPerQuestion || 4,
+                                    negativeMarking: (test as any).negativeMarking || 0,
                                     openDate: test.openDate || '',
                                     closeDate: test.closeDate || '',
                                     isFree: test.isFree,
@@ -714,13 +731,19 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                               setEditingQuestion(q);
                               setQuestionForm({
                                 question: q.question,
+                                questionImage: q.questionImage || '',
                                 optionA: q.optionA,
+                                optionAImage: q.optionAImage || '',
                                 optionB: q.optionB,
+                                optionBImage: q.optionBImage || '',
                                 optionC: q.optionC,
+                                optionCImage: q.optionCImage || '',
                                 optionD: q.optionD,
+                                optionDImage: q.optionDImage || '',
                                 correctAnswer: q.correctAnswer,
                                 explanation: q.explanation,
-                                marks: q.marks
+                                marks: q.marks,
+                                negativeMarks: q.negativeMarks || 0
                               });
                               setShowQuestionModal(true);
                             }}
@@ -870,14 +893,31 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">File URL (PDF/Doc) *</label>
-                <input
-                  type="text"
-                  value={noteForm.fileUrl}
-                  onChange={(e) => setNoteForm({ ...noteForm, fileUrl: e.target.value })}
-                  className="w-full px-4 py-3 border rounded-lg"
-                  placeholder="https://drive.google.com/..."
-                />
+                <label className="block text-xs font-bold text-gray-600 mb-1">PDF/Doc File *</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={noteForm.fileUrl}
+                    onChange={(e) => setNoteForm({ ...noteForm, fileUrl: e.target.value })}
+                    className="flex-1 px-4 py-3 border rounded-lg"
+                    placeholder="Paste URL or upload PDF"
+                  />
+                  <FileUploadButton
+                    accept=".pdf,application/pdf"
+                    label="Upload PDF"
+                    icon="upload_file"
+                    onUpload={(url) => setNoteForm({ ...noteForm, fileUrl: url })}
+                  />
+                </div>
+                {noteForm.fileUrl && (
+                  <div className="mt-2 flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
+                    <span className="material-icons-outlined text-green-600">check_circle</span>
+                    <span className="text-xs text-green-700 font-bold truncate flex-1">{noteForm.fileUrl}</span>
+                    <button type="button" onClick={() => setNoteForm({ ...noteForm, fileUrl: '' })} className="text-red-500 hover:text-red-700">
+                      <span className="material-icons-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -984,7 +1024,7 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                   <p className="text-[10px] text-gray-400 mt-1">Test will close after this date</p>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">No. of Questions</label>
                   <input
@@ -1005,6 +1045,17 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                   />
                 </div>
                 <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Marks Per Question</label>
+                  <input
+                    type="number"
+                    value={testForm.marksPerQuestion}
+                    onChange={(e) => setTestForm({ ...testForm, marksPerQuestion: parseInt(e.target.value) || 4 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Total Marks</label>
                   <input
                     type="number"
@@ -1021,6 +1072,17 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                     onChange={(e) => setTestForm({ ...testForm, passingMarks: parseInt(e.target.value) || 40 })}
                     className="w-full px-4 py-3 border rounded-lg"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Negative Marking</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    value={testForm.negativeMarking}
+                    onChange={(e) => setTestForm({ ...testForm, negativeMarking: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Marks deducted per wrong answer (0 = no negative)</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -1050,7 +1112,7 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
       {showQuestionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white">
+            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white z-10">
               <h3 className="font-black text-navy">{editingQuestion ? 'Edit Question' : 'Add Question'}</h3>
               <button onClick={() => { setShowQuestionModal(false); resetQuestionForm(); }} className="p-2 hover:bg-gray-100 rounded-lg">
                 <span className="material-icons-outlined">close</span>
@@ -1066,46 +1128,54 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                   rows={3}
                   placeholder="Enter your question..."
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Option A *</label>
-                  <input
-                    type="text"
-                    value={questionForm.optionA}
-                    onChange={(e) => setQuestionForm({ ...questionForm, optionA: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-lg"
+                <div className="mt-2 flex items-center gap-2">
+                  <FileUploadButton
+                    accept="image/*"
+                    label="Question Image"
+                    icon="add_photo_alternate"
+                    onUpload={(url) => setQuestionForm({ ...questionForm, questionImage: url })}
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Option B *</label>
-                  <input
-                    type="text"
-                    value={questionForm.optionB}
-                    onChange={(e) => setQuestionForm({ ...questionForm, optionB: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Option C *</label>
-                  <input
-                    type="text"
-                    value={questionForm.optionC}
-                    onChange={(e) => setQuestionForm({ ...questionForm, optionC: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Option D *</label>
-                  <input
-                    type="text"
-                    value={questionForm.optionD}
-                    onChange={(e) => setQuestionForm({ ...questionForm, optionD: e.target.value })}
-                    className="w-full px-4 py-3 border rounded-lg"
-                  />
+                  {questionForm.questionImage && (
+                    <div className="relative">
+                      <img src={questionForm.questionImage} alt="Q" className="h-16 rounded-lg border" />
+                      <button type="button" onClick={() => setQuestionForm({ ...questionForm, questionImage: '' })} className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
+                        <span className="material-icons-outlined text-xs">close</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
+                {(['A', 'B', 'C', 'D'] as const).map((opt) => (
+                  <div key={opt}>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Option {opt} *</label>
+                    <input
+                      type="text"
+                      value={(questionForm as any)[`option${opt}`]}
+                      onChange={(e) => setQuestionForm({ ...questionForm, [`option${opt}`]: e.target.value })}
+                      className="w-full px-4 py-3 border rounded-lg"
+                      placeholder={`Option ${opt}...`}
+                    />
+                    <div className="mt-1 flex items-center gap-2">
+                      <FileUploadButton
+                        accept="image/*"
+                        label="Image"
+                        icon="image"
+                        onUpload={(url) => setQuestionForm({ ...questionForm, [`option${opt}Image`]: url })}
+                      />
+                      {(questionForm as any)[`option${opt}Image`] && (
+                        <div className="relative">
+                          <img src={(questionForm as any)[`option${opt}Image`]} alt={`Opt ${opt}`} className="h-10 rounded border" />
+                          <button type="button" onClick={() => setQuestionForm({ ...questionForm, [`option${opt}Image`]: '' })} className="absolute -top-1 -right-1 bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px]">
+                            <span className="material-icons-outlined text-[10px]">close</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Correct Answer *</label>
                   <select
@@ -1125,6 +1195,16 @@ const CourseContentManager: React.FC<Props> = ({ showToast }) => {
                     type="number"
                     value={questionForm.marks}
                     onChange={(e) => setQuestionForm({ ...questionForm, marks: parseInt(e.target.value) || 4 })}
+                    className="w-full px-4 py-3 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Negative Marks</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    value={questionForm.negativeMarks}
+                    onChange={(e) => setQuestionForm({ ...questionForm, negativeMarks: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-3 border rounded-lg"
                   />
                 </div>

@@ -64,6 +64,17 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - GET /api/tests/:id - Get test with questions
 
 ## Recent Changes (Feb 9, 2026)
+- **File Upload System** - Multer-based upload endpoint (POST /api/upload), supports images and PDFs up to 50MB, FileUploadButton reusable component
+- **Image Upload in Admin** - Categories, Subcategories, Courses, and Questions all support image upload alongside URL input
+- **PDF Upload** - Course content notes support PDF file upload alongside URL
+- **Negative Marking** - Test-level and per-question negative marking support with decimal values (0.25, 0.5, 1)
+- **Marks Per Question** - Configurable marks per question at test level
+- **Question Images** - Question image + individual option images (A, B, C, D) with upload buttons
+- **Student Test Images** - TestTaking screen displays question and option images during exam
+- **Negative Marking Scoring** - Server-side and client-side scoring updated to deduct marks for wrong answers
+- **Results Enhancement** - Test results now show negative marks deducted
+
+### Previous Feb 9 Changes
 - **Home Screen Content** - Added Live Classes, Popular Test Series, Featured Batches sections
 - **Course Details** - Full description, materials summary, share button (Web Share API), Buy Now button, recorded/live tabs
 - **Mock Test Engine** - Complete test-taking flow with countdown timer, question palette, auto-submit, results review
