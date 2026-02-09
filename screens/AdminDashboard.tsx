@@ -35,8 +35,9 @@ import GlobalNews from '../components/admin/misc/GlobalNews';
 import PushNotifications from '../components/admin/misc/PushNotifications';
 import Categories from '../components/admin/Categories';
 import Referrals from '../components/admin/Referrals';
+import ChatSupport from '../components/admin/ChatSupport';
 
-export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications' | 'categories' | 'misc' | 'referrals';
+export type AdminView = 'dashboard' | 'students' | 'buyers' | 'tokens' | 'coupons' | 'store' | 'institute' | 'questions' | 'question-bank' | 'passages' | 'tests' | 'subjective-test' | 'test-series' | 'all-reports' | 'videos' | 'video-series' | 'live-videos' | 'pdfs' | 'packages' | 'messages' | 'blog' | 'settings' | 'banners' | 'courses' | 'course-content' | 'live-class-scheduler' | 'subcourses' | 'subjects' | 'topics' | 'instructions' | 'exam-documents' | 'global-news' | 'push-notifications' | 'categories' | 'misc' | 'referrals' | 'chat-support';
 
 interface Props {
   setAuth: (val: boolean) => void;
@@ -133,7 +134,8 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
     { id: 'live-videos', label: 'Live Sessions', icon: 'live_tv', color: 'text-rose-500' },
     { id: 'pdfs', label: 'Manage PDFs', icon: 'picture_as_pdf', color: 'text-red-500' },
     { id: 'packages', label: 'Batches/Pkgs', icon: 'inventory_2', color: 'text-teal-400' },
-    { id: 'messages', label: 'Messages', icon: 'chat', color: 'text-sky-400' },
+    { id: 'chat-support', label: 'Chat Support', icon: 'support_agent', color: 'text-green-400' },
+    { id: 'messages', label: 'Messages', icon: 'mail', color: 'text-sky-400' },
     { id: 'blog', label: 'Blog Posts', icon: 'article', color: 'text-lime-400' },
     { id: 'settings', label: 'System Settings', icon: 'settings', color: 'text-gray-400' },
     { id: 'banners', label: 'App Banners', icon: 'view_carousel', color: 'text-violet-400' },
@@ -170,6 +172,7 @@ const AdminDashboard: React.FC<Props> = ({ setAuth }) => {
       case 'live-videos': return <LiveVideos {...props} />;
       case 'pdfs': return <PDFs {...props} />;
       case 'packages': return <Packages {...props} />;
+      case 'chat-support': return <ChatSupport {...props} />;
       case 'messages': return <Messages {...props} />;
       case 'blog': return <Blog {...props} />;
       case 'settings': return <Settings {...props} />;

@@ -64,6 +64,7 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - GET /api/tests/:id - Get test with questions
 
 ## Recent Changes (Feb 9, 2026)
+- **Chat System** - Full 1-on-1 chat between students and admin. Students message from Chats tab, admin sees all conversations in Chat Support panel with reply functionality. Auto-polling for real-time updates. MongoDB collections: chats, chatMessages.
 - **Course-Category Mapping** - Courses now have categoryId, subcategoryId, price, and type fields. Admin panel has dropdowns for category/subcategory selection (required). CategoryPage and SubCategoryDetail filter by these IDs.
 - **Course CRUD Endpoints** - Added PUT /api/courses/:id and DELETE /api/courses/:id endpoints (were missing)
 - **NEET Sample Courses** - 6 NEET courses seeded with proper category/subcategory mapping across Class 11, Class 12, and NEET Exam subcategories

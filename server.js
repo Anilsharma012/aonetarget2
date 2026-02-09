@@ -2626,6 +2626,120 @@ app.get('/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
+// ============ CHAT SYSTEM ============
+
+app.get('/api/chats/unread/admin', async (req, res) => {
+  try {
+    const result = await db.collection('chats').aggregate([
+      { $group: { _id: null, total: { $sum: '$unreadAdmin' } } }
+    ]).toArray();
+    res.json({ unread: result[0]?.total || 0 });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+app.get('/api/chats', async (req, res) => {
+  try {
+    const { studentId } = req.query;
+    const query = studentId ? { studentId } : {};
+    const chats = await db.collection('chats').find(query).sort({ updatedAt: -1 }).toArray();
+    res.json(chats);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch chats' });
+  }
+});
+
+app.post('/api/chats/start', async (req, res) => {
+  try {
+    const { studentId, studentName } = req.body;
+    if (!studentId) {
+      return res.status(400).json({ error: 'studentId is required' });
+    }
+    const existing = await db.collection('chats').findOne({ studentId });
+    if (existing) {
+      return res.json(existing);
+    }
+    const chatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const chat = {
+      id: chatId,
+      studentId,
+      studentName: studentName || 'Student',
+      lastMessage: '',
+      lastMessageBy: '',
+      unreadAdmin: 0,
+      unreadStudent: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    await db.collection('chats').insertOne(chat);
+    res.status(201).json(chat);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to start chat' });
+  }
+});
+
+app.get('/api/chats/:chatId/messages', async (req, res) => {
+  try {
+    const messages = await db.collection('chatMessages')
+      .find({ chatId: req.params.chatId })
+      .sort({ createdAt: 1 })
+      .toArray();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch chat messages' });
+  }
+});
+
+app.post('/api/chats/:chatId/messages', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { senderId, senderName, senderType, message } = req.body;
+    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const chatMessage = {
+      id: msgId,
+      chatId,
+      senderId,
+      senderName: senderName || 'Unknown',
+      senderType,
+      message,
+      createdAt: new Date()
+    };
+    await db.collection('chatMessages').insertOne(chatMessage);
+
+    const unreadField = senderType === 'student' ? 'unreadAdmin' : 'unreadStudent';
+    await db.collection('chats').updateOne(
+      { id: chatId },
+      {
+        $set: {
+          lastMessage: message,
+          lastMessageBy: senderType,
+          updatedAt: new Date()
+        },
+        $inc: { [unreadField]: 1 }
+      }
+    );
+
+    res.status(201).json(chatMessage);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+app.put('/api/chats/:chatId/read', async (req, res) => {
+  try {
+    const { readerType } = req.body;
+    const unreadField = readerType === 'admin' ? 'unreadAdmin' : 'unreadStudent';
+    await db.collection('chats').updateOne(
+      { id: req.params.chatId },
+      { $set: { [unreadField]: 0 } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark as read' });
+  }
+});
+
 async function startServer() {
   const httpServer = http.createServer(app);
 
