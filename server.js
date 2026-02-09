@@ -692,10 +692,29 @@ app.post('/api/tests/:testId/submit', async (req, res) => {
     });
 
     const answeredCount = Object.keys(answers).filter(k => answers[k]).length;
+
+    let studentName = '';
+    try {
+      const studentDoc = await db.collection('students').findOne({ id: studentId });
+      studentName = studentDoc?.name || '';
+    } catch(e) {}
+
+    let courseName = test.courseName || test.course || '';
+    if (!courseName && test.courseId) {
+      try {
+        const courseDoc = await db.collection('courses').findOne({ id: test.courseId });
+        courseName = courseDoc?.name || courseDoc?.title || '';
+      } catch(e) {}
+    }
+
     const resultData = {
       id: `result_${Date.now()}`,
       testId: req.params.testId,
+      testName: test.name || test.title || '',
+      courseId: test.courseId || '',
+      courseName,
       studentId,
+      studentName,
       answers,
       questionResults,
       totalQuestions: questions.length,
@@ -1932,10 +1951,79 @@ app.put('/api/students/:id/progress', async (req, res) => {
 // Student Test Results Routes
 app.get('/api/students/:id/test-results', async (req, res) => {
   try {
-    const results = await db.collection('testResults').find({ studentId: req.params.id }).toArray();
-    res.json(results);
+    const results = await db.collection('testResults')
+      .find({ studentId: req.params.id })
+      .sort({ submittedAt: -1 })
+      .toArray();
+
+    const enriched = await Promise.all(results.map(async (r) => {
+      if (!r.testName && r.testId) {
+        try {
+          const t = await db.collection('tests').findOne({ id: r.testId });
+          if (t) {
+            r.testName = t.name || t.title || '';
+            r.courseId = r.courseId || t.courseId || '';
+            r.courseName = r.courseName || t.courseName || t.course || '';
+          }
+        } catch(e) {}
+      }
+      if (!r.courseName && r.courseId) {
+        try {
+          const c = await db.collection('courses').findOne({ id: r.courseId });
+          if (c) r.courseName = c.name || c.title || '';
+        } catch(e) {}
+      }
+      return r;
+    }));
+
+    res.json(enriched);
   } catch (error) {
     console.error('Error fetching test results:', error);
+    res.status(500).json({ error: 'Failed to fetch test results' });
+  }
+});
+
+app.get('/api/admin/test-results', async (req, res) => {
+  try {
+    const { studentId, courseId, testId } = req.query;
+    const query = {};
+    if (studentId) query.studentId = studentId;
+    if (courseId) query.courseId = courseId;
+    if (testId) query.testId = testId;
+    const results = await db.collection('testResults')
+      .find(query)
+      .sort({ submittedAt: -1 })
+      .toArray();
+
+    const enriched = await Promise.all(results.map(async (r) => {
+      if (!r.testName && r.testId) {
+        try {
+          const t = await db.collection('tests').findOne({ id: r.testId });
+          if (t) {
+            r.testName = t.name || t.title || '';
+            r.courseId = r.courseId || t.courseId || '';
+            r.courseName = r.courseName || t.courseName || t.course || '';
+          }
+        } catch(e) {}
+      }
+      if (!r.studentName && r.studentId) {
+        try {
+          const s = await db.collection('students').findOne({ id: r.studentId });
+          if (s) r.studentName = s.name || '';
+        } catch(e) {}
+      }
+      if (!r.courseName && r.courseId) {
+        try {
+          const c = await db.collection('courses').findOne({ id: r.courseId });
+          if (c) r.courseName = c.name || c.title || '';
+        } catch(e) {}
+      }
+      return r;
+    }));
+
+    res.json(enriched);
+  } catch (error) {
+    console.error('Error fetching all test results:', error);
     res.status(500).json({ error: 'Failed to fetch test results' });
   }
 });
