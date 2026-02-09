@@ -382,7 +382,7 @@ const ContentTypeDetail: React.FC = () => {
       </main>
 
       {!enrolled && courses.length > 0 && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-shrink-0">
               <p className="text-[10px] text-gray-400">Course Price</p>
