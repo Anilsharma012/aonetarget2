@@ -588,7 +588,10 @@ app.put('/api/institute', async (req, res) => {
 // Routes for Questions
 app.get('/api/questions', async (req, res) => {
   try {
-    const questions = await db.collection('questions').find({}).toArray();
+    const filter = {};
+    if (req.query.testId) filter.testId = req.query.testId;
+    if (req.query.courseId) filter.courseId = req.query.courseId;
+    const questions = await db.collection('questions').find(filter).toArray();
     res.json(questions);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch questions' });
@@ -649,7 +652,8 @@ app.get('/api/tests/:id', async (req, res) => {
     if (!test) {
       return res.status(404).json({ error: 'Test not found' });
     }
-    res.json(test);
+    const questions = await db.collection('questions').find({ testId: req.params.id }).toArray();
+    res.json({ ...test, questions });
   } catch (error) {
     console.error('Error fetching test:', error);
     res.status(500).json({ error: 'Failed to fetch test' });
@@ -665,7 +669,7 @@ app.post('/api/tests/:testId/submit', async (req, res) => {
       return res.status(404).json({ error: 'Test not found' });
     }
 
-    const questions = test.questions || [];
+    const questions = await db.collection('questions').find({ testId: req.params.testId }).toArray();
     const testNegativeMarking = test.negativeMarking || 0;
     let correctCount = 0;
     let wrongCount = 0;
