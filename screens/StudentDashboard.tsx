@@ -32,6 +32,7 @@ const StudentDashboard: React.FC = () => {
   });
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [upcomingTests, setUpcomingTests] = useState<any[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -57,6 +58,8 @@ const StudentDashboard: React.FC = () => {
       const coursesData = await coursesRes.json().catch(() => []);
       const testsData = await testsRes.json().catch(() => []);
       const resultsData = await resultsRes.json().catch(() => []);
+
+      setEnrolledCourses(Array.isArray(coursesData) ? coursesData : []);
 
       const results = Array.isArray(resultsData) ? resultsData : [];
       setTestResults(results);
@@ -201,6 +204,45 @@ const StudentDashboard: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
+            {enrolledCourses.length > 0 && (
+              <section className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                  <span className="material-symbols-rounded text-green-600">school</span>
+                  My Courses
+                </h3>
+                <div className="space-y-2">
+                  {enrolledCourses.slice(0, 4).map((c: any) => (
+                    <button
+                      key={c.id || c._id}
+                      onClick={() => navigate(`/course/${c.id || c._id}`)}
+                      className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-white rounded-xl hover:shadow-sm transition-all active:scale-[0.98]"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#303F9F] to-[#1A237E] rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                        {(c.imageUrl || c.thumbnail) ? (
+                          <img src={c.imageUrl || c.thumbnail} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        ) : (
+                          <span className="text-white font-bold">{(c.name || c.title || '?').charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-xs font-bold text-gray-800 truncate">{c.name || c.title}</p>
+                        <p className="text-[10px] text-gray-400">{c.type === 'live' ? 'Live' : 'Recorded'} Course</p>
+                      </div>
+                      <span className="material-symbols-rounded text-[#303F9F] text-lg">play_circle</span>
+                    </button>
+                  ))}
+                </div>
+                {enrolledCourses.length > 4 && (
+                  <button
+                    onClick={() => navigate('/my-courses')}
+                    className="w-full mt-2 text-brandBlue text-xs font-bold py-2 hover:bg-blue-50 rounded-lg"
+                  >
+                    View All ({enrolledCourses.length})
+                  </button>
+                )}
+              </section>
+            )}
+
             {testResults.length > 0 && (
               <section className="bg-white rounded-xl p-4 shadow-sm">
                 <h3 className="font-bold text-sm mb-3 flex items-center gap-2">

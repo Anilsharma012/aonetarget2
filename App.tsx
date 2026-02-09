@@ -27,6 +27,7 @@ import WatchHistory from './screens/WatchHistory';
 import HelpSupport from './screens/HelpSupport';
 import Settings from './screens/Settings';
 import ReferEarn from './screens/ReferEarn';
+import PurchaseSuccess from './screens/PurchaseSuccess';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 
@@ -78,6 +79,7 @@ const App: React.FC = () => {
                   <Route path="/checkout/:id" element={<Checkout />} />
                   <Route path="/study/:id" element={<StudyDashboard />} />
                   <Route path="/success" element={<Success />} />
+                  <Route path="/purchase-success" element={<PurchaseSuccess />} />
                   
                   <Route path="/student-dashboard" element={
                     isStudentLoggedIn ? <StudentDashboard /> : <Navigate to="/student-login" />

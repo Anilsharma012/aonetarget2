@@ -123,8 +123,15 @@ app.post('/api/courses', async (req, res) => {
 
 app.get('/api/courses/:id', async (req, res) => {
   try {
-    const { ObjectId } = await import('mongodb');
-    const course = await db.collection('courses').findOne({ id: req.params.id });
+    let course = await db.collection('courses').findOne({ id: req.params.id });
+    if (!course) {
+      try {
+        const { ObjectId } = await import('mongodb');
+        if (ObjectId.isValid(req.params.id)) {
+          course = await db.collection('courses').findOne({ _id: new ObjectId(req.params.id) });
+        }
+      } catch(e) {}
+    }
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
@@ -2638,7 +2645,7 @@ app.post('/api/purchases', async (req, res) => {
       id: `purchase_${Date.now()}`,
       studentId,
       courseId,
-      courseName: course ? course.title : courseId,
+      courseName: course ? (course.name || course.title) : courseId,
       amount: amount || (course ? course.price : 0),
       paymentMethod: paymentMethod || 'online',
       referralCode: referralCode || null,
