@@ -134,6 +134,39 @@ app.get('/api/courses/:id', async (req, res) => {
   }
 });
 
+app.put('/api/courses/:id', async (req, res) => {
+  try {
+    console.log('PUT /api/courses/:id - Updating course:', req.params.id);
+    const { _id, ...updateData } = req.body;
+    const result = await db.collection('courses').updateOne(
+      { id: req.params.id },
+      { $set: { ...updateData, updatedAt: new Date().toISOString() } }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    const updated = await db.collection('courses').findOne({ id: req.params.id });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update course:', error);
+    res.status(500).json({ error: 'Failed to update course' });
+  }
+});
+
+app.delete('/api/courses/:id', async (req, res) => {
+  try {
+    console.log('DELETE /api/courses/:id - Deleting course:', req.params.id);
+    const result = await db.collection('courses').deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    res.json({ success: true, message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete course:', error);
+    res.status(500).json({ error: 'Failed to delete course' });
+  }
+});
+
 // Routes for Instructors
 app.get('/api/instructors', async (req, res) => {
   try {
