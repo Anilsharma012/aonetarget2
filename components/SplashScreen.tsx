@@ -60,7 +60,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         ) : (
           <div className="text-center text-white">
             <img 
-              src="/attached_assets/download_1770552281686.png" 
+              src="/attached_assets/alonelogo_1770810181717.jpg" 
               alt="Aone Target Logo" 
               className="w-48 mx-auto mb-6"
             />

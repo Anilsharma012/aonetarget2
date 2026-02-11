@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { coursesAPI, newsAPI, categoriesAPI, bannersAPI, testsAPI, testSeriesAPI, liveVideosAPI } from '../src/services/apiClient';
+import StudentSidebar from '../components/StudentSidebar';
 
 import { COURSES } from '../constants';
 
@@ -54,6 +55,7 @@ const Home: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [testSeries, setTestSeries] = useState<any[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -152,7 +154,7 @@ const Home: React.FC = () => {
     fetchAll();
     fetchNews();
 
-    const refreshInterval = setInterval(fetchAll, 15000);
+    const refreshInterval = setInterval(fetchAll, 120000);
     return () => clearInterval(refreshInterval);
   }, []);
 
@@ -199,14 +201,14 @@ const Home: React.FC = () => {
       <header className="sticky top-0 z-40 shadow-lg" style={{ background: 'linear-gradient(135deg, #1A237E 0%, #303F9F 50%, #1A237E 100%)' }}>
         <div className="px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button className="p-1.5 rounded-xl hover:bg-white/10 transition-colors">
+            <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-xl hover:bg-white/10 transition-colors active:scale-90">
               <span className="material-icons-outlined text-white">menu</span>
             </button>
             <div className="flex items-center gap-2">
               <img 
-                src="/attached_assets/download_1770552281686.png" 
+                src="/attached_assets/alonelogo_1770810181717.jpg" 
                 alt="Aone Target" 
-                className="h-8 object-contain brightness-0 invert"
+                className="h-9 object-contain rounded"
               />
             </div>
           </div>
@@ -558,6 +560,12 @@ const Home: React.FC = () => {
           </div>
         </button>
       </div>
+
+      <StudentSidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+        student={null}
+      />
 
       {showNewsModal && newsModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
