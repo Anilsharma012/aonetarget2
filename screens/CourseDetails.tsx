@@ -185,30 +185,40 @@ const CourseDetails: React.FC = () => {
 
   const fetchCourseData = async () => {
     try {
-      const [courseRes, videosRes, notesRes, testsRes, enrolledRes] = await Promise.all([
+      const fetchPromises: Promise<Response>[] = [
         fetch(`/api/courses/${id}`),
         fetch(`/api/courses/${id}/videos`),
         fetch(`/api/courses/${id}/notes`),
         fetch(`/api/courses/${id}/tests`),
-        fetch(`/api/students/${studentId}/enrolled/${id}`)
-      ]);
+      ];
+
+      const [courseRes, videosRes, notesRes, testsRes] = await Promise.all(fetchPromises);
       
       const courseData = await courseRes.json();
-      const videosData = await videosRes.json();
-      const notesData = await notesRes.json();
-      const testsData = await testsRes.json();
-      const enrolledData = await enrolledRes.json();
+      if (courseRes.ok && courseData && !courseData.error) {
+        setCourse(courseData);
+      }
       
-      setCourse(courseData);
+      const videosData = await videosRes.json().catch(() => []);
+      const notesData = await notesRes.json().catch(() => []);
+      const testsData = await testsRes.json().catch(() => []);
+      
       setVideos(Array.isArray(videosData) ? videosData : []);
       setNotes(Array.isArray(notesData) ? notesData : []);
       setTests(Array.isArray(testsData) ? testsData.filter((t: Test) => t.status === 'active') : []);
-      setIsEnrolled(enrolledData.enrolled || false);
-      
-      if (enrolledData.enrolled) {
-        const progressRes = await fetch(`/api/students/${studentId}/courses/${id}/progress`);
-        const progressData = await progressRes.json();
-        setProgress(progressData);
+
+      if (studentId) {
+        try {
+          const enrolledRes = await fetch(`/api/students/${studentId}/enrolled/${id}`);
+          const enrolledData = await enrolledRes.json();
+          setIsEnrolled(enrolledData.enrolled || false);
+          
+          if (enrolledData.enrolled) {
+            const progressRes = await fetch(`/api/students/${studentId}/courses/${id}/progress`);
+            const progressData = await progressRes.json();
+            setProgress(progressData);
+          }
+        } catch {}
       }
     } catch (error) {
       console.error('Error fetching course data:', error);

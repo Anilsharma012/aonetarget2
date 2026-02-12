@@ -42,7 +42,17 @@ const ContentTypeDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<string>(subjectParam);
 
-  const studentId = localStorage.getItem('studentId') || '';
+  const getStudentId = () => {
+    try {
+      const data = localStorage.getItem('studentData');
+      if (data) {
+        const parsed = JSON.parse(data);
+        return parsed.id || '';
+      }
+    } catch {}
+    return localStorage.getItem('studentId') || '';
+  };
+  const studentId = getStudentId();
   const config = contentTypeConfig[contentType || ''] || contentTypeConfig.recorded_batch;
 
   const neetSubjects = [

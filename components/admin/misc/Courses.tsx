@@ -15,6 +15,8 @@ interface Course {
   categoryId?: string;
   subcategoryId?: string;
   price?: number;
+  mrp?: number;
+  instructor?: string;
   type?: 'recorded' | 'live';
   examType?: 'neet' | 'iit-jee';
   contentType?: 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test';
@@ -37,7 +39,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
 
-  const [formData, setFormData] = useState({
+  const emptyForm = {
     name: '',
     description: '',
     imageUrl: '',
@@ -46,12 +48,15 @@ const Courses: React.FC<Props> = ({ showToast }) => {
     categoryId: '',
     subcategoryId: '',
     price: '',
+    mrp: '',
+    instructor: '',
     type: '' as '' | 'recorded' | 'live',
     examType: '' as '' | 'neet' | 'iit-jee',
     contentType: '' as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test',
     subject: '' as '' | 'biology' | 'chemistry' | 'physics' | 'math',
     boardType: '' as '' | 'cbse' | 'hbse'
-  });
+  };
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => { loadCourses(); loadCategoriesAndSubs(); }, []);
 
@@ -101,7 +106,9 @@ const Courses: React.FC<Props> = ({ showToast }) => {
         createdDate: editingItem?.createdDate || new Date().toISOString(),
         categoryId: formData.categoryId || undefined,
         subcategoryId: formData.subcategoryId || undefined,
-        price: formData.price ? parseFloat(formData.price) : undefined,
+        price: formData.price ? parseFloat(formData.price) : 0,
+        mrp: formData.mrp ? parseFloat(formData.mrp) : undefined,
+        instructor: formData.instructor || undefined,
         type: formData.type || undefined,
         examType: formData.examType || undefined,
         contentType: formData.contentType || undefined,
@@ -117,7 +124,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
       }
       setShowModal(false);
       setEditingItem(null);
-      setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '', boardType: '' });
+      setFormData(emptyForm);
       loadCourses();
     } catch (error) {
       showToast('Failed to save course', 'error');
@@ -147,7 +154,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
           <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Total: {courses.length} Courses</p>
         </div>
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ name: '', description: '', imageUrl: '', subjects: '', status: 'active', categoryId: '', subcategoryId: '', price: '', type: '', examType: '', contentType: '', subject: '', boardType: '' }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData(emptyForm); setShowModal(true); }}
           className="bg-navy text-white px-6 py-3 rounded-xl font-black text-[11px] uppercase shadow-sm hover:shadow-md hover:scale-105 transition-all flex items-center gap-2"
         >
           <span className="material-icons-outlined text-base">add</span>
@@ -194,11 +201,10 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">#</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Course</th>
                     <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-left font-black text-gray-600 uppercase tracking-wider">Description</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Subjects</th>
-                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Students</th>
+                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Content Type</th>
                     <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-center font-black text-gray-600 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -207,11 +213,34 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                   {paginatedItems.map((item, idx) => (
                     <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50 group">
                       <td className="px-6 py-4 font-bold text-gray-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                      <td className="px-6 py-4 font-bold text-navy">{item.name}</td>
-                      <td className="px-6 py-4 text-gray-600">{categories.find((c: any) => c.id === item.categoryId)?.title || item.categoryId || '-'}</td>
-                      <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{item.description}</td>
-                      <td className="px-6 py-4 text-center font-bold text-gray-700">{item.subjects || 0}</td>
-                      <td className="px-6 py-4 text-center font-bold text-gray-700">{item.studentsEnrolled || 0}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover" onError={(e) => e.currentTarget.style.display='none'} />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-navy/10 flex items-center justify-center">
+                              <span className="material-icons-outlined text-navy text-sm">school</span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-navy">{item.name}</p>
+                            {item.instructor && <p className="text-[10px] text-gray-400">{item.instructor}</p>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        <div>{categories.find((c: any) => c.id === item.categoryId)?.title || item.categoryId || '-'}</div>
+                        {item.examType && <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase">{item.examType}</span>}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-navy">{item.price ? `₹${item.price}` : 'Free'}</span>
+                        {item.mrp && item.mrp > (item.price || 0) && <p className="text-[10px] text-gray-400 line-through">₹{item.mrp}</p>}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {item.contentType ? (
+                          <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold capitalize">{item.contentType.replace('_', ' ')}</span>
+                        ) : '-'}
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${item.status === 'active' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-gray-50 text-gray-700 border border-gray-100'}`}>
                           {item.status}
@@ -219,7 +248,7 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status, categoryId: item.categoryId || '', subcategoryId: item.subcategoryId || '', price: item.price?.toString() || '', type: (item.type || '') as '' | 'recorded' | 'live', examType: (item.examType || '') as '' | 'neet' | 'iit-jee', contentType: (item.contentType || '') as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test', subject: (item.subject || '') as '' | 'biology' | 'chemistry' | 'physics' | 'math', boardType: (item.boardType || '') as '' | 'cbse' | 'hbse' }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingItem(item); setFormData({ name: item.name, description: item.description, imageUrl: item.imageUrl || '', subjects: (item.subjects || '').toString(), status: item.status, categoryId: item.categoryId || '', subcategoryId: item.subcategoryId || '', price: item.price?.toString() || '', mrp: item.mrp?.toString() || '', instructor: item.instructor || '', type: (item.type || '') as '' | 'recorded' | 'live', examType: (item.examType || '') as '' | 'neet' | 'iit-jee', contentType: (item.contentType || '') as '' | 'recorded_batch' | 'live_classroom' | 'crash_course' | 'mock_test', subject: (item.subject || '') as '' | 'biology' | 'chemistry' | 'physics' | 'math', boardType: (item.boardType || '') as '' | 'cbse' | 'hbse' }); setShowModal(true); }} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
                             <span className="material-icons-outlined text-base">edit</span>
                           </button>
                           <button onClick={() => handleDelete(item.id)} className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors">
@@ -323,10 +352,19 @@ const Courses: React.FC<Props> = ({ showToast }) => {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-black text-gray-700 uppercase mb-2">Instructor Name</label>
+                <input type="text" placeholder="e.g. Dr. Sharma, Aone Target Faculty" value={formData.instructor} onChange={(e) => setFormData({ ...formData, instructor: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Price (₹)</label>
-                  <input type="number" placeholder="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">Selling Price (₹)</label>
+                  <input type="number" placeholder="0 = Free" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-700 uppercase mb-2">MRP (₹)</label>
+                  <input type="number" placeholder="Original price" value={formData.mrp} onChange={(e) => setFormData({ ...formData, mrp: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg font-bold outline-none focus:ring-2 focus:ring-navy/10" />
+                  <p className="text-[10px] text-gray-400 mt-1">Set higher than price to show discount</p>
                 </div>
                 <div>
                   <label className="block text-xs font-black text-gray-700 uppercase mb-2">Type</label>

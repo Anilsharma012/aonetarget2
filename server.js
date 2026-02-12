@@ -2650,12 +2650,21 @@ app.post('/api/purchases', async (req, res) => {
       return res.status(404).json({ error: 'Student not found' });
     }
 
-    const course = await db.collection('courses').findOne({ id: courseId });
+    let course = await db.collection('courses').findOne({ id: courseId });
+    if (!course) {
+      try {
+        const { ObjectId } = await import('mongodb');
+        if (ObjectId.isValid(courseId)) {
+          course = await db.collection('courses').findOne({ _id: new ObjectId(courseId) });
+        }
+      } catch(e) {}
+    }
+    const actualCourseId = course ? (course.id || courseId) : courseId;
 
     const purchase = {
       id: `purchase_${Date.now()}`,
       studentId,
-      courseId,
+      courseId: actualCourseId,
       courseName: course ? (course.name || course.title) : courseId,
       amount: amount || (course ? course.price : 0),
       paymentMethod: paymentMethod || 'online',
@@ -2667,10 +2676,10 @@ app.post('/api/purchases', async (req, res) => {
     await db.collection('purchases').insertOne(purchase);
 
     const enrolledCourses = student.enrolledCourses || [];
-    if (!enrolledCourses.includes(courseId)) {
+    if (!enrolledCourses.includes(actualCourseId)) {
       await db.collection('students').updateOne(
         { id: studentId },
-        { $addToSet: { enrolledCourses: courseId } }
+        { $addToSet: { enrolledCourses: actualCourseId } }
       );
     }
 
