@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
+import { testsAPI } from '../src/services/apiClient';
 
 interface TestResult {
   id: string;
@@ -49,15 +50,14 @@ const StudentDashboard: React.FC = () => {
 
   const fetchDashboardData = async (studentId: string) => {
     try {
-      const [coursesRes, testsRes, resultsRes] = await Promise.all([
-        fetch(`/api/students/${studentId}/courses`),
-        fetch('/api/tests'),
-        fetch(`/api/students/${studentId}/test-results`)
+      const [coursesRes, testsData, resultsRes] = await Promise.all([
+        fetch(`/api/students/${studentId}/courses`).then(r => r.json()).catch(() => []),
+        testsAPI.getAll().catch(() => []),
+        fetch(`/api/students/${studentId}/test-results`).then(r => r.json()).catch(() => [])
       ]);
 
-      const coursesData = await coursesRes.json().catch(() => []);
-      const testsData = await testsRes.json().catch(() => []);
-      const resultsData = await resultsRes.json().catch(() => []);
+      const coursesData = Array.isArray(coursesRes) ? coursesRes : [];
+      const resultsData = Array.isArray(resultsRes) ? resultsRes : [];
 
       setEnrolledCourses(Array.isArray(coursesData) ? coursesData : []);
 

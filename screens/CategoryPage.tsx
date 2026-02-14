@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { categoriesAPI, subcategoriesAPI } from '../src/services/apiClient';
+import { categoriesAPI, subcategoriesAPI, coursesAPI } from '../src/services/apiClient';
 
 interface Category {
   _id?: string;
@@ -106,14 +106,6 @@ const NeetIitJeePage: React.FC<{ courses: Course[]; loading: boolean }> = ({ cou
     setSelectedSubject(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-[#303F9F] border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-gradient-to-br from-[#1A237E] to-[#303F9F] text-white pt-6 pb-10 px-4 rounded-b-[2rem] relative overflow-hidden">
@@ -161,7 +153,13 @@ const NeetIitJeePage: React.FC<{ courses: Course[]; loading: boolean }> = ({ cou
 
       <main className="px-4 -mt-5 space-y-5">
         <div className="grid grid-cols-2 gap-3">
-          {contentTypes.map(ct => {
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 rounded-2xl h-32 w-full"></div>
+              </div>
+            ))
+          ) : contentTypes.map(ct => {
             const count = getContentCount(ct.id);
             return (
               <button
@@ -309,14 +307,6 @@ const Class11_12Page: React.FC<{ courses: Course[]; loading: boolean }> = ({ cou
     setActiveBoard(board);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-[#303F9F] border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-gradient-to-br from-[#1A237E] to-[#303F9F] text-white pt-6 pb-10 px-4 rounded-b-[2rem] relative overflow-hidden">
@@ -364,7 +354,13 @@ const Class11_12Page: React.FC<{ courses: Course[]; loading: boolean }> = ({ cou
 
       <main className="px-4 -mt-5 space-y-5">
         <div className="grid grid-cols-2 gap-3">
-          {contentTypes.map(ct => {
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 rounded-2xl h-32 w-full"></div>
+              </div>
+            ))
+          ) : contentTypes.map(ct => {
             const count = getContentCount(ct.id);
             return (
               <button
@@ -439,7 +435,7 @@ const CategoryPage: React.FC = () => {
         const [cats, subs, coursesRes] = await Promise.all([
           categoriesAPI.getAll(),
           subcategoriesAPI.getAll(categoryId),
-          fetch('/api/courses').then(r => r.json()),
+          coursesAPI.getAll(),
         ]);
         const cat = (Array.isArray(cats) ? cats : []).find((c: Category) => c.id === categoryId);
         setCategory(cat || null);
@@ -462,18 +458,25 @@ const CategoryPage: React.FC = () => {
     return <Class11_12Page courses={courses} loading={loading} />;
   }
 
-  if (loading) {
+  if (!loading && !category) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Category not found</p>
       </div>
     );
   }
 
-  if (!category) {
+  if (loading || !category) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Category not found</p>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="animate-pulse">
+          <div className="bg-gray-200 pt-6 pb-8 px-4 rounded-b-[2rem] h-40"></div>
+          <div className="px-4 mt-4 space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-24 w-full"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

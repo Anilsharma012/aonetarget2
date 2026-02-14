@@ -148,8 +148,7 @@ const Home: React.FC = () => {
     fetchAll();
     fetchNews();
 
-    const refreshInterval = setInterval(fetchAll, 120000);
-    return () => clearInterval(refreshInterval);
+    return () => {};
   }, []);
 
   const dismissNewsModal = () => {
@@ -260,6 +259,7 @@ const Home: React.FC = () => {
                       src={banner.imageUrl} 
                       alt={banner.title || `Banner ${index + 1}`} 
                       className="w-full h-full object-cover"
+                      loading={index === 0 ? 'eager' : 'lazy'}
                       onClick={() => banner.linkUrl && navigate(banner.linkUrl)}
                       style={{ cursor: banner.linkUrl ? 'pointer' : 'default' }}
                     />
@@ -307,7 +307,7 @@ const Home: React.FC = () => {
                  className={`relative p-4 rounded-2xl h-36 flex flex-col justify-between text-white bg-gradient-to-br ${cat.gradient || categoryGradients[i % categoryGradients.length]} overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 group`}
                >
                  {cat.imageUrl && (
-                   <img src={cat.imageUrl} alt={cat.title} className="absolute inset-0 w-full h-full object-cover" />
+                   <img src={cat.imageUrl} alt={cat.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
                  )}
                  {cat.imageUrl && <div className="absolute inset-0 bg-black/40"></div>}
                  <div className="relative z-10 flex justify-between items-start">
@@ -452,7 +452,7 @@ const Home: React.FC = () => {
                 >
                   <div className={`w-24 h-24 bg-gradient-to-br ${categoryGradients[i % categoryGradients.length]} flex items-center justify-center shrink-0`}>
                     {course.imageUrl || course.thumbnail ? (
-                      <img src={course.imageUrl || course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                      <img src={course.imageUrl || course.thumbnail} alt={course.title} loading="lazy" className="w-full h-full object-cover" />
                     ) : (
                       <span className="material-symbols-outlined text-white text-3xl">school</span>
                     )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { coursesAPI } from '../src/services/apiClient';
 
 interface Course {
   _id?: string;
@@ -65,7 +66,7 @@ const SubCategoryDetail: React.FC = () => {
   const loadContent = async () => {
     try {
       setLoading(true);
-      const coursesRes = await fetch('/api/courses').then(r => r.json()).catch(() => []);
+      const coursesRes = await coursesAPI.getAll().catch(() => []);
       const allCourses = Array.isArray(coursesRes) ? coursesRes : [];
       setCourses(allCourses);
 

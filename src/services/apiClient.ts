@@ -1,4 +1,3 @@
-// Use relative path - Vite proxy handles forwarding to backend
 const API_BASE_URL = '/api';
 if (typeof window !== 'undefined') {
   console.log('Hostname:', window.location.hostname);
@@ -6,18 +5,54 @@ if (typeof window !== 'undefined') {
   console.log('API Base URL:', API_BASE_URL);
 }
 
+const apiCache: Record<string, { data: any; timestamp: number }> = {};
+const pendingRequests: Record<string, Promise<any>> = {};
+const CACHE_TTL = 30000;
+
+async function cachedFetch(url: string, ttl = CACHE_TTL): Promise<any> {
+  const now = Date.now();
+  const cached = apiCache[url];
+  if (cached && (now - cached.timestamp) < ttl) {
+    return cached.data;
+  }
+
+  if (pendingRequests[url]) {
+    return pendingRequests[url];
+  }
+
+  const promise = fetch(url).then(async (response) => {
+    if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+    const data = await response.json();
+    apiCache[url] = { data, timestamp: Date.now() };
+    delete pendingRequests[url];
+    return data;
+  }).catch((err) => {
+    delete pendingRequests[url];
+    throw err;
+  });
+
+  pendingRequests[url] = promise;
+  return promise;
+}
+
+export function invalidateCache(urlPattern?: string) {
+  if (urlPattern) {
+    Object.keys(apiCache).forEach(key => {
+      if (key.includes(urlPattern)) delete apiCache[key];
+    });
+  } else {
+    Object.keys(apiCache).forEach(key => delete apiCache[key]);
+  }
+}
+
 // Courses API
 export const coursesAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/courses`);
-    if (!response.ok) throw new Error('Failed to fetch courses');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/courses`);
   },
   
   getById: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch course');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/courses/${id}`, 15000);
   },
   
   create: async (courseData: any) => {
@@ -27,6 +62,7 @@ export const coursesAPI = {
       body: JSON.stringify(courseData),
     });
     if (!response.ok) throw new Error('Failed to create course');
+    invalidateCache('courses');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -36,11 +72,13 @@ export const coursesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update course');
+    invalidateCache('courses');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/courses/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete course');
+    invalidateCache('courses');
     return response.json();
   }
 };
@@ -464,9 +502,7 @@ export const questionsAPI = {
 // Tests API
 export const testsAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/tests`);
-    if (!response.ok) throw new Error('Failed to fetch tests');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/tests`);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/tests`, {
@@ -475,6 +511,7 @@ export const testsAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create test');
+    invalidateCache('tests');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -484,11 +521,13 @@ export const testsAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update test');
+    invalidateCache('tests');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/tests/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete test');
+    invalidateCache('tests');
     return response.json();
   }
 };
@@ -496,17 +535,7 @@ export const testsAPI = {
 // Test Series API
 export const testSeriesAPI = {
   getAll: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/test-series`);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-        throw new Error(error.error || 'Failed to fetch test series');
-      }
-      return response.json();
-    } catch (error) {
-      console.error('Test Series getAll error:', error);
-      throw error;
-    }
+    return cachedFetch(`${API_BASE_URL}/test-series`);
   },
   create: async (data: any) => {
     try {
@@ -522,6 +551,7 @@ export const testSeriesAPI = {
         console.error('Server error response:', error);
         throw new Error(error.error || error.details || `Failed to create test series (${response.status})`);
       }
+      invalidateCache('test-series');
       const result = await response.json();
       console.log('Test series created successfully:', result);
       return result;
@@ -542,6 +572,7 @@ export const testSeriesAPI = {
         const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
         throw new Error(error.error || 'Failed to update test series');
       }
+      invalidateCache('test-series');
       return response.json();
     } catch (error) {
       console.error('Test Series update error:', error);
@@ -556,6 +587,7 @@ export const testSeriesAPI = {
         const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
         throw new Error(error.error || 'Failed to delete test series');
       }
+      invalidateCache('test-series');
       return response.json();
     } catch (error) {
       console.error('Test Series delete error:', error);
@@ -638,9 +670,7 @@ export const subjectiveTestsAPI = {
 // Videos API
 export const videosAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/videos`);
-    if (!response.ok) throw new Error('Failed to fetch videos');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/videos`);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/videos`, {
@@ -649,6 +679,7 @@ export const videosAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create video');
+    invalidateCache('videos');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -658,11 +689,13 @@ export const videosAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update video');
+    invalidateCache('videos');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/videos/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete video');
+    invalidateCache('videos');
     return response.json();
   }
 };
@@ -670,9 +703,7 @@ export const videosAPI = {
 // Live Videos API
 export const liveVideosAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/live-videos`);
-    if (!response.ok) throw new Error('Failed to fetch live videos');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/live-videos`);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/live-videos`, {
@@ -681,6 +712,7 @@ export const liveVideosAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create live video');
+    invalidateCache('live-videos');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -690,11 +722,13 @@ export const liveVideosAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update live video');
+    invalidateCache('live-videos');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/live-videos/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete live video');
+    invalidateCache('live-videos');
     return response.json();
   }
 };
@@ -848,9 +882,7 @@ export const settingsAPI = {
 // Banners API
 export const bannersAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/banners`);
-    if (!response.ok) throw new Error('Failed to fetch banners');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/banners`, 60000);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/banners`, {
@@ -859,6 +891,7 @@ export const bannersAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create banner');
+    invalidateCache('banners');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -868,11 +901,13 @@ export const bannersAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update banner');
+    invalidateCache('banners');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/banners/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete banner');
+    invalidateCache('banners');
     return response.json();
   }
 };
@@ -1040,9 +1075,7 @@ export const examDocumentsAPI = {
 // News API
 export const newsAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/news`);
-    if (!response.ok) throw new Error('Failed to fetch news');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/news`, 60000);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/news`, {
@@ -1051,6 +1084,7 @@ export const newsAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create news');
+    invalidateCache('news');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -1060,11 +1094,13 @@ export const newsAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update news');
+    invalidateCache('news');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/news/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete news');
+    invalidateCache('news');
     return response.json();
   }
 };
@@ -1072,9 +1108,7 @@ export const newsAPI = {
 // Notifications API
 export const notificationsAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/notifications`);
-    if (!response.ok) throw new Error('Failed to fetch notifications');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/notifications`);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/notifications`, {
@@ -1083,11 +1117,13 @@ export const notificationsAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create notification');
+    invalidateCache('notifications');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/notifications/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete notification');
+    invalidateCache('notifications');
     return response.json();
   }
 };
@@ -1095,9 +1131,7 @@ export const notificationsAPI = {
 // Categories API
 export const categoriesAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/categories`);
-    if (!response.ok) throw new Error('Failed to fetch categories');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/categories`, 60000);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/categories`, {
@@ -1106,6 +1140,7 @@ export const categoriesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create category');
+    invalidateCache('categories');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -1115,11 +1150,13 @@ export const categoriesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update category');
+    invalidateCache('categories');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/categories/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete category');
+    invalidateCache('categories');
     return response.json();
   },
   seed: async () => {
@@ -1133,9 +1170,7 @@ export const categoriesAPI = {
 export const subcategoriesAPI = {
   getAll: async (categoryId?: string) => {
     const url = categoryId ? `${API_BASE_URL}/subcategories?categoryId=${categoryId}` : `${API_BASE_URL}/subcategories`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch subcategories');
-    return response.json();
+    return cachedFetch(url, 60000);
   },
   create: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/subcategories`, {
@@ -1144,6 +1179,7 @@ export const subcategoriesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create subcategory');
+    invalidateCache('subcategories');
     return response.json();
   },
   update: async (id: string, data: any) => {
@@ -1153,11 +1189,13 @@ export const subcategoriesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to update subcategory');
+    invalidateCache('subcategories');
     return response.json();
   },
   delete: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/subcategories/${id}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete subcategory');
+    invalidateCache('subcategories');
     return response.json();
   }
 };
@@ -1229,9 +1267,7 @@ export const dashboardAPI = {
 // Splash Screen API
 export const splashScreenAPI = {
   get: async () => {
-    const response = await fetch(`${API_BASE_URL}/splash-screen`);
-    if (!response.ok) throw new Error('Failed to fetch splash screen settings');
-    return response.json();
+    return cachedFetch(`${API_BASE_URL}/splash-screen`, 120000);
   },
   update: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/splash-screen`, {

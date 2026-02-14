@@ -6,7 +6,10 @@ interface SplashScreenProps {
 }
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
-  const [splashData, setSplashData] = useState<any>(null);
+  const [splashData, setSplashData] = useState<any>({
+    imageUrl: '/attached_assets/ChatGPT_Image_Feb_8,_2026,_05_51_58_PM_1770553325908.png',
+    isActive: true
+  });
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
@@ -15,41 +18,28 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       if (completed) return;
       completed = true;
       setFadeOut(true);
-      setTimeout(onComplete, 300);
+      setTimeout(onComplete, 200);
     };
 
-    const safetyTimeout = setTimeout(finish, 2000);
+    const safetyTimeout = setTimeout(finish, 1500);
 
-    const fetchSplash = async () => {
-      try {
-        const data = await splashScreenAPI.get();
-        if (completed) return;
-        if (data && data.isActive !== false) {
-          setSplashData(data);
-          const duration = Math.min(data.duration || 1500, 2000);
-          setTimeout(finish, duration);
-        } else {
-          finish();
-        }
-      } catch (error) {
-        if (completed) return;
-        setSplashData({
-          imageUrl: '/attached_assets/ChatGPT_Image_Feb_8,_2026,_05_51_58_PM_1770553325908.png',
-          isActive: true,
-          duration: 1500
-        });
-        setTimeout(finish, 1500);
+    splashScreenAPI.get().then(data => {
+      if (completed) return;
+      if (data && data.isActive !== false) {
+        setSplashData(data);
+        setTimeout(finish, Math.min(data.duration || 1200, 1500));
+      } else {
+        finish();
       }
-    };
-    fetchSplash();
+    }).catch(() => {
+      if (!completed) setTimeout(finish, 1000);
+    });
 
     return () => clearTimeout(safetyTimeout);
   }, [onComplete]);
 
-  if (!splashData) return null;
-
   return (
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 transition-opacity duration-200 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
       <div className="w-full max-w-md mx-auto h-full max-h-screen bg-gradient-to-b from-[#0a1628] to-[#1A237E] flex items-center justify-center overflow-hidden shadow-2xl">
         {splashData.imageUrl ? (
           <img 

@@ -160,14 +160,6 @@ const ContentTypeDetail: React.FC = () => {
     } catch {}
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-[#303F9F] border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <header className={`bg-gradient-to-br ${config.gradient} text-white pt-6 pb-8 px-4 rounded-b-[2rem] relative overflow-hidden`}>
@@ -193,7 +185,7 @@ const ContentTypeDetail: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 mt-2">
             <span className="material-symbols-rounded text-white/70 text-sm">school</span>
-            <span className="text-white/80 text-xs font-medium">{filteredCourses.length} {filteredCourses.length === 1 ? 'Course' : 'Courses'} Available</span>
+            <span className="text-white/80 text-xs font-medium">{loading ? '...' : `${filteredCourses.length} ${filteredCourses.length === 1 ? 'Course' : 'Courses'} Available`}</span>
           </div>
         </div>
       </header>
@@ -222,7 +214,13 @@ const ContentTypeDetail: React.FC = () => {
           </div>
         </div>
 
-        {filteredCourses.length > 0 ? (
+        {loading ? (
+          <div className="animate-pulse space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-64 w-full"></div>
+            ))}
+          </div>
+        ) : filteredCourses.length > 0 ? (
           <div className="space-y-4">
             {filteredCourses.map((course, index) => {
               const cId = course.id || course._id || '';

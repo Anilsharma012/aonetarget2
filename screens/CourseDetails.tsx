@@ -186,23 +186,16 @@ const CourseDetails: React.FC = () => {
 
   const fetchCourseData = async () => {
     try {
-      const fetchPromises: Promise<Response>[] = [
-        fetch(`/api/courses/${id}`),
-        fetch(`/api/courses/${id}/videos`),
-        fetch(`/api/courses/${id}/notes`),
-        fetch(`/api/courses/${id}/tests`),
-      ];
-
-      const [courseRes, videosRes, notesRes, testsRes] = await Promise.all(fetchPromises);
+      const [courseData, videosData, notesData, testsData] = await Promise.all([
+        fetch(`/api/courses/${id}`).then(r => r.json()).catch(() => null),
+        fetch(`/api/courses/${id}/videos`).then(r => r.json()).catch(() => []),
+        fetch(`/api/courses/${id}/notes`).then(r => r.json()).catch(() => []),
+        fetch(`/api/courses/${id}/tests`).then(r => r.json()).catch(() => []),
+      ]);
       
-      const courseData = await courseRes.json();
-      if (courseRes.ok && courseData && !courseData.error) {
+      if (courseData && !courseData.error) {
         setCourse(courseData);
       }
-      
-      const videosData = await videosRes.json().catch(() => []);
-      const notesData = await notesRes.json().catch(() => []);
-      const testsData = await testsRes.json().catch(() => []);
       
       setVideos(Array.isArray(videosData) ? videosData : []);
       setNotes(Array.isArray(notesData) ? notesData : []);
@@ -293,8 +286,26 @@ const CourseDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brandBlue"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="animate-pulse">
+          <div className="bg-gray-200 w-full h-52"></div>
+          <div className="px-4 -mt-6 relative z-10">
+            <div className="bg-white rounded-2xl shadow-lg p-4 space-y-3">
+              <div className="bg-gray-200 rounded-2xl h-6 w-3/4"></div>
+              <div className="bg-gray-200 rounded-2xl h-4 w-1/2"></div>
+              <div className="bg-gray-200 rounded-2xl h-4 w-full"></div>
+            </div>
+          </div>
+          <div className="flex mt-4 px-4 gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-1 bg-gray-200 rounded-2xl h-10"></div>
+            ))}
+          </div>
+          <div className="px-4 mt-4 space-y-3">
+            <div className="bg-gray-200 rounded-2xl h-40 w-full"></div>
+            <div className="bg-gray-200 rounded-2xl h-40 w-full"></div>
+          </div>
+        </div>
       </div>
     );
   }

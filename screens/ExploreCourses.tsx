@@ -40,14 +40,6 @@ const ExploreCourses: React.FC = () => {
     load();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-gradient-to-br from-brandBlue to-[#1A237E] text-white pt-6 pb-8 px-4 rounded-b-[2rem]">
@@ -62,25 +54,40 @@ const ExploreCourses: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-4 gap-3 text-center">
-          {categories.slice(0, 4).map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => navigate(`/explore/${cat.id}`)}
-              className="flex flex-col items-center gap-2"
-            >
-              <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center hover:bg-white/25 transition-all active:scale-90">
-                <span className="material-icons-outlined text-2xl">{cat.icon}</span>
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse flex flex-col items-center gap-2">
+                <div className="w-14 h-14 bg-white/15 rounded-2xl"></div>
+                <div className="bg-white/15 rounded h-2 w-10"></div>
               </div>
-              <span className="text-[10px] font-bold">{cat.title}</span>
-            </button>
-          ))}
+            ))
+          ) : (
+            categories.slice(0, 4).map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => navigate(`/explore/${cat.id}`)}
+                className="flex flex-col items-center gap-2"
+              >
+                <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center hover:bg-white/25 transition-all active:scale-90">
+                  <span className="material-icons-outlined text-2xl">{cat.icon}</span>
+                </div>
+                <span className="text-[10px] font-bold">{cat.title}</span>
+              </button>
+            ))
+          )}
         </div>
       </header>
 
       <main className="px-4 mt-6 space-y-4">
         <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Select Your Stream</h2>
 
-        {categories.map(cat => (
+        {loading ? (
+          <div className="animate-pulse space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-24 w-full"></div>
+            ))}
+          </div>
+        ) : categories.map(cat => (
           <button
             key={cat.id}
             onClick={() => navigate(`/explore/${cat.id}`)}
@@ -103,15 +110,17 @@ const ExploreCourses: React.FC = () => {
           </button>
         ))}
 
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100 mt-6">
-          <div className="flex items-center gap-3">
-            <span className="material-icons-outlined text-amber-500 text-2xl">lightbulb</span>
-            <div>
-              <p className="text-sm font-bold text-amber-800">Not sure which course to pick?</p>
-              <p className="text-xs text-amber-600 mt-1">Contact us for free career counselling!</p>
+        {!loading && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100 mt-6">
+            <div className="flex items-center gap-3">
+              <span className="material-icons-outlined text-amber-500 text-2xl">lightbulb</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">Not sure which course to pick?</p>
+                <p className="text-xs text-amber-600 mt-1">Contact us for free career counselling!</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

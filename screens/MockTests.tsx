@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
+import { testsAPI, testSeriesAPI, coursesAPI } from '../src/services/apiClient';
 
 interface CourseGroup {
   courseId: string;
@@ -32,15 +33,11 @@ const MockTests: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [testsRes, seriesRes, coursesRes] = await Promise.all([
-        fetch('/api/tests'),
-        fetch('/api/test-series'),
-        fetch('/api/courses')
+      const [testsData, seriesData, coursesData] = await Promise.all([
+        testsAPI.getAll(),
+        testSeriesAPI.getAll(),
+        coursesAPI.getAll()
       ]);
-
-      const testsData = await testsRes.json();
-      const seriesData = await seriesRes.json();
-      const coursesData = await coursesRes.json();
 
       setTests(Array.isArray(testsData) ? testsData.filter((t: any) => t.status === 'active') : []);
       setTestSeries(Array.isArray(seriesData) ? seriesData : []);
@@ -160,8 +157,10 @@ const MockTests: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-8">
-            <span className="material-symbols-rounded animate-spin text-4xl text-[#303F9F]">progress_activity</span>
+          <div className="animate-pulse space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-32 w-full"></div>
+            ))}
           </div>
         ) : (
           <div className="space-y-6">

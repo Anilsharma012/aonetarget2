@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { coursesAPI } from '../src/services/apiClient';
 
 const CoursesScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -26,13 +27,12 @@ const CoursesScreen: React.FC = () => {
 
   const fetchCourses = async () => {
     try {
-      const [allCoursesRes, enrolledCoursesRes] = await Promise.all([
-        fetch('/api/courses'),
-        student?.id ? fetch(`/api/students/${student.id}/courses`) : Promise.resolve({ json: () => [] })
+      const [allCourses, enrolledCoursesRes] = await Promise.all([
+        coursesAPI.getAll(),
+        student?.id ? fetch(`/api/students/${student.id}/courses`).then(r => r.json()) : Promise.resolve([])
       ]);
       
-      const allCourses = await allCoursesRes.json();
-      const enrolled = await enrolledCoursesRes.json();
+      const enrolled = Array.isArray(enrolledCoursesRes) ? enrolledCoursesRes : [];
       
       setCourses(Array.isArray(allCourses) ? allCourses : []);
       setEnrolledCourses(Array.isArray(enrolled) ? enrolled : []);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../components/StudentSidebar';
+import { liveVideosAPI } from '../src/services/apiClient';
 
 const LiveClasses: React.FC = () => {
   const navigate = useNavigate();
@@ -24,10 +25,7 @@ const LiveClasses: React.FC = () => {
 
   const fetchLiveClasses = async () => {
     try {
-      const response = await fetch('/api/live-classes');
-      const data = await response.json();
-      const now = new Date();
-      
+      const data = await liveVideosAPI.getAll();
       if (Array.isArray(data)) {
         setLiveClasses(data.filter((c: any) => c.isLive));
         setUpcomingClasses(data.filter((c: any) => !c.isLive));
@@ -74,8 +72,10 @@ const LiveClasses: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-8">
-            <span className="material-symbols-rounded animate-spin text-4xl text-brandBlue">progress_activity</span>
+          <div className="animate-pulse space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-24 w-full"></div>
+            ))}
           </div>
         ) : activeTab === 'live' ? (
           liveClasses.length > 0 ? (

@@ -70,6 +70,11 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - **Loading Performance** - Splash screen reduced from 6s to max 2s, session-based (only shows once per browser session), faster fade animation. Removed hardcoded "Continue Learning" section
 - **Purchase Flow Fix** - Server purchase endpoint now handles both custom id and MongoDB _id for flexible course lookups and enrollment
 - **Share URLs Fixed** - All share links now use hash-based URLs (/#/course/:id) for proper routing
+- **API Caching Layer** - Added cachedFetch with TTL-based caching (30s default, 60s for categories/banners/news) and request deduplication in apiClient.ts. Prevents duplicate API calls and speeds up page navigation. Cache auto-invalidates on admin create/update/delete operations
+- **React StrictMode Removed** - Eliminated double API calls in development mode
+- **Skeleton Loading** - Full-page blocking spinners replaced with inline skeleton placeholders on 6 key screens (ExploreCourses, CategoryPage, CourseDetails, ContentTypeDetail, LiveClasses, MockTests). Pages show structure immediately
+- **Image Lazy Loading** - Added loading="lazy" to category images, course thumbnails, and banner images (first banner eager, rest lazy)
+- **Faster Splash Screen** - Max 1.5s duration with 200ms fade, shows default image immediately instead of blank while fetching
 
 ## Previous Changes (Feb 9, 2026)
 - **11th-12th Category Page** - Custom layout for 11th-12th category (categoryId: iit-jee) with CBSE/HBSE board tabs, 2x2 content type grid (Recorded Batch, Live Classroom, Crash Course, Mock Test), and subject filters (Hindi, English, Math, Science, Social Science, Sanskrit). Uses boardType field for filtering.
