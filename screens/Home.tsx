@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { coursesAPI, newsAPI, categoriesAPI, bannersAPI, testsAPI, testSeriesAPI, liveVideosAPI } from '../src/services/apiClient';
 import StudentSidebar from '../components/StudentSidebar';
 
-import { COURSES } from '../constants';
 
 interface NewsItem {
   id: string;
@@ -47,7 +46,7 @@ const categoryGradients: string[] = [
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<any[]>(COURSES);
+  const [courses, setCourses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [newsModal, setNewsModal] = useState<NewsItem | null>(null);
@@ -69,14 +68,9 @@ const Home: React.FC = () => {
     const fetchCourses = async () => {
       try {
         const data = await coursesAPI.getAll();
-        if (data && data.length > 0) {
-          setCourses(data);
-        } else {
-          setCourses(COURSES);
-        }
+        setCourses(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch from MongoDB:', error);
-        setCourses(COURSES);
       }
     };
 
@@ -338,35 +332,6 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="pb-2">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1 h-6 bg-gradient-to-b from-[#D32F2F] to-[#1A237E] rounded-full"></div>
-            <h2 className="text-xl font-extrabold text-gray-800">Continue Learning</h2>
-          </div>
-          <div 
-            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 flex gap-4 items-center cursor-pointer hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group" 
-            onClick={() => navigate('/study/neet-2025-physics')}
-          >
-            <div className="w-16 h-16 bg-gradient-to-br from-[#D32F2F]/10 to-[#D32F2F]/20 rounded-2xl flex items-center justify-center relative overflow-hidden shrink-0 group-hover:from-[#D32F2F]/20 group-hover:to-[#D32F2F]/30 transition-all">
-               <span className="material-symbols-outlined text-[#D32F2F] text-3xl">play_circle</span>
-               <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#D32F2F] to-[#1A237E] w-2/3 rounded-full"></div>
-            </div>
-            <div className="flex-1">
-              <span className="text-[10px] uppercase font-bold text-[#1A237E] tracking-wider bg-[#1A237E]/5 px-2 py-0.5 rounded-full inline-block">NEET Biology</span>
-              <h4 className="font-bold text-base mt-1 text-gray-800">Cell Structure & Functions</h4>
-              <div className="flex justify-between items-center mt-1.5">
-                <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                  <span className="material-icons-outlined text-[12px]">schedule</span>
-                  25m remaining
-                </span>
-                <button className="text-[#1A237E] text-xs font-bold flex items-center gap-1 bg-[#1A237E]/5 px-3 py-1.5 rounded-lg group-hover:bg-[#1A237E] group-hover:text-white transition-all">
-                  Resume 
-                  <span className="material-icons-outlined text-xs">play_arrow</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
         {liveClasses.length > 0 && (
           <section>
             <div className="flex justify-between items-center mb-4">
@@ -494,7 +459,7 @@ const Home: React.FC = () => {
                   </div>
                   <div className="flex-1 p-3 min-w-0">
                     <h4 className="font-bold text-sm text-gray-800 truncate">{course.title || course.name}</h4>
-                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">{course.description || course.subtitle || ''}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">{(course.description || course.subtitle || '').replace(/<[^>]+>/g, '')}</p>
                     <div className="flex items-center gap-3 mt-2">
                       <span className="text-[11px] text-gray-400 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[12px]">group</span>

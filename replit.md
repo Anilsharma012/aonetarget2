@@ -63,7 +63,15 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - POST /api/tests/:testId/submit - Submit test with auto-scoring
 - GET /api/tests/:id - Get test with questions
 
-## Recent Changes (Feb 9, 2026)
+## Recent Changes (Feb 14, 2026)
+- **CourseDetails Page Redesign** - Prominent course image at top with gradient overlay, instructor info card, social media share buttons (WhatsApp, Telegram, Facebook, Twitter), sticky Buy Now bar at bottom with price/discount display, properly rendered HTML descriptions
+- **Raw HTML Fix** - Course descriptions on listing pages (ContentTypeDetail, Home) now strip HTML tags for clean text display. Detail page renders HTML properly with prose styling
+- **Batches Page Removed** - Replaced with "My Courses" in bottom navigation. Old Batches route redirects to /explore. Removed hardcoded COURSES constant from Home page
+- **Loading Performance** - Splash screen reduced from 6s to max 2s, session-based (only shows once per browser session), faster fade animation. Removed hardcoded "Continue Learning" section
+- **Purchase Flow Fix** - Server purchase endpoint now handles both custom id and MongoDB _id for flexible course lookups and enrollment
+- **Share URLs Fixed** - All share links now use hash-based URLs (/#/course/:id) for proper routing
+
+## Previous Changes (Feb 9, 2026)
 - **11th-12th Category Page** - Custom layout for 11th-12th category (categoryId: iit-jee) with CBSE/HBSE board tabs, 2x2 content type grid (Recorded Batch, Live Classroom, Crash Course, Mock Test), and subject filters (Hindi, English, Math, Science, Social Science, Sanskrit). Uses boardType field for filtering.
 - **Board Type Support** - New boardType field (cbse/hbse) added to courses for board classification. Admin panel has Board Type dropdown. Server API supports boardType query filter.
 - **Content Type Detail Page** - New ContentTypeDetail screen (/content/:contentType) shows actual course content when content type cards are clicked. Recorded Batch shows video list (first free, rest locked). Live Classroom shows subject filter then live classes (all locked until purchase). Crash Course shows course cards. Mock Test shows test list (first free, rest locked). Sticky Buy Now bar at bottom with course price. Enrollment status check for free/locked indicators.

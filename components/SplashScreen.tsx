@@ -15,10 +15,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       if (completed) return;
       completed = true;
       setFadeOut(true);
-      setTimeout(onComplete, 500);
+      setTimeout(onComplete, 300);
     };
 
-    const safetyTimeout = setTimeout(finish, 6000);
+    const safetyTimeout = setTimeout(finish, 2000);
 
     const fetchSplash = async () => {
       try {
@@ -26,7 +26,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         if (completed) return;
         if (data && data.isActive !== false) {
           setSplashData(data);
-          const duration = data.duration || 3000;
+          const duration = Math.min(data.duration || 1500, 2000);
           setTimeout(finish, duration);
         } else {
           finish();
@@ -36,9 +36,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         setSplashData({
           imageUrl: '/attached_assets/ChatGPT_Image_Feb_8,_2026,_05_51_58_PM_1770553325908.png',
           isActive: true,
-          duration: 3000
+          duration: 1500
         });
-        setTimeout(finish, 3000);
+        setTimeout(finish, 1500);
       }
     };
     fetchSplash();

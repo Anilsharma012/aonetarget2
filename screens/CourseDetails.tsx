@@ -38,6 +38,7 @@ interface Course {
   description?: string;
   instructor?: string;
   thumbnail?: string;
+  imageUrl?: string;
   price?: number;
   mrp?: number;
   category?: string;
@@ -138,11 +139,11 @@ const CourseDetails: React.FC = () => {
   };
 
   const handleShare = async () => {
-    const courseUrl = `${window.location.origin}/course/${id}`;
+    const courseUrl = `${window.location.origin}/#/course/${id}`;
     const courseTitle = course?.name || course?.title || 'Check out this course';
     const shareData = {
       title: courseTitle,
-      text: `${courseTitle} - Learn with A-One!`,
+      text: `${courseTitle} - Learn with Aone Target!`,
       url: courseUrl,
     };
 
@@ -312,19 +313,42 @@ const CourseDetails: React.FC = () => {
     );
   }
 
+  const courseImage = course.imageUrl || course.thumbnail;
+  const shareOnPlatform = (platform: string) => {
+    const courseUrl = `${window.location.origin}/#/course/${id}`;
+    const courseTitle = course.name || course.title || 'Check out this course';
+    const text = `${courseTitle} - Learn with Aone Target Institute!`;
+    let url = '';
+    switch(platform) {
+      case 'whatsapp': url = `https://wa.me/?text=${encodeURIComponent(text + '\n' + courseUrl)}`; break;
+      case 'telegram': url = `https://t.me/share/url?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(text)}`; break;
+      case 'facebook': url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(courseUrl)}`; break;
+      case 'twitter': url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(courseUrl)}`; break;
+    }
+    if (url) window.open(url, '_blank');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-[#1A237E] text-white sticky top-0 z-50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/20">
-              <span className="material-symbols-rounded">arrow_back</span>
-            </button>
-            <img src="/aone-logo.png" alt="Logo" className="h-8" onError={(e) => e.currentTarget.style.display = 'none'} />
+    <div className="min-h-screen bg-gray-50 pb-28">
+      <div className="relative">
+        {courseImage ? (
+          <div className="w-full h-52 bg-gradient-to-br from-[#1A237E] to-[#303F9F] relative">
+            <img src={courseImage} alt={course.name || course.title} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </div>
+        ) : (
+          <div className="w-full h-44 bg-gradient-to-br from-[#1A237E] to-[#303F9F] relative flex items-center justify-center">
+            <span className="material-symbols-rounded text-white/20 text-8xl">school</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
+        )}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 z-10">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-colors">
+            <span className="material-symbols-rounded text-white">arrow_back</span>
+          </button>
           <div className="relative">
-            <button onClick={handleShare} className="p-2 rounded-full hover:bg-white/20 transition-colors">
-              <span className="material-symbols-rounded">share</span>
+            <button onClick={handleShare} className="p-2 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-colors">
+              <span className="material-symbols-rounded text-white">share</span>
             </button>
             {shareSuccess && (
               <div className="absolute -bottom-8 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg animate-fade-in">
@@ -333,28 +357,69 @@ const CourseDetails: React.FC = () => {
             )}
           </div>
         </div>
-        
-        <div className="px-4 pb-4">
-          <h1 className="text-lg font-bold">{course.name || course.title}</h1>
-          <p className="text-sm text-white/80">{course.instructor || 'Instructor'}</p>
+      </div>
+
+      <div className="px-4 -mt-6 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg p-4">
+          <h1 className="text-lg font-black text-gray-800 leading-tight">{course.name || course.title}</h1>
+          {course.instructor && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-7 h-7 bg-[#1A237E]/10 rounded-full flex items-center justify-center">
+                <span className="material-symbols-rounded text-[#1A237E] text-sm">person</span>
+              </div>
+              <span className="text-sm text-gray-600">{course.instructor}</span>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {course.category && (
+              <span className="inline-flex items-center gap-1 bg-[#303F9F]/10 text-[#303F9F] text-[10px] font-bold px-2.5 py-1 rounded-full">
+                <span className="material-symbols-rounded text-xs">category</span>
+                {course.category}
+              </span>
+            )}
+            {(course.enrollmentCount !== undefined && course.enrollmentCount > 0) && (
+              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                <span className="material-symbols-rounded text-xs">group</span>
+                {course.enrollmentCount} Enrolled
+              </span>
+            )}
+          </div>
           
           {isEnrolled && (
             <div className="mt-3">
-              <div className="flex justify-between text-xs mb-1">
+              <div className="flex justify-between text-xs mb-1 text-gray-500">
                 <span>{completedVideos}/{totalVideos} videos completed</span>
-                <span>{progressPercent}%</span>
+                <span className="font-bold text-[#303F9F]">{progressPercent}%</span>
               </div>
-              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-400 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#303F9F] to-[#1A237E] rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
               </div>
             </div>
           )}
+
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Share:</span>
+            {[
+              { platform: 'whatsapp', color: '#25D366', icon: 'chat' },
+              { platform: 'telegram', color: '#26A5E4', icon: 'send' },
+              { platform: 'facebook', color: '#1877F2', icon: 'thumb_up' },
+              { platform: 'twitter', color: '#1DA1F2', icon: 'tag' },
+            ].map(s => (
+              <button
+                key={s.platform}
+                onClick={() => shareOnPlatform(s.platform)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90 transition-all hover:scale-110"
+                style={{ backgroundColor: s.color }}
+              >
+                <span className="material-symbols-rounded text-sm">{s.icon}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        
-        <div className="flex bg-white">
+      </div>
+
+      <div className="sticky top-0 z-20 bg-white shadow-sm mt-4">
+        <div className="flex">
           {tabConfig.map((tab) => (
             <button
               key={tab.key}
@@ -376,55 +441,9 @@ const CourseDetails: React.FC = () => {
             </button>
           ))}
         </div>
-      </header>
+      </div>
 
       <main className="p-4 origin-top transition-transform duration-200" style={{ transform: `scale(${zoomLevel})` }}>
-        {!isEnrolled && (
-          <div className="bg-gradient-to-r from-[#1A237E] to-[#303F9F] rounded-2xl p-4 mb-4 text-white shadow-lg">
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-rounded text-3xl">school</span>
-              <div className="flex-1">
-                {isPaidCourse ? (
-                  <>
-                    <h3 className="font-bold">Get Full Access</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xl font-black">₹{course.price}</span>
-                      {course.mrp && course.mrp > (course.price || 0) && (
-                        <>
-                          <span className="text-sm text-white/60 line-through">₹{course.mrp}</span>
-                          <span className="bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                            {Math.round(((course.mrp - (course.price || 0)) / course.mrp) * 100)}% OFF
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="font-bold">Enroll to Unlock All Content</h3>
-                    <p className="text-white/80 text-sm">Get access to all videos, notes & tests</p>
-                  </>
-                )}
-              </div>
-              {isPaidCourse ? (
-                <button
-                  onClick={handleBuyNow}
-                  className="bg-[#D32F2F] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-red-700 transition-colors"
-                >
-                  Buy Now
-                </button>
-              ) : (
-                <button
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="bg-white text-[#1A237E] px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50"
-                >
-                  {enrolling ? '...' : 'Enroll Free'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         {course.description && (
           <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
@@ -432,28 +451,8 @@ const CourseDetails: React.FC = () => {
               <span className="material-symbols-rounded text-base">info</span>
               About this Course
             </h3>
-            <div className="flex flex-wrap gap-3 mb-3">
-              {course.category && (
-                <span className="inline-flex items-center gap-1 bg-[#303F9F]/10 text-[#303F9F] text-xs font-bold px-2.5 py-1 rounded-full">
-                  <span className="material-symbols-rounded text-sm">category</span>
-                  {course.category}
-                </span>
-              )}
-              {course.instructor && (
-                <span className="inline-flex items-center gap-1 bg-[#1A237E]/10 text-[#1A237E] text-xs font-bold px-2.5 py-1 rounded-full">
-                  <span className="material-symbols-rounded text-sm">person</span>
-                  {course.instructor}
-                </span>
-              )}
-              {(course.enrollmentCount !== undefined && course.enrollmentCount > 0) && (
-                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                  <span className="material-symbols-rounded text-sm">group</span>
-                  {course.enrollmentCount} Enrolled
-                </span>
-              )}
-            </div>
             <div
-              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
               dangerouslySetInnerHTML={{ __html: course.description }}
             />
           </div>
@@ -817,6 +816,50 @@ const CourseDetails: React.FC = () => {
           <div className="p-4 text-white">
             <h4 className="font-bold">{selectedVideo.title}</h4>
             <p className="text-gray-400 text-sm">{selectedVideo.duration || '00:00'} min</p>
+          </div>
+        </div>
+      )}
+
+      {!isEnrolled && (
+        <div className="fixed bottom-[72px] left-0 right-0 z-40 max-w-md mx-auto">
+          <div className="bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3 flex items-center justify-between rounded-t-2xl">
+            <div>
+              {isPaidCourse ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-black text-[#1A237E]">₹{course.price}</span>
+                    {course.mrp && course.mrp > (course.price || 0) && (
+                      <span className="text-sm text-gray-400 line-through">₹{course.mrp}</span>
+                    )}
+                  </div>
+                  {course.mrp && course.mrp > (course.price || 0) && (
+                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                      {Math.round(((course.mrp - (course.price || 0)) / course.mrp) * 100)}% OFF
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-lg font-black text-green-600">Free Course</span>
+              )}
+            </div>
+            {isPaidCourse ? (
+              <button
+                onClick={handleBuyNow}
+                className="bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2"
+              >
+                <span className="material-symbols-rounded text-lg">shopping_cart</span>
+                Buy Now
+              </button>
+            ) : (
+              <button
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="bg-gradient-to-r from-[#303F9F] to-[#1A237E] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                <span className="material-symbols-rounded text-lg">school</span>
+                {enrolling ? 'Enrolling...' : 'Enroll Free'}
+              </button>
+            )}
           </div>
         </div>
       )}

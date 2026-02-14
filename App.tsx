@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './screens/Home';
-import Batches from './screens/Batches';
 import CourseDetails from './screens/CourseDetails';
 import Checkout from './screens/Checkout';
 import StudyDashboard from './screens/StudyDashboard';
@@ -35,10 +34,13 @@ import SplashScreen from './components/SplashScreen';
 const App: React.FC = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('splashShown');
+  });
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
+    sessionStorage.setItem('splashShown', 'true');
   }, []);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ const App: React.FC = () => {
               <div className="pb-20">
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/batches" element={<Batches />} />
+                  <Route path="/batches" element={<Navigate to="/explore" />} />
                   <Route path="/courses" element={<CoursesScreen />} />
                   <Route path="/explore" element={<ExploreCourses />} />
                   <Route path="/explore/:categoryId" element={<CategoryPage />} />
