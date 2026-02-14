@@ -14,7 +14,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ isLoggedIn = false }) => {
     { name: 'Home', icon: 'home', path: '/' },
     { name: 'Courses', icon: 'menu_book', path: '/explore' },
     { name: 'My Courses', icon: 'school', path: isLoggedIn ? '/my-courses' : '/student-login' },
-    { name: 'Chats', icon: 'chat_bubble', path: isLoggedIn ? '/chats' : '/student-login' },
     { name: 'Profile', icon: 'person', path: isLoggedIn ? '/profile' : '/student-login' },
   ];
 
