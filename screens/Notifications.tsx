@@ -58,7 +58,7 @@ const Notifications: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-20">
       <StudentSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} student={student} />
 
-      <header className="bg-gradient-to-r from-amber-500 to-[#F57C00] text-white pt-8 pb-6 px-4">
+      <header className="bg-gradient-to-r from-[#1A237E] to-[#303F9F] text-white pt-8 pb-6 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full hover:bg-white/20">
@@ -77,14 +77,14 @@ const Notifications: React.FC = () => {
       <div className="p-4">
         {loading ? (
           <div className="flex justify-center py-8">
-            <span className="material-symbols-rounded animate-spin text-4xl text-amber-500">progress_activity</span>
+            <span className="material-symbols-rounded animate-spin text-4xl text-[#1A237E]">progress_activity</span>
           </div>
         ) : notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.map((notif, idx) => (
               <div 
                 key={idx} 
-                className={`bg-white rounded-xl p-4 shadow-sm flex gap-4 ${!notif.isRead ? 'border-l-4 border-amber-500' : ''}`}
+                className={`bg-white rounded-xl p-4 shadow-sm flex gap-4 ${!notif.isRead ? 'border-l-4 border-[#1A237E]' : ''}`}
               >
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${getNotificationColor(notif.type)}`}>
                   <span className="material-symbols-rounded">{getNotificationIcon(notif.type)}</span>

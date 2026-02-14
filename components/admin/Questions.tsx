@@ -54,6 +54,10 @@ const Questions: React.FC<Props> = ({ showToast }) => {
   const [loadingTests, setLoadingTests] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [bulkQuestions, setBulkQuestions] = useState<any[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<TestQuestion | null>(null);
   const [questionForm, setQuestionForm] = useState({
@@ -173,7 +177,8 @@ const Questions: React.FC<Props> = ({ showToast }) => {
         questions.push(qData);
       }
 
-      const res = await fetch(`/api/tests/${selectedTest.id}`, {
+      const testId = selectedTest.id || (selectedTest as any)._id;
+      const res = await fetch(`/api/tests/${testId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...selectedTest, questions })
@@ -199,7 +204,8 @@ const Questions: React.FC<Props> = ({ showToast }) => {
 
     try {
       const questions = (selectedTest.questions || []).filter(q => q.id !== questionId);
-      const res = await fetch(`/api/tests/${selectedTest.id}`, {
+      const testId = selectedTest.id || (selectedTest as any)._id;
+      const res = await fetch(`/api/tests/${testId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...selectedTest, questions })
@@ -233,6 +239,117 @@ const Questions: React.FC<Props> = ({ showToast }) => {
       negativeMarks: q.negativeMarks || 0
     });
     setShowQuestionModal(true);
+  };
+
+  const parseCSVLine = (line: string): string[] => {
+    const fields: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  };
+
+  const handleCSVFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) {
+        showToast('CSV must have a header row and at least one data row', 'error');
+        return;
+      }
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, ''));
+      const parsed: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const vals = parseCSVLine(lines[i]);
+        if (vals.length < 6) continue;
+        const row: any = {};
+        headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+        if (!row.question || !row.optiona || !row.optionb || !row.correctanswer) continue;
+        parsed.push({
+          question: row.question,
+          optionA: row.optiona,
+          optionB: row.optionb,
+          optionC: row.optionc || '',
+          optionD: row.optiond || '',
+          correctAnswer: row.correctanswer?.toUpperCase() || 'A',
+          explanation: row.explanation || '',
+          marks: parseInt(row.marks) || 4,
+          negativeMarks: parseFloat(row.negativemarks) || 0,
+        });
+      }
+      if (parsed.length === 0) {
+        showToast('No valid questions found in CSV', 'error');
+        return;
+      }
+      setBulkQuestions(parsed);
+      showToast(`Parsed ${parsed.length} question(s) from CSV`, 'success');
+    };
+    reader.readAsText(file);
+  };
+
+  const downloadCSVTemplate = () => {
+    const header = 'question,optionA,optionB,optionC,optionD,correctAnswer,explanation,marks,negativeMarks';
+    const sample = '"What is 2+2?","3","4","5","6","B","2+2 equals 4",4,1';
+    const blob = new Blob([header + '\n' + sample + '\n'], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'questions_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkUpload = async () => {
+    if (!selectedTest || bulkQuestions.length === 0) return;
+    setBulkUploading(true);
+    try {
+      const questionsToUpload = bulkQuestions.map((q, i) => ({
+        id: `q_bulk_${Date.now()}_${i}`,
+        ...q,
+      }));
+      const testIdentifier = selectedTest.id || (selectedTest as any)._id;
+      const res = await fetch(`/api/tests/${testIdentifier}/bulk-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: questionsToUpload }),
+      });
+      if (res.ok) {
+        showToast(`${bulkQuestions.length} questions uploaded successfully!`, 'success');
+        setShowBulkUpload(false);
+        setBulkQuestions([]);
+        const refreshRes = await fetch(`/api/tests/${testIdentifier}`);
+        if (refreshRes.ok) {
+          const fullTest = await refreshRes.json();
+          setSelectedTest({ ...fullTest, questions: fullTest.questions || [] });
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to upload');
+      }
+    } catch (error: any) {
+      showToast(error.message || 'Failed to upload questions', 'error');
+    } finally {
+      setBulkUploading(false);
+    }
   };
 
   const filteredQuestions = (selectedTest?.questions || []).filter(q =>
@@ -405,6 +522,13 @@ const Questions: React.FC<Props> = ({ showToast }) => {
               >
                 <span className="material-icons-outlined text-lg">add</span>
                 Add Question
+              </button>
+              <button
+                onClick={() => { setBulkQuestions([]); setShowBulkUpload(true); }}
+                className="px-5 py-2.5 bg-[#303F9F] text-white text-sm font-bold rounded-xl hover:bg-[#303F9F]/90 flex items-center gap-2"
+              >
+                <span className="material-icons-outlined text-lg">upload_file</span>
+                Bulk Upload
               </button>
             </div>
           </div>
@@ -602,6 +726,94 @@ const Questions: React.FC<Props> = ({ showToast }) => {
               </button>
               <button onClick={handleQuestionSubmit} className="flex-1 py-3 bg-navy text-white rounded-lg font-bold">
                 {editingQuestion ? 'Update' : 'Add'} Question
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkUpload && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white z-10">
+              <h3 className="font-black text-navy">Bulk Upload Questions (CSV)</h3>
+              <button onClick={() => { setShowBulkUpload(false); setBulkQuestions([]); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="px-5 py-2.5 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy/90 flex items-center gap-2 cursor-pointer">
+                  <span className="material-icons-outlined text-lg">upload_file</span>
+                  Choose CSV File
+                  <input type="file" accept=".csv" onChange={handleCSVFile} className="hidden" />
+                </label>
+                <button onClick={downloadCSVTemplate} className="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 flex items-center gap-2">
+                  <span className="material-icons-outlined text-lg">download</span>
+                  Download Template
+                </button>
+              </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <p className="text-xs text-blue-700 font-semibold mb-1">CSV Format</p>
+                <p className="text-[11px] text-blue-600">Headers: question, optionA, optionB, optionC, optionD, correctAnswer, explanation, marks, negativeMarks</p>
+                <p className="text-[11px] text-blue-500 mt-1">correctAnswer should be A, B, C, or D. Use quotes around fields containing commas.</p>
+              </div>
+
+              {bulkQuestions.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-navy text-sm mb-3">Preview ({bulkQuestions.length} questions)</h4>
+                  <div className="border rounded-xl overflow-hidden">
+                    <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">#</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">Question</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">A</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">B</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">C</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">D</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">Ans</th>
+                            <th className="px-3 py-2 text-left font-bold text-gray-600">Marks</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bulkQuestions.map((q, i) => (
+                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="px-3 py-2 font-bold text-gray-500">{i + 1}</td>
+                              <td className="px-3 py-2 text-gray-800 max-w-[200px] truncate">{q.question}</td>
+                              <td className="px-3 py-2 text-gray-600 max-w-[80px] truncate">{q.optionA}</td>
+                              <td className="px-3 py-2 text-gray-600 max-w-[80px] truncate">{q.optionB}</td>
+                              <td className="px-3 py-2 text-gray-600 max-w-[80px] truncate">{q.optionC}</td>
+                              <td className="px-3 py-2 text-gray-600 max-w-[80px] truncate">{q.optionD}</td>
+                              <td className="px-3 py-2"><span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">{q.correctAnswer}</span></td>
+                              <td className="px-3 py-2 text-gray-600">{q.marks}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-4 px-6 py-4 border-t bg-gray-50">
+              <button onClick={() => { setShowBulkUpload(false); setBulkQuestions([]); }} className="flex-1 py-3 bg-gray-200 rounded-lg font-bold">
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkUpload}
+                disabled={bulkQuestions.length === 0 || bulkUploading}
+                className="flex-1 py-3 bg-navy text-white rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {bulkUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  <>Upload {bulkQuestions.length} Question{bulkQuestions.length !== 1 ? 's' : ''}</>
+                )}
               </button>
             </div>
           </div>

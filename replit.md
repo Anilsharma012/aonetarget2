@@ -75,6 +75,10 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - **Skeleton Loading** - Full-page blocking spinners replaced with inline skeleton placeholders on 6 key screens (ExploreCourses, CategoryPage, CourseDetails, ContentTypeDetail, LiveClasses, MockTests). Pages show structure immediately
 - **Image Lazy Loading** - Added loading="lazy" to category images, course thumbnails, and banner images (first banner eager, rest lazy)
 - **Faster Splash Screen** - Max 1.5s duration with 200ms fade, shows default image immediately instead of blank while fetching
+- **Test Questions Fix** - Server now checks both embedded questions (in test document) AND separate questions collection. Supports id and _id lookups for tests
+- **Bulk Question Upload** - CSV upload feature in admin Questions panel. Download template, parse CSV, preview questions, bulk upload to test. Server endpoint POST /api/tests/:testId/bulk-questions
+- **Header Redesign** - Centered logo, 3 quick buttons only (Live Courses, Test, Notification). Notification bell now navigates to /notifications
+- **Notifications Screen** - Updated brand colors (navy blue theme matching app)
 
 ## Previous Changes (Feb 9, 2026)
 - **11th-12th Category Page** - Custom layout for 11th-12th category (categoryId: iit-jee) with CBSE/HBSE board tabs, 2x2 content type grid (Recorded Batch, Live Classroom, Crash Course, Mock Test), and subject filters (Hindi, English, Math, Science, Social Science, Sanskrit). Uses boardType field for filtering.

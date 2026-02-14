@@ -191,45 +191,42 @@ const Home: React.FC = () => {
 
   return (
     <div className="flex flex-col animate-fade-in pb-4">
-      <header className="sticky top-0 z-40 shadow-lg" style={{ background: 'linear-gradient(135deg, #1A237E 0%, #303F9F 50%, #1A237E 100%)' }}>
-        <div className="px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-xl hover:bg-white/10 transition-colors active:scale-90">
-              <span className="material-icons-outlined text-white">menu</span>
-            </button>
-            <div className="flex items-center gap-2">
-              <img 
-                src="/attached_assets/alonelogo_1770810181717.jpg" 
-                alt="Aone Target" 
-                className="h-9 object-contain rounded"
-              />
-            </div>
+      <header className="sticky top-0 z-40 shadow-lg overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A237E 0%, #283593 40%, #303F9F 100%)' }}>
+        <div className="px-3 pt-3 pb-2 flex justify-between items-center">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-white/10 transition-colors active:scale-90">
+            <span className="material-icons-outlined text-white text-[26px]">menu</span>
+          </button>
+          <div className="flex-1 flex justify-center">
+            <img 
+              src="/attached_assets/alonelogo_1770810181717.jpg" 
+              alt="Aone Target" 
+              className="h-10 object-contain rounded-md shadow-md"
+            />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button 
               onClick={handleDownloadAPK}
-              className="bg-white/15 backdrop-blur-sm px-4 py-2 rounded-xl flex items-center gap-1.5 hover:bg-white/25 transition-all active:scale-95 border border-white/20"
+              className="bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 hover:bg-white/25 transition-all active:scale-95 border border-white/20"
             >
-              <span className="material-symbols-outlined text-white text-[18px]">android</span>
-              <span className="text-[11px] font-bold uppercase text-white tracking-wider">APK</span>
+              <span className="material-symbols-outlined text-white text-[16px]">android</span>
+              <span className="text-[10px] font-bold uppercase text-white tracking-wider">APK</span>
             </button>
-            <button className="p-2 rounded-xl hover:bg-white/10 transition-colors relative">
-              <span className="material-icons-outlined text-white">notifications</span>
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#D32F2F] rounded-full border-2 border-[#1A237E] animate-pulse"></span>
+            <button onClick={() => navigate('/notifications')} className="p-2 rounded-xl hover:bg-white/10 transition-colors relative">
+              <span className="material-icons-outlined text-white text-[24px]">notifications</span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#D32F2F] rounded-full border-2 border-[#283593] animate-pulse"></span>
             </button>
           </div>
         </div>
-        <div className="px-4 pb-3 flex space-x-2.5 overflow-x-auto hide-scrollbar">
+        <div className="px-3 pb-3 flex gap-2 overflow-x-auto hide-scrollbar">
           {[
-            { label: 'Live', icon: 'sensors', path: '/live-classes' },
-            { label: 'Courses', icon: 'school', path: '/explore' },
-            { label: 'Webinars', icon: 'videocam', path: '/live-classes' },
-            { label: 'Tests', icon: 'quiz', path: '/mock-tests' }
+            { label: 'Live Courses', icon: 'sensors', path: '/live-classes' },
+            { label: 'Test', icon: 'quiz', path: '/mock-tests' },
+            { label: 'Notification', icon: 'notifications', path: '/notifications' }
           ].map((item, idx) => (
             <button 
               key={idx} 
               onClick={() => navigate(item.path)} 
-              className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-5 py-2 rounded-full text-sm font-semibold text-white whitespace-nowrap transition-all active:scale-95 hover:bg-white/25 border border-white/15"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-white/15 backdrop-blur-sm px-4 py-2.5 rounded-2xl text-sm font-semibold text-white whitespace-nowrap transition-all active:scale-95 hover:bg-white/25 border border-white/20"
             >
               <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
               {item.label}

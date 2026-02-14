@@ -655,11 +655,18 @@ app.get('/api/tests', async (req, res) => {
 // Get single test by ID
 app.get('/api/tests/:id', async (req, res) => {
   try {
-    const test = await db.collection('tests').findOne({ id: req.params.id });
+    let test = await db.collection('tests').findOne({ id: req.params.id });
+    if (!test) {
+      try {
+        test = await db.collection('tests').findOne({ _id: new ObjectId(req.params.id) });
+      } catch(e) {}
+    }
     if (!test) {
       return res.status(404).json({ error: 'Test not found' });
     }
-    const questions = await db.collection('questions').find({ testId: req.params.id }).toArray();
+    const separateQuestions = await db.collection('questions').find({ testId: req.params.id }).toArray();
+    const embeddedQuestions = test.questions || [];
+    const questions = separateQuestions.length > 0 ? separateQuestions : embeddedQuestions;
     res.json({ ...test, questions });
   } catch (error) {
     console.error('Error fetching test:', error);
@@ -671,12 +678,16 @@ app.get('/api/tests/:id', async (req, res) => {
 app.post('/api/tests/:testId/submit', async (req, res) => {
   try {
     const { studentId, answers, timeTaken } = req.body;
-    const test = await db.collection('tests').findOne({ id: req.params.testId });
+    let test = await db.collection('tests').findOne({ id: req.params.testId });
+    if (!test) {
+      try { test = await db.collection('tests').findOne({ _id: new ObjectId(req.params.testId) }); } catch(e) {}
+    }
     if (!test) {
       return res.status(404).json({ error: 'Test not found' });
     }
 
-    const questions = await db.collection('questions').find({ testId: req.params.testId }).toArray();
+    const separateQuestions = await db.collection('questions').find({ testId: req.params.testId }).toArray();
+    const questions = separateQuestions.length > 0 ? separateQuestions : (test.questions || []);
     const testNegativeMarking = test.negativeMarking || 0;
     let correctCount = 0;
     let wrongCount = 0;
@@ -804,6 +815,46 @@ app.delete('/api/tests/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting test:', error);
     res.status(500).json({ error: 'Failed to delete test', details: error.message });
+  }
+});
+
+// Bulk upload questions for a test (CSV format)
+app.post('/api/tests/:testId/bulk-questions', async (req, res) => {
+  try {
+    const { questions } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ error: 'No questions provided' });
+    }
+    let test = await db.collection('tests').findOne({ id: req.params.testId });
+    if (!test) {
+      try { test = await db.collection('tests').findOne({ _id: new ObjectId(req.params.testId) }); } catch(e) {}
+    }
+    if (!test) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+    const existingQuestions = test.questions || [];
+    const newQuestions = questions.map((q, i) => ({
+      id: `q_${Date.now()}_${i}`,
+      question: q.question || '',
+      optionA: q.optionA || q.option_a || '',
+      optionB: q.optionB || q.option_b || '',
+      optionC: q.optionC || q.option_c || '',
+      optionD: q.optionD || q.option_d || '',
+      correctAnswer: (q.correctAnswer || q.correct_answer || q.answer || 'A').toUpperCase(),
+      explanation: q.explanation || '',
+      marks: parseInt(q.marks) || 4,
+      negativeMarks: parseFloat(q.negativeMarks || q.negative_marks) || 0,
+      questionImage: q.questionImage || '',
+    }));
+    const allQuestions = [...existingQuestions, ...newQuestions];
+    await db.collection('tests').updateOne(
+      { _id: test._id },
+      { $set: { questions: allQuestions } }
+    );
+    res.json({ success: true, added: newQuestions.length, total: allQuestions.length });
+  } catch (error) {
+    console.error('Error bulk uploading questions:', error);
+    res.status(500).json({ error: 'Failed to bulk upload questions' });
   }
 });
 
