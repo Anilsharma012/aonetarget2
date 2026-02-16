@@ -8,16 +8,8 @@ import fs from 'fs';
 import http from 'http';
 import { createServer as createViteServer } from 'vite';
 import multer from 'multer';
-import twilio from 'twilio';
 
 dotenv.config();
-
-const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null;
-const TWILIO_PHONE = process.env.TWILIO_PHONE_NUMBER || '';
-
-const otpStore = new Map();
 
 const app = express();
 const PORT = 5000;
@@ -1824,72 +1816,7 @@ app.post('/api/students/login', async (req, res) => {
     if (student.password !== password) {
       return res.status(401).json({ error: 'Invalid phone number or password' });
     }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 5 * 60 * 1000;
-    otpStore.set(phone, { otp, expiresAt, studentId: student.id || student._id.toString() });
-
-    let smsSent = false;
-    if (twilioClient && TWILIO_PHONE) {
-      try {
-        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
-        await twilioClient.messages.create({
-          body: `Your Aone Target login OTP is: ${otp}. Valid for 5 minutes.`,
-          from: TWILIO_PHONE,
-          to: formattedPhone
-        });
-        smsSent = true;
-      } catch (smsErr) {
-        console.error('Twilio SMS error:', smsErr.message);
-      }
-    }
-
-    if (!smsSent) {
-      console.log(`[DEV] OTP for ${phone}: ${otp}`);
-    }
     
-    res.json({ 
-      success: true, 
-      message: 'OTP sent to your phone',
-      otpSent: true,
-      smsSent,
-      phone
-    });
-  } catch (error) {
-    console.error('Error logging in student:', error);
-    res.status(500).json({ error: 'Login failed', details: error.message });
-  }
-});
-
-app.post('/api/students/verify-otp', async (req, res) => {
-  try {
-    const { phone, otp } = req.body;
-    
-    if (!phone || !otp) {
-      return res.status(400).json({ error: 'Phone and OTP are required' });
-    }
-
-    const stored = otpStore.get(phone);
-    if (!stored) {
-      return res.status(400).json({ error: 'OTP expired or not found. Please login again.' });
-    }
-
-    if (Date.now() > stored.expiresAt) {
-      otpStore.delete(phone);
-      return res.status(400).json({ error: 'OTP has expired. Please login again.' });
-    }
-
-    if (stored.otp !== otp) {
-      return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
-    }
-
-    otpStore.delete(phone);
-
-    const student = await db.collection('students').findOne({ phone });
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
-    }
-
     const { password: _, ...studentWithoutPassword } = student;
     res.json({ 
       success: true, 
@@ -1897,51 +1824,8 @@ app.post('/api/students/verify-otp', async (req, res) => {
       student: studentWithoutPassword
     });
   } catch (error) {
-    console.error('Error verifying OTP:', error);
-    res.status(500).json({ error: 'OTP verification failed', details: error.message });
-  }
-});
-
-app.post('/api/students/resend-otp', async (req, res) => {
-  try {
-    const { phone } = req.body;
-    
-    if (!phone) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
-
-    const student = await db.collection('students').findOne({ phone });
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 5 * 60 * 1000;
-    otpStore.set(phone, { otp, expiresAt, studentId: student.id || student._id.toString() });
-
-    let smsSent = false;
-    if (twilioClient && TWILIO_PHONE) {
-      try {
-        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
-        await twilioClient.messages.create({
-          body: `Your Aone Target login OTP is: ${otp}. Valid for 5 minutes.`,
-          from: TWILIO_PHONE,
-          to: formattedPhone
-        });
-        smsSent = true;
-      } catch (smsErr) {
-        console.error('Twilio SMS error:', smsErr.message);
-      }
-    }
-
-    if (!smsSent) {
-      console.log(`[DEV] Resend OTP for ${phone}: ${otp}`);
-    }
-
-    res.json({ success: true, message: 'OTP resent', smsSent });
-  } catch (error) {
-    console.error('Error resending OTP:', error);
-    res.status(500).json({ error: 'Failed to resend OTP' });
+    console.error('Error logging in student:', error);
+    res.status(500).json({ error: 'Login failed', details: error.message });
   }
 });
 

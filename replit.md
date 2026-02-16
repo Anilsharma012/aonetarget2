@@ -80,9 +80,6 @@ A comprehensive NEET learning platform with admin panel, student dashboard, refe
 - **Header Redesign** - Centered logo, 3 quick buttons only (Live Courses, Test, Notification). Notification bell now navigates to /notifications
 - **Notifications Screen** - Updated brand colors (navy blue theme matching app)
 
-## Recent Changes (Feb 16, 2026)
-- **SMS OTP Login** - Login now requires 6-digit OTP verification via Twilio SMS. Server generates OTP, stores with 5-min expiry, sends via Twilio. Frontend shows OTP input screen with countdown timer, resend option, and back button. Endpoints: POST /api/students/verify-otp, POST /api/students/resend-otp. Falls back to console log if Twilio not configured.
-
 ## Previous Changes (Feb 9, 2026)
 - **11th-12th Category Page** - Custom layout for 11th-12th category (categoryId: iit-jee) with CBSE/HBSE board tabs, 2x2 content type grid (Recorded Batch, Live Classroom, Crash Course, Mock Test), and subject filters (Hindi, English, Math, Science, Social Science, Sanskrit). Uses boardType field for filtering.
 - **Board Type Support** - New boardType field (cbse/hbse) added to courses for board classification. Admin panel has Board Type dropdown. Server API supports boardType query filter.
