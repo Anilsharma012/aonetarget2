@@ -18,33 +18,33 @@ const BottomNav: React.FC<BottomNavProps> = ({ isLoggedIn = false }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 w-full max-w-md z-50 px-3 pb-2">
-      <div className="relative bg-white/80 dark:bg-[#1a1a2e]/90 backdrop-blur-xl rounded-2xl shadow-[0_-4px_30px_rgba(0,0,0,0.12)] border border-white/30 dark:border-white/10">
-        <div className="flex justify-around items-center py-2">
+    <nav className="fixed bottom-0 w-full max-w-md z-50 px-4 pb-3">
+      <div className="glass rounded-3xl shadow-nav border border-white/40">
+        <div className="flex justify-around items-center py-2 px-1">
           {tabs.map((tab) => {
             const isActive = currentPath === tab.path;
             return (
               <button
                 key={tab.name}
                 onClick={() => navigate(tab.path)}
-                className="relative flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-300 group"
+                className="relative flex flex-col items-center gap-1 py-2 px-4 rounded-2xl transition-all duration-200 group"
               >
                 {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#1A237E]/10 to-[#D32F2F]/10 rounded-xl" />
+                  <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-5 h-1 bg-gradient-to-r from-primary-800 to-primary-600 rounded-full" />
                 )}
-                <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${
+                <div className={`relative p-2 rounded-2xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-gradient-to-br from-[#1A237E] to-[#303F9F] shadow-lg shadow-[#1A237E]/30 scale-110' 
-                    : 'group-hover:bg-gray-100 dark:group-hover:bg-white/10'
+                    ? 'bg-gradient-to-br from-primary-800 to-primary-600 shadow-button scale-105' 
+                    : 'group-hover:bg-gray-100/80 group-active:scale-90'
                 }`}>
-                  <span className={`material-symbols-outlined text-[22px] transition-all duration-300 ${
-                    isActive ? 'text-white fill-1' : 'text-gray-400 dark:text-gray-500 group-hover:text-[#1A237E]'
+                  <span className={`material-symbols-outlined text-[20px] transition-all duration-200 ${
+                    isActive ? 'text-white fill-1' : 'text-gray-400 group-hover:text-primary-800'
                   }`}>
                     {tab.icon}
                   </span>
                 </div>
-                <span className={`text-[10px] font-semibold transition-all duration-300 relative ${
-                  isActive ? 'text-[#1A237E] dark:text-white' : 'text-gray-400 dark:text-gray-500 group-hover:text-[#1A237E]'
+                <span className={`text-[9px] font-semibold transition-all duration-200 ${
+                  isActive ? 'text-primary-800' : 'text-gray-400 group-hover:text-primary-800'
                 }`}>
                   {tab.name}
                 </span>

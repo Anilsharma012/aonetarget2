@@ -190,34 +190,34 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in pb-4">
+    <div className="flex flex-col bg-surface-100 min-h-screen pb-4 animate-fade-in">
       <header className="sticky top-0 z-40 shadow-lg overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A237E 0%, #283593 40%, #303F9F 100%)' }}>
-        <div className="px-3 pt-3 pb-2 flex justify-between items-center">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-white/10 transition-colors active:scale-90">
-            <span className="material-icons-outlined text-white text-[26px]">menu</span>
+        <div className="px-4 pt-3 pb-2 flex justify-between items-center">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-white/10 transition-all duration-200 active:scale-[0.97]">
+            <span className="material-symbols-rounded text-white text-[26px]">menu</span>
           </button>
           <div className="flex-1 flex justify-center">
             <img 
               src="/attached_assets/alonelogo_1770810181717.jpg" 
               alt="Aone Target" 
-              className="h-10 object-contain rounded-md shadow-md"
+              className="h-10 object-contain rounded-lg shadow-md"
             />
           </div>
           <div className="flex items-center gap-1.5">
             <button 
               onClick={handleDownloadAPK}
-              className="bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 hover:bg-white/25 transition-all active:scale-95 border border-white/20"
+              className="glass bg-white/15 px-3 py-1.5 rounded-xl flex items-center gap-1.5 hover:bg-white/25 transition-all duration-200 active:scale-[0.97] border border-white/20"
             >
-              <span className="material-symbols-outlined text-white text-[16px]">android</span>
+              <span className="material-symbols-rounded text-white text-[16px]">android</span>
               <span className="text-[10px] font-bold uppercase text-white tracking-wider">APK</span>
             </button>
-            <button onClick={() => navigate('/notifications')} className="p-2 rounded-xl hover:bg-white/10 transition-colors relative">
-              <span className="material-icons-outlined text-white text-[24px]">notifications</span>
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#D32F2F] rounded-full border-2 border-[#283593] animate-pulse"></span>
+            <button onClick={() => navigate('/notifications')} className="p-2 rounded-xl hover:bg-white/10 transition-all duration-200 relative">
+              <span className="material-symbols-rounded text-white text-[24px]">notifications</span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-[#283593] animate-pulse"></span>
             </button>
           </div>
         </div>
-        <div className="px-3 pb-3 flex gap-2 overflow-x-auto hide-scrollbar">
+        <div className="px-4 pb-3 flex gap-2 overflow-x-auto hide-scrollbar">
           {[
             { label: 'Live Courses', icon: 'sensors', path: '/live-classes' },
             { label: 'Test', icon: 'quiz', path: '/mock-tests' },
@@ -226,31 +226,31 @@ const Home: React.FC = () => {
             <button 
               key={idx} 
               onClick={() => navigate(item.path)} 
-              className="flex-1 flex items-center justify-center gap-1.5 bg-white/15 backdrop-blur-sm px-4 py-2.5 rounded-2xl text-sm font-semibold text-white whitespace-nowrap transition-all active:scale-95 hover:bg-white/25 border border-white/20"
+              className="flex-1 flex items-center justify-center gap-1.5 glass bg-white/15 px-4 py-2.5 rounded-full text-sm font-semibold text-white whitespace-nowrap transition-all duration-200 active:scale-[0.97] hover:bg-white/25 border border-white/20"
             >
-              <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
+              <span className="material-symbols-rounded text-[16px]">{item.icon}</span>
               {item.label}
             </button>
           ))}
         </div>
       </header>
 
-      <main className="p-4 space-y-6">
-        <div className="relative">
+      <main className="p-4 space-y-5">
+        <div className="relative animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
           <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <span className="material-icons-outlined text-gray-400 text-xl">search</span>
+            <span className="material-symbols-rounded text-gray-400 text-xl">search</span>
           </span>
           <input 
-            className="block w-full pl-12 pr-4 py-3.5 border-none rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 shadow-[0_2px_15px_rgba(0,0,0,0.06)] focus:shadow-[0_4px_20px_rgba(26,35,126,0.15)] focus:ring-2 focus:ring-[#303F9F]/20 transition-all outline-none"
+            className="block w-full pl-12 pr-4 py-3.5 border border-gray-100/50 rounded-3xl bg-white text-gray-900 placeholder-gray-400 shadow-card focus:shadow-elevated focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none"
             placeholder="Search for courses, tests..." 
           />
         </div>
 
-        {banners.length > 0 && (
-          <div className="relative w-full overflow-hidden rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] aspect-[2/1]">
+        {banners.length > 0 ? (
+          <div className="relative w-full overflow-hidden rounded-3xl shadow-elevated aspect-[2/1] animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
               {banners.map((banner, index) => (
-                <div key={banner._id || banner.id || index} className="w-full flex-shrink-0 h-full bg-gradient-to-br from-[#1A237E] to-[#303F9F] flex items-center justify-center">
+                <div key={banner._id || banner.id || index} className="w-full flex-shrink-0 h-full bg-gradient-to-br from-primary-800 to-primary-600 flex items-center justify-center">
                   {banner.imageUrl ? (
                     <img 
                       src={banner.imageUrl} 
@@ -261,7 +261,7 @@ const Home: React.FC = () => {
                       style={{ cursor: banner.linkUrl ? 'pointer' : 'default' }}
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-[#1A237E] to-[#303F9F] flex items-center justify-center p-4">
+                    <div className="w-full h-full bg-gradient-to-r from-primary-800 to-primary-600 flex items-center justify-center p-4">
                       <div className="text-center text-white">
                         <h3 className="text-xl font-bold">{banner.title}</h3>
                         {banner.subtitle && <p className="text-sm opacity-80 mt-1">{banner.subtitle}</p>}
@@ -283,93 +283,104 @@ const Home: React.FC = () => {
               </div>
             )}
           </div>
+        ) : (
+          <div className="skeleton w-full aspect-[2/1] rounded-3xl"></div>
         )}
 
-        <section>
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
           <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-extrabold text-gray-800">Our Courses</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Explore top categories</p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-1 h-7 bg-gradient-to-b from-accent to-primary rounded-full"></div>
+              <div>
+                <h2 className="section-title">Our Courses</h2>
+                <p className="section-subtitle">Explore top categories</p>
+              </div>
             </div>
-            <button onClick={() => navigate('/explore')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+            <button onClick={() => navigate('/explore')} className="btn-primary text-xs px-4 py-2 flex items-center gap-1 hover:gap-2 transition-all duration-200 active:scale-[0.97]">
               View All
-              <span className="material-icons-outlined text-sm">arrow_forward</span>
+              <span className="material-symbols-rounded text-sm">arrow_forward</span>
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-             {categories.map((cat, i) => (
-               <div 
-                 key={cat._id || cat.id || i} 
-                 onClick={() => navigate(`/explore/${cat.id}`)}
-                 className={`relative p-4 rounded-2xl h-36 flex flex-col justify-between text-white bg-gradient-to-br ${cat.gradient || categoryGradients[i % categoryGradients.length]} overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-[0_4px_15px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 group`}
-               >
-                 {cat.imageUrl && (
-                   <img src={cat.imageUrl} alt={cat.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                 )}
-                 {cat.imageUrl && <div className="absolute inset-0 bg-black/40"></div>}
-                 <div className="relative z-10 flex justify-between items-start">
-                   {cat.tag ? (
-                     <span className="bg-white/25 backdrop-blur-sm text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">{cat.tag}</span>
-                   ) : (
-                     <span className="bg-white/20 backdrop-blur-sm text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">COURSE</span>
-                   )}
-                   <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
-                     <span className="material-symbols-outlined text-white text-xl">{cat.icon || categoryIcons[cat.title] || 'auto_stories'}</span>
-                   </div>
-                 </div>
-                 <div className="relative z-10">
-                   <h3 className="font-bold text-lg leading-tight">{cat.title}</h3>
-                   <span className="text-[10px] opacity-80 font-medium">{cat.subtitle}</span>
-                 </div>
-                 <div className="absolute bottom-3 right-3 h-9 w-9 bg-white/25 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 z-10 group-hover:bg-white/40 group-hover:scale-110 transition-all duration-300">
-                   <span className="material-icons-outlined text-white text-lg">arrow_forward</span>
-                 </div>
-               </div>
-             ))}
-          </div>
+          {categories.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {categories.map((cat, i) => (
+                <div 
+                  key={cat._id || cat.id || i} 
+                  onClick={() => navigate(`/explore/${cat.id}`)}
+                  className={`relative p-4 rounded-3xl h-36 flex flex-col justify-between text-white bg-gradient-to-br ${cat.gradient || categoryGradients[i % categoryGradients.length]} overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-elevated hover:shadow-card-hover hover:-translate-y-0.5 group`}
+                >
+                  {cat.imageUrl && (
+                    <img src={cat.imageUrl} alt={cat.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
+                  {cat.imageUrl && <div className="absolute inset-0 bg-black/40"></div>}
+                  <div className="relative z-10 flex justify-between items-start">
+                    <span className="glass bg-white/20 text-[8px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      {cat.tag || 'COURSE'}
+                    </span>
+                    <div className="w-10 h-10 glass bg-white/20 rounded-2xl flex items-center justify-center border border-white/20">
+                      <span className="material-symbols-rounded text-white text-xl">{cat.icon || categoryIcons[cat.title] || 'auto_stories'}</span>
+                    </div>
+                  </div>
+                  <div className="relative z-10">
+                    <h3 className="font-bold text-lg leading-tight">{cat.title}</h3>
+                    <span className="text-[10px] opacity-80 font-medium">{cat.subtitle}</span>
+                  </div>
+                  <div className="absolute bottom-3 right-3 h-9 w-9 glass bg-white/25 rounded-full flex items-center justify-center border border-white/30 z-10 group-hover:bg-white/40 group-hover:scale-110 transition-all duration-200">
+                    <span className="material-symbols-rounded text-white text-lg">arrow_forward</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="skeleton h-36 rounded-3xl"></div>
+              ))}
+            </div>
+          )}
         </section>
 
         {liveClasses.length > 0 && (
-          <section>
+          <section className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-[#D32F2F] to-[#1A237E] rounded-full"></div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-7 bg-gradient-to-b from-accent to-primary rounded-full"></div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-gray-800">Live Classes</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Join upcoming sessions</p>
+                  <h2 className="section-title">Live Classes</h2>
+                  <p className="section-subtitle">Join upcoming sessions</p>
                 </div>
               </div>
-              <button onClick={() => navigate('/live-classes')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+              <button onClick={() => navigate('/live-classes')} className="btn-primary text-xs px-4 py-2 flex items-center gap-1 hover:gap-2 transition-all duration-200 active:scale-[0.97]">
                 View All
-                <span className="material-icons-outlined text-sm">arrow_forward</span>
+                <span className="material-symbols-rounded text-sm">arrow_forward</span>
               </button>
             </div>
             <div className="space-y-3">
               {liveClasses.slice(0, 4).map((lc: any, i: number) => (
-                <div key={lc._id || lc.id || i} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 flex gap-4 items-center hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group">
-                  <div className="w-14 h-14 bg-gradient-to-br from-[#D32F2F] to-[#C62828] rounded-2xl flex items-center justify-center shrink-0 relative">
-                    <span className="material-symbols-outlined text-white text-2xl">sensors</span>
+                <div key={lc._id || lc.id || i} className="card-premium p-4 rounded-3xl border border-gray-100/50 flex gap-3 items-center hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="w-14 h-14 bg-gradient-to-br from-accent to-accent-600 rounded-2xl flex items-center justify-center shrink-0 relative shadow-button">
+                    <span className="material-symbols-rounded text-white text-2xl">sensors</span>
                     <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-gray-800 truncate">{lc.title || lc.name || 'Live Class'}</h4>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1.5">
                       <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">person</span>
+                        <span className="material-symbols-rounded text-[12px]">person</span>
                         {lc.teacherName || lc.instructor || 'Instructor'}
                       </span>
-                      <span className="text-gray-300">•</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                       <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                        <span className="material-symbols-rounded text-[12px]">schedule</span>
                         {lc.scheduledTime ? new Date(lc.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : lc.time || 'Upcoming'}
                       </span>
                     </div>
                   </div>
                   <button 
                     onClick={(e) => { e.stopPropagation(); navigate('/live-classes'); }}
-                    className="bg-[#D32F2F] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1 hover:bg-[#C62828] active:scale-95 transition-all shrink-0"
+                    className="btn-accent text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 active:scale-[0.97] transition-all duration-200 shrink-0"
                   >
-                    <span className="material-symbols-outlined text-[14px]">videocam</span>
+                    <span className="material-symbols-rounded text-[14px]">videocam</span>
                     Join
                   </button>
                 </div>
@@ -379,18 +390,18 @@ const Home: React.FC = () => {
         )}
 
         {testSeries.length > 0 && (
-          <section>
+          <section className="animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
             <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-[#303F9F] to-[#1A237E] rounded-full"></div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-7 bg-gradient-to-b from-primary-600 to-primary rounded-full"></div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-gray-800">Popular Test Series</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Practice & improve your score</p>
+                  <h2 className="section-title">Popular Test Series</h2>
+                  <p className="section-subtitle">Practice & improve your score</p>
                 </div>
               </div>
-              <button onClick={() => navigate('/mock-tests')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+              <button onClick={() => navigate('/mock-tests')} className="btn-primary text-xs px-4 py-2 flex items-center gap-1 hover:gap-2 transition-all duration-200 active:scale-[0.97]">
                 View All
-                <span className="material-icons-outlined text-sm">arrow_forward</span>
+                <span className="material-symbols-rounded text-sm">arrow_forward</span>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -398,23 +409,23 @@ const Home: React.FC = () => {
                 <div 
                   key={ts._id || ts.id || i}
                   onClick={() => navigate('/mock-tests')}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 cursor-pointer hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group"
+                  className="card-premium p-4 rounded-3xl border border-gray-100/50 cursor-pointer hover:-translate-y-0.5 transition-all duration-200 group"
                 >
-                  <div className="w-11 h-11 bg-gradient-to-br from-[#1A237E]/10 to-[#303F9F]/20 rounded-xl flex items-center justify-center mb-3 group-hover:from-[#1A237E]/20 group-hover:to-[#303F9F]/30 transition-all">
-                    <span className="material-symbols-outlined text-[#1A237E] text-xl">quiz</span>
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mb-3 group-hover:from-primary-200 group-hover:to-primary-300 transition-all duration-200">
+                    <span className="material-symbols-rounded text-primary text-xl">quiz</span>
                   </div>
                   <h4 className="font-bold text-sm text-gray-800 leading-tight line-clamp-2">{ts.title || ts.name || 'Test Series'}</h4>
-                  <div className="flex items-center gap-1 mt-2">
-                    <span className="material-symbols-outlined text-[12px] text-gray-400">subject</span>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="material-symbols-rounded text-[12px] text-gray-400">subject</span>
                     <span className="text-[11px] text-gray-400">{ts.subject || ts.category || 'General'}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100/80">
                     <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">description</span>
+                      <span className="material-symbols-rounded text-[12px]">description</span>
                       {ts.totalTests || ts.tests?.length || 0} Tests
                     </span>
                     {(ts.price !== undefined && ts.price !== null) && (
-                      <span className="text-xs font-bold text-[#1A237E] bg-[#1A237E]/5 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-bold text-primary bg-primary-50 px-2.5 py-0.5 rounded-full">
                         {ts.price === 0 ? 'Free' : `₹${ts.price}`}
                       </span>
                     )}
@@ -426,18 +437,18 @@ const Home: React.FC = () => {
         )}
 
         {courses.length > 0 && (
-          <section>
+          <section className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-[#1A237E] to-[#303F9F] rounded-full"></div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-7 bg-gradient-to-b from-primary to-primary-600 rounded-full"></div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-gray-800">Featured Batches</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Enroll in top batches</p>
+                  <h2 className="section-title">Featured Batches</h2>
+                  <p className="section-subtitle">Enroll in top batches</p>
                 </div>
               </div>
-              <button onClick={() => navigate('/explore')} className="text-[#1A237E] text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all bg-[#1A237E]/5 px-4 py-2 rounded-xl">
+              <button onClick={() => navigate('/explore')} className="btn-primary text-xs px-4 py-2 flex items-center gap-1 hover:gap-2 transition-all duration-200 active:scale-[0.97]">
                 View All
-                <span className="material-icons-outlined text-sm">arrow_forward</span>
+                <span className="material-symbols-rounded text-sm">arrow_forward</span>
               </button>
             </div>
             <div className="space-y-3">
@@ -445,33 +456,33 @@ const Home: React.FC = () => {
                 <div 
                   key={course._id || course.id || i}
                   onClick={() => navigate(`/course/${course._id || course.id}`)}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-[0_8px_30px_rgba(26,35,126,0.12)] hover:-translate-y-0.5 transition-all duration-300 group flex"
+                  className="card-premium rounded-3xl border border-gray-100/50 overflow-hidden cursor-pointer hover:-translate-y-0.5 transition-all duration-200 group flex"
                 >
                   <div className={`w-24 h-24 bg-gradient-to-br ${categoryGradients[i % categoryGradients.length]} flex items-center justify-center shrink-0`}>
                     {course.imageUrl || course.thumbnail ? (
                       <img src={course.imageUrl || course.thumbnail} alt={course.title} loading="lazy" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="material-symbols-outlined text-white text-3xl">school</span>
+                      <span className="material-symbols-rounded text-white text-3xl">school</span>
                     )}
                   </div>
                   <div className="flex-1 p-3 min-w-0">
                     <h4 className="font-bold text-sm text-gray-800 truncate">{course.title || course.name}</h4>
-                    <p className="text-[11px] text-gray-400 mt-0.5 truncate">{(course.description || course.subtitle || '').replace(/<[^>]+>/g, '')}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{(course.description || course.subtitle || '').replace(/<[^>]+>/g, '')}</p>
                     <div className="flex items-center gap-3 mt-2">
                       <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">group</span>
+                        <span className="material-symbols-rounded text-[12px]">group</span>
                         {course.enrollmentCount || course.students || 0} enrolled
                       </span>
                       {(course.price !== undefined && course.price !== null) && (
-                        <span className="text-xs font-bold text-[#D32F2F]">
+                        <span className="text-xs font-bold text-accent bg-accent-50 px-2.5 py-0.5 rounded-full">
                           {course.price === 0 ? 'Free' : `₹${course.price}`}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center pr-3">
-                    <div className="w-8 h-8 bg-[#1A237E]/5 rounded-full flex items-center justify-center group-hover:bg-[#1A237E] group-hover:text-white transition-all">
-                      <span className="material-icons-outlined text-[#1A237E] text-sm group-hover:text-white">arrow_forward</span>
+                    <div className="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center group-hover:bg-primary transition-all duration-200">
+                      <span className="material-symbols-rounded text-primary text-sm group-hover:text-white transition-all duration-200">arrow_forward</span>
                     </div>
                   </div>
                 </div>
@@ -481,8 +492,8 @@ const Home: React.FC = () => {
         )}
       </main>
 
-      <div className="px-4 space-y-4 mb-6">
-        <div className="bg-white rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-100/80 flex flex-col items-center gap-4">
+      <div className="px-4 space-y-3 mb-6 animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
+        <div className="card-premium rounded-3xl p-5 border border-gray-100/50 flex flex-col items-center gap-4">
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">Join our Community</p>
           <div className="flex justify-around w-full max-w-[300px]">
             {[
@@ -494,7 +505,7 @@ const Home: React.FC = () => {
               <button 
                 key={i}
                 onClick={() => handleShare(s.platform)} 
-                className={`w-13 h-13 rounded-2xl flex items-center justify-center text-white shadow-md active:scale-90 transition-all duration-300 ${s.hoverShadow} hover:scale-110 hover:-translate-y-1`}
+                className={`rounded-2xl flex items-center justify-center text-white shadow-md active:scale-[0.97] transition-all duration-200 ${s.hoverShadow} hover:scale-110 hover:-translate-y-1`}
                 style={{ background: s.bg, width: '52px', height: '52px' }}
               >
                 {s.icon}
@@ -505,20 +516,19 @@ const Home: React.FC = () => {
 
         <button 
           onClick={handleDownloadAPK}
-          className="w-full text-white rounded-2xl p-5 flex items-center justify-between shadow-[0_4px_20px_rgba(26,35,126,0.3)] active:scale-[0.98] transition-all duration-200 hover:shadow-[0_8px_30px_rgba(26,35,126,0.4)] border border-white/10"
-          style={{ background: 'linear-gradient(135deg, #1A237E 0%, #303F9F 100%)' }}
+          className="w-full btn-primary rounded-3xl p-5 flex items-center justify-between active:scale-[0.97] transition-all duration-200 border border-white/10"
         >
           <div className="flex items-center gap-4">
-            <div className="bg-white/15 backdrop-blur-sm p-3 rounded-xl flex items-center justify-center border border-white/15">
-              <span className="material-symbols-outlined text-white text-[28px]">install_mobile</span>
+            <div className="glass bg-white/15 p-3 rounded-2xl flex items-center justify-center border border-white/15">
+              <span className="material-symbols-rounded text-white text-[28px]">install_mobile</span>
             </div>
             <div className="text-left">
               <p className="text-lg font-bold tracking-tight">Download Official APK</p>
               <p className="text-xs text-blue-200 font-medium opacity-80">Install on your Android device</p>
             </div>
           </div>
-          <div className="bg-white/15 p-2.5 rounded-full border border-white/20">
-            <span className="material-symbols-outlined text-white text-[24px]">download</span>
+          <div className="glass bg-white/15 p-2.5 rounded-full border border-white/20">
+            <span className="material-symbols-rounded text-white text-[24px]">download</span>
           </div>
         </button>
       </div>
@@ -540,8 +550,8 @@ const Home: React.FC = () => {
                   className="w-full h-48 object-cover"
                 />
                 {newsModal.priority === 'high' && (
-                  <div className="absolute top-3 left-3 bg-[#D32F2F] text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                    <span className="material-icons-outlined text-sm">priority_high</span>
+                  <div className="absolute top-3 left-3 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-button">
+                    <span className="material-symbols-rounded text-sm">priority_high</span>
                     Urgent
                   </div>
                 )}
@@ -549,14 +559,14 @@ const Home: React.FC = () => {
             )}
             <div className="p-6">
               {!newsModal.imageUrl && newsModal.priority === 'high' && (
-                <div className="inline-block bg-red-100 text-[#D32F2F] text-xs font-bold px-3 py-1 rounded-full mb-3">
-                  <span className="material-icons-outlined text-sm align-middle mr-1">priority_high</span>
+                <div className="inline-block bg-accent-50 text-accent text-xs font-bold px-3 py-1 rounded-full mb-3">
+                  <span className="material-symbols-rounded text-sm align-middle mr-1">priority_high</span>
                   Urgent Notice
                 </div>
               )}
               <div className="flex items-start gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#1A237E] to-[#303F9F] rounded-xl flex items-center justify-center text-white flex-shrink-0">
-                  <span className="material-icons-outlined text-xl">campaign</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-600 rounded-2xl flex items-center justify-center text-white flex-shrink-0 shadow-button">
+                  <span className="material-symbols-rounded text-xl">campaign</span>
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-gray-800">{newsModal.title}</h3>
@@ -566,10 +576,9 @@ const Home: React.FC = () => {
               <p className="text-sm text-gray-600 leading-relaxed mb-6">{newsModal.message}</p>
               <button
                 onClick={dismissNewsModal}
-                className="w-full text-white py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #1A237E 0%, #303F9F 100%)' }}
+                className="w-full btn-primary py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all duration-200"
               >
-                <span className="material-icons-outlined text-sm">check_circle</span>
+                <span className="material-symbols-rounded text-sm">check_circle</span>
                 Got it, Thanks!
               </button>
             </div>

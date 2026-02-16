@@ -3,13 +3,11 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
-  // Load env variables
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
     plugins: [react()],
 
-    // Dev server config
     server: {
       host: "0.0.0.0",
       port: 5000,
@@ -23,23 +21,31 @@ export default defineConfig(({ mode }) => {
       port: 5000,
     },
 
-    // Path alias
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),
+        "@assets": path.resolve(__dirname, "./attached_assets"),
       },
     },
 
-    // Env variables
     define: {
       "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
     },
 
-    // Build output
     build: {
       outDir: "dist",
       sourcemap: false,
+      target: 'es2020',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            charts: ['recharts'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 500,
     },
   };
 });

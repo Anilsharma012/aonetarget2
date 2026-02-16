@@ -104,146 +104,239 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ setAuth }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <span className="material-symbols-rounded animate-spin text-4xl text-brandBlue">progress_activity</span>
-          <p className="mt-4 text-gray-500">Loading your profile...</p>
+      <div className="min-h-screen bg-surface-100 pb-20">
+        <div className="bg-gradient-to-br from-primary-800 via-brandBlue to-primary-700 pt-6 pb-14 px-4">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-10 h-10 rounded-full skeleton opacity-30" />
+            <div className="w-10 h-10 rounded-full skeleton opacity-30" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-full skeleton opacity-30" />
+            <div className="flex-1 space-y-2">
+              <div className="h-5 w-32 skeleton opacity-30 rounded-lg" />
+              <div className="h-3 w-44 skeleton opacity-30 rounded-lg" />
+              <div className="h-3 w-28 skeleton opacity-30 rounded-lg" />
+            </div>
+          </div>
+        </div>
+        <div className="-mt-6 px-4">
+          <div className="card-premium p-4">
+            <div className="h-3 w-24 skeleton rounded-lg mb-4" />
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className="w-14 h-14 skeleton rounded-2xl" />
+                  <div className="h-2.5 w-12 skeleton rounded-lg" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="p-4 space-y-2">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="card-premium p-4 flex items-center gap-4">
+              <div className="w-11 h-11 skeleton rounded-2xl" />
+              <div className="flex-1 h-4 skeleton rounded-lg" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-surface-100 pb-24">
       <StudentSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} student={student} />
 
-      <header className="bg-gradient-to-r from-brandBlue to-[#1A237E] text-white pt-6 pb-8 px-4">
-        <div className="flex justify-between items-start mb-4">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full hover:bg-white/20">
-            <span className="material-symbols-rounded">menu</span>
-          </button>
-          <button onClick={handleLogout} className="p-2 rounded-full hover:bg-white/20">
-            <span className="material-symbols-rounded">logout</span>
-          </button>
+      <header className="bg-gradient-to-br from-primary-800 via-brandBlue to-primary-700 text-white pt-6 pb-14 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl">
-            <span className="text-3xl font-black text-brandBlue">
-              {student?.name?.charAt(0)?.toUpperCase() || 'S'}
-            </span>
+
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-10 h-10 glass-dark rounded-full flex items-center justify-center transition-all duration-200 active:scale-[0.97]"
+            >
+              <span className="material-symbols-rounded text-xl">menu</span>
+            </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="w-10 h-10 glass-dark rounded-full flex items-center justify-center transition-all duration-200 active:scale-[0.97]"
+            >
+              <span className="material-symbols-rounded text-xl">edit</span>
+            </button>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold">{student?.name || 'Student'}</h1>
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="p-1 bg-white/20 rounded-full"
-              >
-                <span className="material-symbols-rounded text-sm">edit</span>
-              </button>
+
+          <div className="flex items-center gap-4 animate-fade-in-up">
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-elevated ring-4 ring-white/20">
+              <span className="text-4xl font-black text-brandBlue">
+                {student?.name?.charAt(0)?.toUpperCase() || 'S'}
+              </span>
             </div>
-            <p className="text-blue-200 text-xs mt-0.5">{student?.email}</p>
-            <p className="text-blue-200 text-xs">{student?.phone || '+91 XXXXX XXXXX'}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold truncate">{student?.name || 'Student'}</h1>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="material-symbols-rounded text-blue-200 text-sm">mail</span>
+                <p className="text-blue-200 text-xs truncate">{student?.email}</p>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="material-symbols-rounded text-blue-200 text-sm">call</span>
+                <p className="text-blue-200 text-xs">{student?.phone || '+91 XXXXX XXXXX'}</p>
+              </div>
+              {(student?.class || student?.target) && (
+                <div className="flex items-center gap-2 mt-2">
+                  {student?.class && (
+                    <span className="text-[10px] font-semibold bg-white/15 px-2.5 py-0.5 rounded-full">
+                      {student.class}
+                    </span>
+                  )}
+                  {student?.target && (
+                    <span className="text-[10px] font-semibold bg-white/15 px-2.5 py-0.5 rounded-full">
+                      {student.target}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="-mt-4 px-4">
-        <div className="bg-white rounded-2xl shadow-lg p-4">
-          <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest mb-4">Learning Stats</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <span className="text-xl font-black text-brandBlue">{stats.enrolled}</span>
+      <div className="-mt-6 px-4 animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+        <div className="card-premium p-4">
+          <h3 className="font-semibold text-[11px] text-gray-400 uppercase tracking-widest mb-3">Learning Stats</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-blue-50/80 rounded-2xl p-3 text-center transition-all duration-200 active:scale-[0.97]">
+              <div className="w-11 h-11 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
+                <span className="material-symbols-rounded text-brandBlue text-lg fill-1">menu_book</span>
               </div>
-              <p className="text-[10px] text-gray-500 font-bold">Enrolled</p>
+              <p className="text-xl font-black text-brandBlue leading-none">{stats.enrolled}</p>
+              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Enrolled</p>
             </div>
-            <div className="text-center">
-              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <span className="text-xl font-black text-green-600">{stats.completed}</span>
+            <div className="bg-emerald-50/80 rounded-2xl p-3 text-center transition-all duration-200 active:scale-[0.97]">
+              <div className="w-11 h-11 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
+                <span className="material-symbols-rounded text-emerald-600 text-lg fill-1">task_alt</span>
               </div>
-              <p className="text-[10px] text-gray-500 font-bold">Completed</p>
+              <p className="text-xl font-black text-emerald-600 leading-none">{stats.completed}</p>
+              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Completed</p>
             </div>
-            <div className="text-center">
-              <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <span className="text-xl font-black text-orange-500">{stats.tests}</span>
+            <div className="bg-amber-50/80 rounded-2xl p-3 text-center transition-all duration-200 active:scale-[0.97]">
+              <div className="w-11 h-11 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-1.5">
+                <span className="material-symbols-rounded text-amber-600 text-lg fill-1">quiz</span>
               </div>
-              <p className="text-[10px] text-gray-500 font-bold">Tests</p>
+              <p className="text-xl font-black text-amber-600 leading-none">{stats.tests}</p>
+              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Tests</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4 space-y-2">
-        {menuItems.map((item, idx) => (
-          <button
-            key={idx}
-            onClick={() => item.path ? navigate(item.path) : item.action?.()}
-            className="w-full bg-white rounded-xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-all"
-          >
-            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
-              <span className="material-symbols-rounded text-gray-600">{item.icon}</span>
-            </div>
-            <span className="flex-1 text-left font-medium text-sm">{item.label}</span>
-            <span className="material-symbols-rounded text-gray-400">chevron_right</span>
-          </button>
-        ))}
+      <div className="px-4 mt-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="card-premium overflow-hidden">
+          {menuItems.map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => item.path ? navigate(item.path) : item.action?.()}
+              className="w-full p-4 flex items-center gap-3 transition-all duration-200 active:scale-[0.97] active:bg-surface-100 hover:bg-surface-50"
+            >
+              <div className="w-10 h-10 bg-surface-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-rounded text-gray-600 text-xl">{item.icon}</span>
+              </div>
+              <span className="flex-1 text-left font-medium text-sm text-gray-800">{item.label}</span>
+              <span className="material-symbols-rounded text-gray-300 text-lg">chevron_right</span>
+              {idx < menuItems.length - 1 && (
+                <div className="absolute bottom-0 left-[4.25rem] right-4 h-px bg-gray-100" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-4 mt-4 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+        <button
+          onClick={handleLogout}
+          className="w-full p-4 rounded-3xl bg-red-50 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.97] hover:bg-red-100 border border-red-100"
+        >
+          <span className="material-symbols-rounded text-red-500 text-xl">logout</span>
+          <span className="font-semibold text-sm text-red-600">Log Out</span>
+        </button>
       </div>
 
       {isEditing && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 animate-fade-in">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-6 animate-slide-up shadow-elevated">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold">Edit Profile</h2>
-              <button onClick={() => setIsEditing(false)} className="p-1">
-                <span className="material-symbols-rounded text-gray-400">close</span>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Edit Profile</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Update your personal details</p>
+              </div>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="w-9 h-9 bg-surface-100 rounded-full flex items-center justify-center transition-all duration-200 active:scale-[0.97]"
+              >
+                <span className="material-symbols-rounded text-gray-500 text-lg">close</span>
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Name</label>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
-                />
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</label>
+                <div className="relative mt-1.5">
+                  <span className="material-symbols-rounded text-gray-400 text-lg absolute left-3 top-1/2 -translate-y-1/2">person</span>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 bg-surface-100 border border-surface-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/20 focus:border-brandBlue transition-all duration-200"
+                  />
+                </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Phone</label>
-                <input
-                  type="tel"
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
-                />
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</label>
+                <div className="relative mt-1.5">
+                  <span className="material-symbols-rounded text-gray-400 text-lg absolute left-3 top-1/2 -translate-y-1/2">call</span>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 bg-surface-100 border border-surface-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/20 focus:border-brandBlue transition-all duration-200"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Class</label>
-                  <select
-                    value={editForm.class}
-                    onChange={(e) => setEditForm({ ...editForm, class: e.target.value })}
-                    className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
-                  >
-                    <option value="11th">11th</option>
-                    <option value="12th">12th</option>
-                    <option value="Dropper">Dropper</option>
-                  </select>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Class</label>
+                  <div className="relative mt-1.5">
+                    <span className="material-symbols-rounded text-gray-400 text-lg absolute left-3 top-1/2 -translate-y-1/2">school</span>
+                    <select
+                      value={editForm.class}
+                      onChange={(e) => setEditForm({ ...editForm, class: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-surface-100 border border-surface-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/20 focus:border-brandBlue appearance-none transition-all duration-200"
+                    >
+                      <option value="11th">11th</option>
+                      <option value="12th">12th</option>
+                      <option value="Dropper">Dropper</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Target</label>
-                  <select
-                    value={editForm.target}
-                    onChange={(e) => setEditForm({ ...editForm, target: e.target.value })}
-                    className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue"
-                  >
-                    <option value="NEET">NEET</option>
-                    <option value="JEE">JEE</option>
-                    <option value="Both">Both</option>
-                  </select>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Target</label>
+                  <div className="relative mt-1.5">
+                    <span className="material-symbols-rounded text-gray-400 text-lg absolute left-3 top-1/2 -translate-y-1/2">target</span>
+                    <select
+                      value={editForm.target}
+                      onChange={(e) => setEditForm({ ...editForm, target: e.target.value })}
+                      className="w-full pl-10 pr-4 py-3 bg-surface-100 border border-surface-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/20 focus:border-brandBlue appearance-none transition-all duration-200"
+                    >
+                      <option value="NEET">NEET</option>
+                      <option value="JEE">JEE</option>
+                      <option value="Both">Both</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -251,13 +344,13 @@ const StudentProfile: React.FC<StudentProfileProps> = ({ setAuth }) => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-600"
+                className="flex-1 py-3.5 bg-surface-100 border border-surface-200 rounded-2xl font-semibold text-sm text-gray-600 transition-all duration-200 active:scale-[0.97]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveProfile}
-                className="flex-1 py-3 bg-brandBlue text-white rounded-xl font-bold text-sm"
+                className="flex-1 py-3.5 btn-primary text-sm active:scale-[0.97]"
               >
                 Save Changes
               </button>
